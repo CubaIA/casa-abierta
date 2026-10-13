@@ -1,4 +1,4 @@
-name: Terminar Casa Abierta
+name: Terminar Casa Abierta v2
 
 on:
   workflow_dispatch:
