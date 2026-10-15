@@ -1,0 +1,8 @@
+# Configuración del proyecto Supabase para Casa Abierta Cuba.
+# Generado para usar con la Supabase CLI (supabase init ya no es necesario).
+
+project_id = "casa-abierta-cuba"
+
+[functions.cuba-conecta-ia]
+# verify_jwt = true  # por defecto la función exige el JWT de Supabase;
+# la app llama con supabase.functions.invoke, que lo envía automáticamente.
