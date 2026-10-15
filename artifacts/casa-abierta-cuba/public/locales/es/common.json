@@ -1,0 +1,65 @@
+{
+  "app": {
+    "name": "Casa Abierta Cuba"
+  },
+  "nav": {
+    "explore": "Explorar",
+    "my_requests": "Mis solicitudes",
+    "favorites": "Favoritos",
+    "host": "Soy anfitrión",
+    "admin": "Admin",
+    "contact": "Contacto",
+    "login": "Entrar",
+    "logout": "Salir",
+    "skip": "Saltar al contenido"
+  },
+  "common": {
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "province": "Provincia",
+    "service_type": "Tipo de servicio",
+    "all": "Todos",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "submit": "Enviar",
+    "send": "Enviar",
+    "close": "Cerrar",
+    "view": "Ver",
+    "open": "Abrir",
+    "share": "Compartir",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "review": "Revisar",
+    "contact_email": "Correo de contacto",
+    "language": "Idioma",
+    "country": "País",
+    "currency": "Moneda",
+    "price": "Precio"
+  },
+  "auth": {
+    "login_title": "Entrar a Casa Abierta",
+    "signup_title": "Crear cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "full_name": "Nombre completo",
+    "account_type": "Tipo de cuenta",
+    "traveler": "Viajero",
+    "provider": "Proveedor/Anfitrión",
+    "create_account": "Crear cuenta",
+    "no_account": "¿No tienes cuenta?",
+    "have_account": "¿Ya tienes cuenta?",
+    "demo_hint": "Modo demo: usa viajero@casa.cu / demo1234"
+  },
+  "errors": {
+    "required": "Este campo es obligatorio",
+    "invalid_email": "Correo electrónico inválido",
+    "generic": "Algo salió mal"
+  }
+}

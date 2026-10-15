@@ -1,0 +1,63 @@
+{
+  "app": { "name": "Casa Abierta Cuba" },
+  "nav": {
+    "explore": "Обзор",
+    "my_requests": "Мои заявки",
+    "favorites": "Избранное",
+    "host": "Стать хозяином",
+    "admin": "Админ",
+    "contact": "Контакты",
+    "login": "Войти",
+    "logout": "Выйти",
+    "skip": "Перейти к содержимому"
+  },
+  "common": {
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "province": "Провинция",
+    "service_type": "Тип услуги",
+    "all": "Все",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "submit": "Отправить",
+    "send": "Отправить",
+    "close": "Закрыть",
+    "view": "Просмотр",
+    "open": "Открыть",
+    "share": "Поделиться",
+    "copy": "Копировать",
+    "copied": "Скопировано",
+    "accept": "Принять",
+    "reject": "Отклонить",
+    "review": "Рассмотреть",
+    "contact_email": "Контактный email",
+    "language": "Язык",
+    "country": "Страна",
+    "currency": "Валюта",
+    "price": "Цена"
+  },
+  "auth": {
+    "login_title": "Войти в Casa Abierta",
+    "signup_title": "Создать аккаунт",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "full_name": "Полное имя",
+    "account_type": "Тип аккаунта",
+    "traveler": "Путешественник",
+    "provider": "Поставщик/Хозяин",
+    "create_account": "Создать аккаунт",
+    "no_account": "Нет аккаунта?",
+    "have_account": "Уже есть аккаунт?",
+    "demo_hint": "Демо-режим: используйте viajero@casa.cu / demo1234"
+  },
+  "errors": {
+    "required": "Обязательное поле",
+    "invalid_email": "Неверный email",
+    "generic": "Что-то пошло не так"
+  }
+}
