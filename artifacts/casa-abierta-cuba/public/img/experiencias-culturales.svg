@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Música en vivo y baile cubano (placeholder)">
+  <defs>
+    <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#154D63"/>
+      <stop offset="1" stop-color="#1B5E7A"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#stage)"/>
+  <polygon points="400,0 180,500 620,500" fill="#D4A574" opacity="0.25"/>
+  <circle cx="400" cy="70" r="34" fill="#F2D5A3"/>
+  <ellipse cx="400" cy="430" rx="330" ry="70" fill="#245339"/>
+  <g fill="#0E1B22">
+    <circle cx="330" cy="245" r="30"/>
+    <rect x="305" y="275" width="50" height="115" rx="22"/>
+    <circle cx="470" cy="250" r="28"/>
+    <rect x="447" y="278" width="46" height="110" rx="20"/>
+  </g>
+  <g stroke="#F2D5A3" stroke-width="10" stroke-linecap="round">
+    <line x1="352" y1="300" x2="415" y2="335"/>
+    <line x1="448" y1="305" x2="395" y2="345"/>
+  </g>
+  <g fill="#C75B39">
+    <ellipse cx="405" cy="345" rx="46" ry="30"/>
+  </g>
+  <g stroke="#D4A574" stroke-width="7" stroke-linecap="round">
+    <line x1="285" y1="290" x2="245" y2="230"/>
+    <line x1="515" y1="295" x2="560" y2="235"/>
+  </g>
+  <g fill="#4FB3C9">
+    <circle cx="243" cy="222" r="17"/>
+    <circle cx="562" cy="228" r="17"/>
+  </g>
+  <g fill="#F2D5A3" opacity="0.85">
+    <text x="180" y="160" font-size="44">♪</text>
+    <text x="590" y="140" font-size="38">♫</text>
+    <text x="520" y="200" font-size="30">♪</text>
+  </g>
+</svg>

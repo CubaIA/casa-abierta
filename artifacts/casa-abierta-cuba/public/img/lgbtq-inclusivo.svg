@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Espacio inclusivo LGBTQ+ (placeholder)">
+  <rect width="800" height="500" fill="#FAF7F0"/>
+  <g fill="none" stroke-width="26" opacity="0.9">
+    <path d="M110 380 A290 290 0 0 1 690 380" stroke="#C75B39"/>
+    <path d="M148 380 A252 252 0 0 1 652 380" stroke="#D4A574"/>
+    <path d="M186 380 A214 214 0 0 1 614 380" stroke="#F2D5A3"/>
+    <path d="M224 380 A176 176 0 0 1 576 380" stroke="#3A7D5C"/>
+    <path d="M262 380 A138 138 0 0 1 538 380" stroke="#4FB3C9"/>
+    <path d="M300 380 A100 100 0 0 1 500 380" stroke="#1B5E7A"/>
+  </g>
+  <rect y="392" width="800" height="108" fill="#1B5E7A"/>
+  <path d="M400 250 c-34-40-96-18-96 30 0 44 60 76 96 106 36-30 96-62 96-106 0-48-62-70-96-30z" fill="#C75B39"/>
+  <g>
+    <circle cx="330" cy="445" r="24" fill="#F2D5A3"/>
+    <rect x="308" y="469" width="44" height="34" rx="14" fill="#4FB3C9"/>
+    <circle cx="400" cy="440" r="26" fill="#D4A574"/>
+    <rect x="376" y="466" width="48" height="38" rx="15" fill="#3A7D5C"/>
+    <circle cx="470" cy="445" r="24" fill="#8F3D26"/>
+    <rect x="448" y="469" width="44" height="34" rx="14" fill="#C75B39"/>
+  </g>
+</svg>

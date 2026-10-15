@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Playa de Varadero al atardecer (placeholder)">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B5E7A"/>
+      <stop offset="0.45" stop-color="#C75B39"/>
+      <stop offset="0.72" stop-color="#D4A574"/>
+      <stop offset="1" stop-color="#F2D5A3"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4FB3C9"/>
+      <stop offset="1" stop-color="#1B5E7A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#sky)"/>
+  <circle cx="600" cy="360" r="95" fill="#F2D5A3" opacity="0.95"/>
+  <rect y="360" width="1200" height="180" fill="url(#sea)"/>
+  <path d="M0 360 Q300 340 600 360 T1200 360 V540 H0 Z" fill="url(#sea)"/>
+  <g fill="#F2D5A3" opacity="0.35">
+    <rect x="520" y="390" width="160" height="6" rx="3"/>
+    <rect x="545" y="415" width="110" height="5" rx="2.5"/>
+    <rect x="565" y="440" width="70" height="4" rx="2"/>
+  </g>
+  <rect y="540" width="1200" height="90" fill="#E8C88F"/>
+  <g fill="#154D63">
+    <path d="M170 540 C160 440 150 380 145 330 L165 330 C175 390 185 450 195 540 Z"/>
+    <path d="M145 330 C100 300 70 310 40 340 C80 320 115 325 150 350 Z"/>
+    <path d="M145 330 C170 285 215 275 260 295 C215 290 180 310 155 355 Z"/>
+    <path d="M165 330 C200 330 235 355 250 395 C225 365 195 350 165 355 Z"/>
+    <path d="M145 335 C110 355 90 390 90 430 C105 390 125 360 152 350 Z"/>
+  </g>
+</svg>
