@@ -30,7 +30,7 @@ async function upload() {
   for (const f of files) {
     const p = path.join(process.cwd(), f)
     if (!fs.existsSync(p)) {
-      console.log('⚠   No existe:', p)
+      console.log('⚠️  No existe:', p)
       continue
     }
     const buf = fs.readFileSync(p)
