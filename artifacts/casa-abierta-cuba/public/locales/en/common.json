@@ -1,0 +1,63 @@
+{
+  "app": { "name": "Casa Abierta Cuba" },
+  "nav": {
+    "explore": "Explore",
+    "my_requests": "My requests",
+    "favorites": "Favorites",
+    "host": "Become host",
+    "admin": "Admin",
+    "contact": "Contact",
+    "login": "Sign in",
+    "logout": "Log out",
+    "skip": "Skip to content"
+  },
+  "common": {
+    "search": "Search",
+    "filter": "Filter",
+    "province": "Province",
+    "service_type": "Service type",
+    "all": "All",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "send": "Send",
+    "close": "Close",
+    "view": "View",
+    "open": "Open",
+    "share": "Share",
+    "copy": "Copy",
+    "copied": "Copied",
+    "accept": "Accept",
+    "reject": "Reject",
+    "review": "Review",
+    "contact_email": "Contact email",
+    "language": "Language",
+    "country": "Country",
+    "currency": "Currency",
+    "price": "Price"
+  },
+  "auth": {
+    "login_title": "Sign in to Casa Abierta",
+    "signup_title": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "full_name": "Full name",
+    "account_type": "Account type",
+    "traveler": "Traveler",
+    "provider": "Provider/Host",
+    "create_account": "Create account",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "demo_hint": "Demo mode: use viajero@casa.cu / demo1234"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalid_email": "Invalid email",
+    "generic": "Something went wrong"
+  }
+}

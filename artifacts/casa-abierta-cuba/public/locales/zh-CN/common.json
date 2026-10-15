@@ -1,0 +1,63 @@
+{
+  "app": { "name": "Casa Abierta Cuba" },
+  "nav": {
+    "explore": "探索",
+    "my_requests": "我的请求",
+    "favorites": "收藏",
+    "host": "成为房东",
+    "admin": "管理",
+    "contact": "联系",
+    "login": "登录",
+    "logout": "退出",
+    "skip": "跳转到内容"
+  },
+  "common": {
+    "search": "搜索",
+    "filter": "筛选",
+    "province": "省",
+    "service_type": "服务类型",
+    "all": "全部",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "submit": "提交",
+    "send": "发送",
+    "close": "关闭",
+    "view": "查看",
+    "open": "打开",
+    "share": "分享",
+    "copy": "复制",
+    "copied": "已复制",
+    "accept": "接受",
+    "reject": "拒绝",
+    "review": "审核",
+    "contact_email": "联系邮箱",
+    "language": "语言",
+    "country": "国家",
+    "currency": "货币",
+    "price": "价格"
+  },
+  "auth": {
+    "login_title": "登录 Casa Abierta",
+    "signup_title": "创建账户",
+    "email": "电子邮箱",
+    "password": "密码",
+    "full_name": "全名",
+    "account_type": "账户类型",
+    "traveler": "旅行者",
+    "provider": "供应商/房东",
+    "create_account": "创建账户",
+    "no_account": "还没有账户？",
+    "have_account": "已有账户？",
+    "demo_hint": "演示模式：使用 viajero@casa.cu / demo1234"
+  },
+  "errors": {
+    "required": "此字段为必填项",
+    "invalid_email": "电子邮箱无效",
+    "generic": "出现错误"
+  }
+}
