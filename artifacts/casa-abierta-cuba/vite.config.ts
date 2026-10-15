@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     minify: 'esbuild',
+    assetsInclude: ['**/*.sql'],
     rollupOptions: {
       output: {
         manualChunks: {
