@@ -1,0 +1,354 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta oficial Casa Abierta Cuba */
+  --color-terracota: #C75B39;
+  --color-terracota-500: #C75B39;
+  --color-terracota-600: #B04C30;
+  --color-terracota-700: #8F3D26;
+  --color-arena: #F2D5A3;
+  --color-arena-2: #E8C88F;
+  --color-azul: #1B5E7A;
+  --color-azul-200: #C7DCE8;
+  --color-azul-300: #93BFD1;
+  --color-azul-600: #1F6C8B;
+  --color-azul-700: #154D63;
+  --color-turquesa: #4FB3C9;
+  --color-turquesa-500: #4FB3C9;
+  --color-dorado: #D4A574;
+  --color-verde: #3A7D5C;
+  --color-verde-500: #3A7D5C;
+  --color-verde-600: #2F684A;
+  --color-verde-700: #245339;
+  --color-crema: #faf7f0;
+  --color-tinta: #1c2321;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background: var(--color-crema);
+    color: var(--color-tinta);
+    font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  img {
+    max-width: 100%;
+    display: block;
+  }
+}
+
+/* ---------- Estructura ---------- */
+.page-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+.section-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--color-terracota-600);
+  margin-bottom: 0.6rem;
+}
+
+/* ---------- Editorial (páginas informativas) ---------- */
+.editorial-page h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  margin: 0.4rem 0 1rem;
+  color: var(--color-azul);
+  font-weight: 850;
+}
+.editorial-page h1 em {
+  font-style: italic;
+  color: var(--color-terracota-600);
+}
+.editorial-page h2 {
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+  margin: 0 0 0.6rem;
+  color: var(--color-azul-700);
+  font-weight: 750;
+}
+.editorial-lead {
+  font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+  color: var(--color-verde-700);
+  max-width: 46rem;
+  margin: 0 0 2rem;
+}
+.editorial-story {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.75rem;
+  margin: 2.5rem 0;
+}
+.editorial-story section p,
+.legal-sections p,
+.editorial-pillars p,
+.editorial-cta p {
+  color: #3d4a45;
+}
+.editorial-story section p {
+  margin: 0 0 1rem;
+}
+.creator-card {
+  background: linear-gradient(160deg, var(--color-azul) 0%, var(--color-azul-700) 100%);
+  color: #f1ede4;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  align-self: start;
+  box-shadow: 0 18px 40px rgba(27, 94, 122, 0.25);
+}
+.creator-card .section-kicker {
+  color: var(--color-dorado);
+}
+.creator-card h2 {
+  color: #ffffff;
+  font-size: 1.35rem;
+}
+.creator-card p {
+  color: #d6e2ec;
+}
+.creator-seal {
+  display: inline-grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--color-dorado);
+  color: var(--color-azul-700);
+  font-weight: 900;
+  margin-bottom: 0.9rem;
+}
+.editorial-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin: 2.5rem 0;
+}
+.editorial-pillars section {
+  background: #ffffff;
+  border: 1px solid var(--color-arena-2);
+  border-radius: 1.1rem;
+  padding: 1.4rem;
+}
+.editorial-pillars svg {
+  color: var(--color-terracota-600);
+  margin-bottom: 0.6rem;
+}
+.editorial-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: var(--color-arena);
+  border: 1px solid var(--color-arena-2);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  margin-top: 2.5rem;
+}
+.legal-page .legal-sections section {
+  margin-bottom: 1.6rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--color-arena-2);
+}
+.legal-sections p {
+  margin: 0.4rem 0 0;
+}
+.legal-note {
+  font-size: 0.88rem;
+  color: #6b7671;
+  background: var(--color-arena);
+  border-radius: 0.9rem;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
+/* ---------- Botones y enlaces ---------- */
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-terracota-600);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.button-primary:hover {
+  background: var(--color-terracota-700);
+  transform: translateY(-1px);
+}
+.button-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-azul);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.button-secondary:hover {
+  background: var(--color-azul-700);
+}
+.button-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: var(--color-azul);
+  font-weight: 650;
+  border: 1.5px solid var(--color-azul-300);
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.button-ghost:hover {
+  background: var(--color-azul-200);
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-terracota-600);
+  font-weight: 700;
+  text-decoration: none;
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Formularios ---------- */
+.field-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 0.35rem;
+}
+.field-input {
+  width: 100%;
+  border: 1.5px solid var(--color-arena-2);
+  background: #fff;
+  color: var(--color-tinta);
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+}
+.field-input:focus {
+  outline: 2px solid var(--color-azul-300);
+  border-color: var(--color-azul-300);
+}
+.field-hint {
+  font-size: 0.8rem;
+  color: #6b7671;
+  margin-top: 0.3rem;
+}
+.form-error {
+  background: #fbeae7;
+  border: 1px solid var(--color-terracota-500);
+  color: var(--color-terracota-700);
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+.form-success {
+  background: #e7f4ee;
+  border: 1px solid var(--color-verde-500);
+  color: var(--color-verde-700);
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+/* ---------- Tarjetas de negocio ---------- */
+.business-card {
+  background: #fff;
+  border: 1px solid var(--color-arena-2);
+  border-radius: 1.15rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.business-card:hover {
+  box-shadow: 0 14px 34px rgba(27, 94, 122, 0.12);
+  transform: translateY(-2px);
+}
+.business-visual {
+  height: 150px;
+  background: linear-gradient(135deg, var(--color-turquesa), var(--color-arena));
+  display: grid;
+  place-items: center;
+  color: var(--color-azul);
+}
+.business-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Badges de estado ---------- */
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.22rem 0.65rem;
+  letter-spacing: 0.02em;
+}
+.badge-neutral { background: var(--color-arena); color: #6b5a36; }
+.badge-blue { background: var(--color-azul-200); color: var(--color-azul-700); }
+.badge-green { background: #e2f3ec; color: var(--color-verde-700); }
+.badge-red { background: #fbeae7; color: var(--color-terracota-700); }
+.badge-gold { background: #f7ecd6; color: #8a6a24; }
+
+/* ---------- Paneles ---------- */
+.panel {
+  background: #fff;
+  border: 1px solid var(--color-arena-2);
+  border-radius: 1.15rem;
+  padding: 1.5rem;
+}
+.empty-state {
+  background: #fff;
+  border: 1.5px dashed var(--color-arena-2);
+  border-radius: 1rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: #6b7671;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 820px) {
+  .editorial-story { grid-template-columns: 1fr; }
+  .editorial-pillars { grid-template-columns: 1fr; }
+  .page-shell { padding: 1.75rem 1rem 3rem; }
+}
