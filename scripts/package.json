@@ -7,7 +7,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
+    "@types/node": "^22.0.0",
     "tsx": "catalog:"
   }
 }
