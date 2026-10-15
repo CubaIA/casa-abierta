@@ -61,8 +61,8 @@ export default function App() {
             <Route path="/antifraud" component={() => <InformationPage kind="antifraud" />} />
             <Route component={NotFound} />
           </Switch>
-        )}
-      </div>
+        </Suspense>
+      )}
     </Layout>
   );
 }

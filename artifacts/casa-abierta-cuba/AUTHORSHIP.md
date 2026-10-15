@@ -8,7 +8,7 @@
 - Técnico en Programación, Control y Supervisión de Operaciones Turísticas
 - Diseñador de Aplicaciones de Servicios
 
-Este software, su código fuente, documentación, diseño, marcas, identidad visual, contenido y estructura son propiedad exclusiva de Yoanny Guillén Vargas, salvo lo indicado por licencias de terceros utilizadas.
+Este software, su código fuente, documentación, diseño, marcas, identidad visual, contenido y estructura son propiedad exclusiva de Yoanny Guillén Vargas, salvo lo indicado por licencias de terceros utilizadas. 
 
 Este documento es interno y NO se muestra al público en la aplicación.
 
@@ -23,10 +23,10 @@ Casa Abierta Cuba fue desarrollada mediante un proceso iterativo de múltiples f
 
 El desarrollo contó con la asistencia de las siguientes herramientas de IA:
 
-- **DeepSeek** - Generación y refinamiento de código, arquitectura, migraciones SQL y lógica de negocio.
-- **ChatGPT** - Asistencia en diseño, documentación, revisión de código, correcciones y optimización.
-- **Replit** - Entorno de desarrollo asistido, ejecución y prototipado iterativo.
-- **Freebuff** - Entorno de desarrollo asistido por IA, gestión de tareas, generación de código, commits y despliegue asistido.
+- **[DeepSeek](https://www.deepseek.com/)** - Generación y refinamiento de código, arquitectura, migraciones SQL y lógica de negocio.
+- **[ChatGPT](https://chatgpt.com/)** - Asistencia en diseño, documentación, revisión de código, correcciones y optimización.
+- **[Replit](https://replit.com/)** - Entorno de desarrollo asistido, ejecución y prototipado iterativo.
+- **[Freebuff](https://freebuff.com/)** - Entorno de desarrollo asistido por IA, gestión de tareas, generación de código, commits y despliegue asistido.
 
 Todas las decisiones arquitectónicas, funcionales y de negocio fueron dirigidas y aprobadas por Yoanny Guillén Vargas. La asistencia de IA fue utilizada como herramienta de desarrollo bajo su supervisión y dirección.
 
@@ -56,7 +56,7 @@ La documentación técnica completa incluye:
 
 ## Sello de tiempo (Prueba legal de autoría)
 
-Este proyecto puede sellarse mediante OpenTimestamps (opentimestamps.org) para dejar constancia inmutable de un hash del código en blockchain, proporcionando prueba temporal verificable de la existencia del código en una fecha determinada.
+Este proyecto puede sellarse mediante [OpenTimestamps](https://opentimestamps.org) para dejar constancia inmutable de un hash del código en blockchain, proporcionando prueba temporal verificable de la existencia del código en una fecha determinada.
 
 El procedimiento está documentado en `CUMPLIMIENTO_176_MEDIDAS.md` y `docs/INSTALACION.md`.
 

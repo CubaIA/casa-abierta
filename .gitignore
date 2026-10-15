@@ -27,6 +27,11 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# environment secrets (Supabase keys, tokens)
+.env
+.env.local
+.env.*.local
+
 # misc
 /.sass-cache
 /connect.lock
@@ -47,3 +52,10 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Entregables generados (ZIP local, no se versionan)
+deliverables/*.zip
+deliverables/*.zip.part_*
+# Build outputs
+lib/api-client-react/dist/
+vite-dev.log

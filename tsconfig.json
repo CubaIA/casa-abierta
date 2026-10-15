@@ -1,12 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "composite": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "lib": ["dom", "dom.iterable", "es2022"]
-  },
-  "include": ["src"]
+  "files": [],
+  "references": [{ "path": "./lib/api-client-react" }]
 }

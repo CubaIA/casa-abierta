@@ -8,6 +8,10 @@ Tienes 5 partes:
 - casa-abierta-cuba.zip.part_03
 - casa-abierta-cuba.zip.part_04
 
+En Windows (PowerShell):
+  cd carpeta_donde_guardaste_las_partes
+  Get-Content casa-abierta-cuba.zip.part_* | Set-Content casa-abierta-cuba.zip -Encoding Byte
+
 En Linux/Mac/Termux:
   cd carpeta_donde_guardaste_las_partes
   cat casa-abierta-cuba.zip.part_* > casa-abierta-cuba.zip
@@ -15,4 +19,4 @@ En Linux/Mac/Termux:
 Verifica integridad:
   unzip -t casa-abierta-cuba.zip
 
-Despues abre el ZIP resultante.
+Después abre el ZIP resultante.

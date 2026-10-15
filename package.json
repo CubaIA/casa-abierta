@@ -1,15 +1,24 @@
 {
-  "name": "@workspace/api-client-react",
+  "name": "workspace",
   "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "dev": "pnpm --filter casa-abierta-cuba dev",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
   "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "dependencies": {
-    "@tanstack/react-query": "catalog:"
+    "@replit/connectors-sdk": "^0.4.3",
+    "i18next": "^26.4.4",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "i18next-http-backend": "^4.0.2",
+    "react-i18next": "^17.0.16"
   },
-  "peerDependencies": {
-    "react": ">=18"
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3"
   }
 }
