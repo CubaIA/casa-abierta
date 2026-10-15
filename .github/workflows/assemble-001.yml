@@ -1,0 +1,55 @@
+name: Ensamblar migración 001 completa
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Concatenar partes y verificar
+        run: |
+          set -euo pipefail
+          DIR="artifacts/casa-abierta-cuba/supabase/migrations/_001_parts"
+          OUT="artifacts/casa-abierta-cuba/supabase/migrations/001_casa_abierta_completo.sql"
+          if [ ! -d "$DIR" ]; then
+            echo "No hay partes pendientes; nada que hacer."
+            exit 0
+          fi
+          cat "$DIR"/part_0.sql "$DIR"/part_1.sql "$DIR"/part_2.sql \
+              "$DIR"/part_3.sql "$DIR"/part_4.sql "$DIR"/part_5.sql > "$OUT"
+          SIZE=$(wc -c < "$OUT")
+          LINES=$(wc -l < "$OUT")
+          SHA=$(git hash-object "$OUT")
+          echo "SIZE=$SIZE LINES=$LINES SHA=$SHA"
+          test "$SIZE" = "52683"
+          test "$LINES" = "1174"
+          test "$SHA" = "73053faa67532343719e3b751182aff5ccda93f8"
+
+      - name: Commit y push
+        run: |
+          set -euo pipefail
+          DIR="artifacts/casa-abierta-cuba/supabase/migrations/_001_parts"
+          OUT="artifacts/casa-abierta-cuba/supabase/migrations/001_casa_abierta_completo.sql"
+          if [ ! -d "$DIR" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"
+          git rm -r --quiet "$DIR"
+          git commit -m "fix(supabase): 001_casa_abierta_completo.sql completo (52683 bytes, 1174 líneas)"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin main; then
+              exit 0
+            fi
+            echo "Reintento de push $i"
+            sleep 5
+          done
+          exit 1
