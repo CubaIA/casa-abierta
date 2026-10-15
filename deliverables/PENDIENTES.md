@@ -9,7 +9,6 @@
 - [x] Subir marketplace.ts y api.ts (archivos grandes) por partes + workflow.
 - [x] Subir docs/, deliverables/, deploy/, scripts/, lib/, iconos PNG.
 - [x] Verificar la paridad total (nombres + blob shas) entre el repositorio local y el remoto.
-- [x] Crear el ZIP final + commit local + entregables finales.
 - [ ] Documentar cómo instalar y correr la aplicación (por hacer).
 - [ ] Subir la base de datos a Supabase (por hacer).
 - [ ] Subir las funciones y Edge Functions a Supabase (por hacer).
