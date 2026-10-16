@@ -1,4 +1,3 @@
-```
 /** Capa de datos de Casa Abierta.
  *
  * Con Supabase configurado usa PostgREST + RPCs (RLS es la frontera).
@@ -48,4 +47,923 @@ const demoUuid = (seed: string) => {
   const part = (n: number) => (h + n).toString(16).padStart(8, '0');
   return `${part(1)}-${part(2)}-4${part(3).slice(1)}-a${part(4).slice(1)}-${part(5)}${part(6)}`.slice(0, 36);
 };
-```
+
+export const DEMO_USERS: Array<Profile & { password: string }> = [
+  {
+    id: demoUuid('viajero'),
+    email: 'viajero@casa.cu',
+    password: 'demo1234',
+    full_name: 'Ana Viajera',
+    phone: null,
+    role: 'traveler',
+    account_status: 'active',
+    country: 'México',
+    preferred_language: 'español',
+    trip_style: 'Cultural',
+    budget_band: 'Moderado',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: demoUuid('proveedor'),
+    email: 'proveedor@casa.cu',
+    password: 'demo1234',
+    full_name: 'María Pérez',
+    phone: '+5355559876',
+    role: 'provider',
+    account_status: 'active',
+    country: 'Cuba',
+    preferred_language: 'español',
+    trip_style: null,
+    budget_band: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: demoUuid('admin'),
+    email: 'admin@casa.cu',
+    password: 'demo1234',
+    full_name: 'Admin Casa Abierta',
+    phone: null,
+    role: 'admin',
+    account_status: 'active',
+    country: 'Cuba',
+    preferred_language: 'español',
+    trip_style: null,
+    budget_band: null,
+    created_at: new Date().toISOString(),
+  },
+];
+
+const DEMO_BUSINESSES: Business[] = [
+  {
+    id: demoUuid('casa-mar'),
+    owner_id: demoUuid('proveedor'),
+    name: 'Casa junto al Mar',
+    host_name: 'María Pérez',
+    description: 'Habitaciones luminosas a dos cuadras de la playa, con desayuno casero y terraza para ver el atardecer sobre el mar.',
+    host_story: 'Recibo viajeros en mi familia desde hace doce años; mi casa es el primer abrazo cubano que muchos visitantes conocen.',
+    service_type: 'alojamiento',
+    category: 'alojamiento',
+    tourism_category: 'alojamiento',
+    province: 'Matanzas',
+    municipality: 'Cárdenas',
+    photos: [],
+    languages: ['español', 'inglés'],
+    experience_details: 'Terraza con hamacas, cena casera opcional y paseos en bicicleta por el malecón.',
+    recommended_for: ['parejas', 'familias'],
+    lgbt_friendly: true,
+    status: 'approved',
+    created_at: '2026-09-10T10:00:00Z',
+  },
+  {
+    id: demoUuid('sabor-habana'),
+    owner_id: demoUuid('proveedor'),
+    name: 'Mesa Habanera',
+    host_name: 'Carlos Domínguez',
+    description: 'Cocina de paladar con platos criollos tradicionales y música en vivo los viernes por la noche.',
+    host_story: 'Mi abuela me enseñó que una mesa bien puesta es la mejor manera de conocer una isla.',
+    service_type: 'gastronomia',
+    category: 'servicios',
+    tourism_category: 'gastronomia',
+    province: 'La Habana',
+    municipality: 'La Habana Vieja',
+    photos: [],
+    languages: ['español', 'francés'],
+    experience_details: 'Menú degustación de cinco platos, clase corta de cocina criolla y sobremesa con son montuno.',
+    recommended_for: ['parejas', 'grupos'],
+    lgbt_friendly: true,
+    status: 'approved',
+    created_at: '2026-09-12T10:00:00Z',
+  },
+  {
+    id: demoUuid('vinales-ruta'),
+    owner_id: demoUuid('proveedor'),
+    name: 'Rutas a Caballo por Viñales',
+    host_name: 'Yanet Rodríguez',
+    description: 'Cabalgatas guiadas entre mogotes, fincas de tabaco y miradores con el valle al amanecer.',
+    host_story: 'Crecí entre estos valles y cada ruta es una excusa para contar su historia a quien llega.',
+    service_type: 'experiencias',
+    category: 'experiencias',
+    tourism_category: 'experiencias_culturales',
+    province: 'Pinar del Río',
+    municipality: 'Viñales',
+    photos: [],
+    languages: ['español', 'inglés', 'alemán'],
+    experience_details: 'Rutas de 3 y 6 horas, visita a plantaciones y almuerzo campesino incluido.',
+    recommended_for: ['aventureros', 'familias'],
+    lgbt_friendly: false,
+    status: 'approved',
+    created_at: '2026-09-15T10:00:00Z',
+  },
+  {
+    id: demoUuid('traslado-playa'),
+    owner_id: demoUuid('proveedor'),
+    name: 'Traslados Varadero–Habana',
+    host_name: 'Lázaro Suárez',
+    description: 'Servicio privado de traslado con vehículos cómodos, conductores locales y horarios a la medida.',
+    host_story: 'Llevo quince años recorriendo la isla al volante; conozco cada parada digna de una foto.',
+    service_type: 'transporte',
+    category: 'servicios',
+    tourism_category: 'servicios_turisticos',
+    province: 'Matanzas',
+    municipality: 'Varadero',
+    photos: [],
+    languages: ['español'],
+    experience_details: 'Traslados puerta a puerta, paradas fotográficas y asistencia con equipaje.',
+    recommended_for: ['familias', 'grupos'],
+    lgbt_friendly: true,
+    status: 'pending',
+    created_at: '2026-10-01T10:00:00Z',
+  },
+];
+
+function emptyStore(): DemoStore {
+  return {
+    businesses: DEMO_BUSINESSES.map((b) => ({ ...b })),
+    requests: [],
+    favorites: [],
+    reviews: [],
+    reports: [],
+    messages: [],
+  };
+}
+
+function loadStore(): DemoStore {
+  if (typeof localStorage === 'undefined') return emptyStore();
+  try {
+    const raw = localStorage.getItem(DEMO_KEY);
+    if (raw) return JSON.parse(raw) as DemoStore;
+  } catch {
+    /* corrupto: reinicia */
+  }
+  const fresh = emptyStore();
+  saveStore(fresh);
+  return fresh;
+}
+
+function saveStore(store: DemoStore) {
+  if (typeof localStorage !== 'undefined') localStorage.setItem(DEMO_KEY, JSON.stringify(store));
+}
+
+export function resetDemoData() {
+  saveStore(emptyStore());
+}
+
+/* ------------------------------------------------------------------ */
+/* Sesión (demo)                                                       */
+/* ------------------------------------------------------------------ */
+
+export interface Session {
+  user: { id: string; email: string };
+}
+
+/** Guarda el contacto en el almacén demo (Supabase lo guarda en contact_email). */
+interface DemoRequestRow extends BusinessRow {
+  contact_email?: string;
+}
+
+export function getDemoSession(): Session | null {
+  if (typeof localStorage === 'undefined') return null;
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as Session;
+  } catch {
+    return null;
+  }
+}
+
+function setDemoSession(session: Session | null) {
+  if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  else localStorage.removeItem(SESSION_KEY);
+}
+
+/* ------------------------------------------------------------------ */
+/* Catálogo                                                            */
+/* ------------------------------------------------------------------ */
+
+export interface CatalogFilters {
+  q?: string;
+  province?: string;
+  service_type?: string;
+}
+
+export async function listBusinesses(filters: CatalogFilters = {}): Promise<Business[]> {
+  if (supabase) {
+    let query = supabase
+      .from('businesses')
+      .select(BUSINESS_PUBLIC_COLS)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+    if (filters.province) query = query.eq('province', filters.province);
+    if (filters.service_type) query = query.eq('service_type', filters.service_type);
+    if (filters.q) query = query.or(`name.ilike.%${filters.q}%,municipality.ilike.%${filters.q}%,province.ilike.%${filters.q}%`);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as Business[];
+  }
+
+  let rows = loadStore().businesses.filter((b) => b.status === 'approved');
+  if (filters.province) rows = rows.filter((b) => b.province === filters.province);
+  if (filters.service_type) rows = rows.filter((b) => b.service_type === filters.service_type);
+  if (filters.q) {
+    const q = filters.q.toLowerCase();
+    rows = rows.filter((b) =>
+      [b.name, b.municipality, b.province, b.description].some((v) => v.toLowerCase().includes(q)),
+    );
+  }
+  return rows;
+}
+
+export async function getBusiness(id: string): Promise<Business | null> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select(BUSINESS_PUBLIC_COLS)
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data as Business | null;
+  }
+  return loadStore().businesses.find((b) => b.id === id) ?? null;
+}
+
+export async function listProvinces(): Promise<string[]> {
+  const rows = await listBusinesses();
+  return Array.from(new Set(rows.map((b) => b.province))).sort();
+}
+
+/* ------------------------------------------------------------------ */
+/* Favoritos                                                           */
+/* ------------------------------------------------------------------ */
+
+export async function listFavoriteIds(userId: string): Promise<string[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('favorites')
+      .select('business_id')
+      .eq('user_id', userId);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => r.business_id as string);
+  }
+  return loadStore()
+    .favorites.filter((f) => f.user_id === userId)
+    .map((f) => f.business_id);
+}
+
+export async function toggleFavorite(userId: string, businessId: string): Promise<boolean> {
+  if (supabase) {
+    const existing = await supabase
+      .from('favorites')
+      .select('business_id')
+      .eq('user_id', userId)
+      .eq('business_id', businessId);
+    if (existing.error) throw new Error(existing.error.message);
+    if ((existing.data ?? []).length > 0) {
+      const del = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', userId)
+        .eq('business_id', businessId);
+      if (del.error) throw new Error(del.error.message);
+      return false;
+    }
+    const ins = await supabase
+      .from('favorites')
+      .insert({ user_id: userId, business_id: businessId });
+    if (ins.error) throw new Error(ins.error.message);
+    return true;
+  }
+
+  const store = loadStore();
+  const idx = store.favorites.findIndex((f) => f.user_id === userId && f.business_id === businessId);
+  if (idx >= 0) {
+    store.favorites.splice(idx, 1);
+    saveStore(store);
+    return false;
+  }
+  store.favorites.push({ user_id: userId, business_id: businessId });
+  saveStore(store);
+  return true;
+}
+
+/* ------------------------------------------------------------------ */
+/* Solicitudes                                                         */
+/* ------------------------------------------------------------------ */
+
+export async function createRequest(input: {
+  requesterId: string;
+  businessId: string;
+  message: string;
+  serviceRequested: string;
+  contactEmail?: string;
+}): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('requests').insert({
+      id: crypto.randomUUID(),
+      requester_id: input.requesterId,
+      business_id: input.businessId,
+      message: input.message,
+      service_requested: input.serviceRequested,
+      status: 'new',
+      contact_email: input.contactEmail ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  store.requests.unshift({
+    id: crypto.randomUUID(),
+    requester_id: input.requesterId,
+    business_id: input.businessId,
+    message: input.message,
+    status: 'new',
+    service_requested: input.serviceRequested,
+    created_at: new Date().toISOString(),
+    contact_email: input.contactEmail,
+  });
+  saveStore(store);
+}
+
+export async function listMyRequests(userId: string): Promise<BusinessRow[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('requests')
+      .select(`${REQUEST_COLS}, business:businesses(name, province)`)
+      .eq('requester_id', userId)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as BusinessRow[];
+  }
+  return loadStore()
+    .requests.filter((r) => r.requester_id === userId)
+    .map((r) => ({
+      ...r,
+      business: {
+        name: loadStore().businesses.find((b) => b.id === r.business_id)?.name ?? 'Negocio',
+        province: loadStore().businesses.find((b) => b.id === r.business_id)?.province ?? '',
+      },
+    }));
+}
+
+export async function listIncomingRequests(providerId: string): Promise<BusinessRow[]> {
+  if (supabase) {
+    const mine = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('owner_id', providerId);
+    if (mine.error) throw new Error(mine.error.message);
+    const ids = (mine.data ?? []).map((b) => b.id as string);
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+      .from('requests')
+      .select(`${REQUEST_COLS}, business:businesses(name, province)`)
+      .in('business_id', ids)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as BusinessRow[];
+  }
+  const store = loadStore();
+  const myIds = store.businesses.filter((b) => b.owner_id === providerId).map((b) => b.id);
+  return store.requests
+    .filter((r) => myIds.includes(r.business_id ?? ''))
+    .map((r) => ({
+      ...r,
+      business: {
+        name: store.businesses.find((b) => b.id === r.business_id)?.name ?? 'Negocio',
+        province: store.businesses.find((b) => b.id === r.business_id)?.province ?? '',
+      },
+    }));
+}
+
+export async function setRequestStatus(requestId: string, status: RequestStatus): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase
+      .from('requests')
+      .update({ status })
+      .eq('id', requestId);
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  const row = store.requests.find((r) => r.id === requestId);
+  if (row) {
+    row.status = status;
+    saveStore(store);
+  }
+}
+
+/** Todas las solicitudes (admin ve todo vía RLS). */
+export async function adminListAllRequests(): Promise<BusinessRow[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('requests')
+      .select(`${REQUEST_COLS}, business:businesses(name, province)`)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as BusinessRow[];
+  }
+  const store = loadStore();
+  return [...store.requests]
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((r) => {
+      const biz = store.businesses.find((b) => b.id === r.business_id);
+      return { ...r, business: { name: biz?.name ?? 'Negocio', province: biz?.province ?? '' } };
+    });
+}
+
+/** Cambio de estado por admin (RPC cuando hay Supabase; RLS permitiría solo parcialmente). */
+export async function adminSetRequestStatus(requestId: string, status: RequestStatus): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_request_status', {
+      target_request_id: requestId,
+      next_status: status,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  await setRequestStatus(requestId, status);
+}
+
+/* ------------------------------------------------------------------ */
+/* Reseñas                                                             */
+/* ------------------------------------------------------------------ */
+
+export async function listReviews(businessId: string): Promise<Review[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Review[];
+  }
+  return loadStore()
+    .reviews.filter((r) => r.business_id === businessId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function createReview(input: {
+  authorId: string;
+  requestId: string;
+  businessId: string;
+  rating: number;
+  comment: string;
+}): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('reviews').insert({
+      request_id: input.requestId,
+      business_id: input.businessId,
+      author_id: input.authorId,
+      rating: input.rating,
+      comment: input.comment,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  // Refleja la política RLS: solo el viajero dueño de una solicitud completed.
+  const req = store.requests.find((r) => r.id === input.requestId);
+  if (
+    !req ||
+    req.status !== 'completed' ||
+    req.requester_id !== input.authorId ||
+    req.business_id !== input.businessId
+  ) {
+    throw new Error('Solo el viajero de una solicitud completada puede escribir la reseña.');
+  }
+  if (store.reviews.some((r) => r.request_id === input.requestId)) {
+    throw new Error('Ya existe una reseña para esta solicitud.');
+  }
+  store.reviews.unshift({
+    id: crypto.randomUUID(),
+    request_id: input.requestId,
+    business_id: input.businessId,
+    author_id: input.authorId,
+    rating: input.rating,
+    comment: input.comment,
+    created_at: new Date().toISOString(),
+  });
+  saveStore(store);
+}
+
+/* ------------------------------------------------------------------ */
+/* Alta de negocio (proveedor)                                         */
+/* ------------------------------------------------------------------ */
+
+export async function submitBusiness(providerId: string, input: SubmitBusinessInput): Promise<string> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('provider_submit_business', {
+      p_name: input.name,
+      p_host_name: input.host_name,
+      p_description: input.description,
+      p_host_story: input.host_story,
+      p_service_type: input.service_type,
+      p_tourism_category: input.tourism_category,
+      p_province: input.province,
+      p_municipality: input.municipality,
+      p_photos: input.photos,
+      p_languages: input.languages,
+      p_experience_details: input.experience_details,
+      p_recommended_for: input.recommended_for,
+      p_lgbt_friendly: input.lgbt_friendly,
+      p_phone: input.phone,
+      p_email: input.email,
+    });
+    if (error) throw new Error(error.message);
+    return data as string;
+  }
+  const store = loadStore();
+  const id = crypto.randomUUID();
+  const broad =
+    input.tourism_category === 'alojamiento'
+      ? 'alojamiento'
+      : ['experiencias_culturales', 'naturaleza', 'ecoturismo', 'artesanos'].includes(input.tourism_category)
+        ? 'experiencias'
+        : 'servicios';
+  store.businesses.unshift({
+    id,
+    owner_id: providerId,
+    name: input.name,
+    host_name: input.host_name,
+    description: input.description,
+    host_story: input.host_story,
+    service_type: input.service_type,
+    category: broad,
+    tourism_category: input.tourism_category,
+    province: input.province,
+    municipality: input.municipality,
+    photos: input.photos,
+    languages: input.languages,
+    experience_details: input.experience_details,
+    recommended_for: input.recommended_for,
+    lgbt_friendly: input.lgbt_friendly,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  });
+  saveStore(store);
+  return id;
+}
+
+export async function listMyBusinesses(ownerId: string): Promise<Business[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select(BUSINESS_AUTH_COLS)
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as Business[];
+  }
+  return loadStore()
+    .businesses.filter((b) => b.owner_id === ownerId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+/* ------------------------------------------------------------------ */
+/* Reportes y mensajes de contacto                                     */
+/* ------------------------------------------------------------------ */
+
+export async function createReport(input: {
+  reporterId: string;
+  targetType: 'business' | 'user' | 'request';
+  targetId: string;
+  reason: string;
+}): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: input.reporterId,
+      target_type: input.targetType,
+      target_id: input.targetId,
+      reason: input.reason,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  store.reports.unshift({
+    id: crypto.randomUUID(),
+    reporter_id: input.reporterId,
+    target_type: input.targetType,
+    target_id: input.targetId,
+    reason: input.reason,
+    status: 'open',
+    admin_note: null,
+    created_at: new Date().toISOString(),
+  });
+  saveStore(store);
+}
+
+export async function createContactMessage(input: {
+  senderId: string;
+  inquiryType: string;
+  subject: string;
+  message: string;
+}): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('contact_messages').insert({
+      sender_id: input.senderId,
+      inquiry_type: input.inquiryType,
+      subject: input.subject,
+      message: input.message,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  store.messages.unshift({
+    id: crypto.randomUUID(),
+    sender_id: input.senderId,
+    inquiry_type: input.inquiryType,
+    subject: input.subject,
+    message: input.message,
+    status: 'open',
+    created_at: new Date().toISOString(),
+  });
+  saveStore(store);
+}
+
+/* ------------------------------------------------------------------ */
+/* Perfil                                                              */
+/* ------------------------------------------------------------------ */
+
+export async function getProfile(userId: string): Promise<Profile | null> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data as Profile | null;
+  }
+  return DEMO_USERS.find((u) => u.id === userId) ?? null;
+}
+
+export async function updateProfile(
+  userId: string,
+  patch: Partial<Pick<Profile, 'full_name' | 'phone' | 'country' | 'trip_style' | 'budget_band' | 'preferred_language'>>,
+): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('users').update(patch).eq('id', userId);
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const row = DEMO_USERS.find((u) => u.id === userId);
+  if (row) Object.assign(row, patch);
+}
+
+/* ------------------------------------------------------------------ */
+/* Catálogo de categorías                                               */
+/* ------------------------------------------------------------------ */
+
+export async function listCategories(): Promise<Category[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('business_categories')
+      .select('key, label, active')
+      .order('sort_order');
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Category[];
+  }
+  return DEMO_CATEGORIES.map((c) => ({ ...c }));
+}
+
+export const DEMO_CATEGORIES: Category[] = [
+  { key: 'alojamiento', label: 'Alojamiento', active: true },
+  { key: 'gastronomia', label: 'Gastronomía', active: true },
+  { key: 'experiencias_culturales', label: 'Experiencias culturales', active: true },
+  { key: 'guias_locales', label: 'Guías locales', active: true },
+  { key: 'servicios_turisticos', label: 'Servicios turísticos', active: true },
+  { key: 'naturaleza', label: 'Naturaleza', active: true },
+  { key: 'ecoturismo', label: 'Ecoturismo', active: true },
+  { key: 'artesanos', label: 'Artesanías', active: true },
+  { key: 'turismo_inclusivo', label: 'Turismo inclusivo', active: true },
+];
+
+export const SERVICE_TYPES: Array<{ value: string; label: string }> = [
+  { value: 'alojamiento', label: 'Alojamiento' },
+  { value: 'gastronomia', label: 'Gastronomía' },
+  { value: 'transporte', label: 'Transporte' },
+  { value: 'guia_local', label: 'Guía local' },
+  { value: 'experiencias', label: 'Experiencias' },
+  { value: 'naturaleza', label: 'Naturaleza' },
+  { value: 'ecoturismo', label: 'Ecoturismo' },
+  { value: 'artesanos', label: 'Artesanías' },
+  { value: 'turismo_inclusivo', label: 'Turismo inclusivo' },
+];
+
+/* ------------------------------------------------------------------ */
+/* Administración                                                      */
+/* ------------------------------------------------------------------ */
+
+/** Negocios de todos los estados (admin ve todo vía RLS). */
+export async function adminListAllBusinesses(): Promise<Business[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select(BUSINESS_AUTH_COLS)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as Business[];
+  }
+  return [...loadStore().businesses].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function adminSetBusinessStatus(id: string, status: BusinessStatus): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_business_status', {
+      target_business_id: id,
+      next_status: status,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  const b = store.businesses.find((x) => x.id === id);
+  if (b) {
+    b.status = status;
+    saveStore(store);
+  }
+}
+
+export async function adminDeleteBusiness(id: string): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_delete_business', { target_business_id: id });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  store.businesses = store.businesses.filter((b) => b.id !== id);
+  saveStore(store);
+}
+
+export async function adminListUsers(): Promise<Profile[]> {
+  if (supabase) {
+    const { data, error } = await supabase.from('users').select('*').order('created_at');
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Profile[];
+  }
+  return DEMO_USERS.map(({ password: _p, ...p }) => p);
+}
+
+export async function adminSetUserRole(id: string, role: Role): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_user_role', { target_user_id: id, next_role: role });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const row = DEMO_USERS.find((u) => u.id === id);
+  if (row) row.role = role;
+}
+
+export async function adminSetUserStatus(id: string, status: AccountStatus): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_user_status', { target_user_id: id, next_status: status });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const row = DEMO_USERS.find((u) => u.id === id);
+  if (row) row.account_status = status;
+}
+
+export async function adminListReports(): Promise<Report[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Report[];
+  }
+  return [...loadStore().reports].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function adminSetReportStatus(
+  id: string,
+  status: ReportStatus,
+  note = '',
+): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_report_status', {
+      target_report_id: id,
+      next_status: status,
+      next_note: note,
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  const r = store.reports.find((x) => x.id === id);
+  if (r) {
+    r.status = status;
+    r.admin_note = note || r.admin_note;
+    saveStore(store);
+  }
+}
+
+export async function adminListContactMessages(): Promise<ContactMessage[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ContactMessage[];
+  }
+  return [...loadStore().messages].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function adminSetContactMessageStatus(id: string, status: ContactStatus): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase
+      .from('contact_messages')
+      .update({ status })
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  const m = store.messages.find((x) => x.id === id);
+  if (m) {
+    m.status = status;
+    saveStore(store);
+  }
+}
+
+/** Única vía de leer contact_email de una solicitud (RPC; privacidad). */
+export async function adminGetRequestContact(requestId: string): Promise<string | null> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('admin_get_request_contact', {
+      p_request_id: requestId,
+    });
+    if (error) throw new Error(error.message);
+    return (data as string | null) ?? null;
+  }
+  const row = loadStore().requests.find((r) => r.id === requestId) as DemoRequestRow | undefined;
+  return row?.contact_email ?? null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Autenticación                                                       */
+/* ------------------------------------------------------------------ */
+
+export async function signIn(email: string, password: string): Promise<Session> {
+  if (supabase) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    return { user: { id: data.user.id, email: data.user.email ?? email } };
+  }
+  const user = DEMO_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+  if (!user) throw new Error('Correo o contraseña incorrectos (modo demo: usa viajero@casa.cu / demo1234).');
+  const session: Session = { user: { id: user.id, email: user.email } };
+  setDemoSession(session);
+  return session;
+}
+
+export async function signUp(input: {
+  email: string;
+  password: string;
+  fullName: string;
+  accountType: 'traveler' | 'provider';
+}): Promise<Session> {
+  if (supabase) {
+    const { data, error } = await supabase.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: { data: { full_name: input.fullName, account_type: input.accountType } },
+    });
+    if (error) throw new Error(error.message);
+    if (!data.user) throw new Error('No se pudo crear la cuenta. Revisa tu correo de confirmación.');
+    return { user: { id: data.user.id, email: data.user.email ?? input.email } };
+  }
+  if (DEMO_USERS.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
+    throw new Error('Ese correo ya está registrado en la demo.');
+  }
+  const user: Profile & { password: string } = {
+    id: crypto.randomUUID(),
+    email: input.email,
+    password: input.password,
+    full_name: input.fullName,
+    phone: null,
+    role: input.accountType,
+    account_status: 'active',
+    country: null,
+    preferred_language: 'español',
+    trip_style: null,
+    budget_band: null,
+    created_at: new Date().toISOString(),
+  };
+  DEMO_USERS.push(user);
+  const session: Session = { user: { id: user.id, email: user.email } };
+  setDemoSession(session);
+  return session;
+}
+
+export async function signOut(): Promise<void> {
+  if (supabase) {
+    await supabase.auth.signOut();
+    return;
+  }
+  setDemoSession(null);
+}
