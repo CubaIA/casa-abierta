@@ -1,1 +1,1 @@
-$(cat /workspace/chats/e24e6bc70c8b2ccaccf3910b/artifacts/casa-abierta-cuba/src/lib/marketplace.ts)
+actualizar
