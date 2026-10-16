@@ -134,12 +134,6 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      {demoMode && (
-        <div className="bg-dorado text-azul-700 text-center text-xs font-bold px-3 py-1.5" role="status">
-          Modo demostración: datos de ejemplo en este navegador. Configura VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY para conectar el backend real.
-        </div>
-      )}
-
       <main id="contenido" className="flex-1">
         {children}
       </main>
@@ -183,6 +177,26 @@ function Footer() {
           </ul>
         </div>
         <div>
+          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Redes</h3>
+          <ul className="space-y-2 text-sm">
+            <li className="text-white font-semibold">CEO y Creador: Yoanny Guillén Vargas</li>
+            <li>Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios.</li>
+          </ul>
+          <p className="mt-3 text-xs text-azul-200 flex flex-wrap gap-1 items-center">
+            <span className="font-semibold text-white">Sígueme en redes:</span>
+            <a href="https://instagram.com/mirry.93" target="_blank" rel="noopener noreferrer" className="text-dorado hover:text-white underline decoration-dotted underline-offset-2">@mirry.93</a>
+          </p>
+        </div>
+        <div>
+          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Confianza</h3>
+          <ul className="space-y-2 text-sm">
+            <li><Link href="/about" className="hover:text-white">Sobre el proyecto</Link></li>
+            <li><Link href="/antifraud" className="hover:text-white">Política antifraude</Link></li>
+            <li><Link href="/privacy" className="hover:text-white">Privacidad</Link></li>
+            <li><Link href="/terms" className="hover:text-white">Términos</Link></li>
+          </ul>
+        </div>
+        <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Créditos</h3>
           <ul className="space-y-2 text-sm">
             <li className="text-white font-semibold">CEO y Creador: Yoanny Guillén Vargas</li>
@@ -193,8 +207,10 @@ function Footer() {
       <div className="border-t border-azul">
         <div className="mx-auto max-w-6xl px-4 py-4 text-xs flex flex-wrap items-center justify-center gap-2">
           <span>© 2026 Casa Abierta Cuba. Todos los derechos reservados.</span>
+          <span className="ml-2">Hecho con 🇨🇺 por @mirry.93</span>
         </div>
       </div>
     </footer>
   );
 }
+
