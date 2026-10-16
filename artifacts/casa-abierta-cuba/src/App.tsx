@@ -15,6 +15,8 @@ const Admin = lazy(() => import('@/pages/Admin'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
 const ChatIA = lazy(() => import('@/pages/ChatIA'));
 const Perfil = lazy(() => import('@/pages/Perfil'));
+const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
+const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
 
 
 function ScrollToTop() {
@@ -54,6 +56,8 @@ export default function App() {
             <Route path="/admin" component={Admin} />
             <Route path="/contacto" component={Contacto} />
             <Route path="/chat" component={ChatIA} />
+            <Route path="/payment/success" component={PaymentSuccess} />
+            <Route path="/payment/cancel" component={PaymentCancel} />
             <Route path="/about" component={() => <InformationPage kind="about" />} />
             <Route path="/privacy" component={() => <InformationPage kind="privacy" />} />
             <Route path="/terms" component={() => <InformationPage kind="terms" />} />
