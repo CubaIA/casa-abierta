@@ -233,3 +233,30 @@ export interface CatalogFilters {
   province?: string;
   service_type?: string;
 }
+
+export async function listBusinesses(filters: CatalogFilters = {}): Promise<Business[]> {
+  if (supabase) {
+    let query = supabase
+      .from('businesses')
+      .select(BUSINESS_PUBLIC_COLS)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+    if (filters.province) query = query.eq('province', filters.province);
+    if (filters.service_type) query = query.eq('service_type', filters.service_type);
+    if (filters.q) query = query.or(`name.ilike.%${filters.q}%,municipality.ilike.%${filters.q}%,province.ilike.%${filters.q}%`);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as Business[];
+  }
+
+  let rows = loadStore().businesses.filter((b) => b.status === 'approved');
+  if (filters.province) rows = rows.filter((b) => b.province === filters.province);
+  if (filters.service_type) rows = rows.filter((b) => b.service_type === filters.service_type);
+  if (filters.q) {
+    const q = filters.q.toLowerCase();
+    rows = rows.filter((b) =>
+      [b.name, b.municipality, b.province, b.description].some((v) => v.toLowerCase().includes(q)),
+    );
+  }
+  return rows;
+}
