@@ -12,6 +12,7 @@ import {
 } from '@/lib/marketplace';
 import type { Business, BusinessRow, RequestStatus, SubmitBusinessInput } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 const REQUEST_STATUS_LABEL: Record<RequestStatus, { label: string; badge: string }> = {
   new: { label: 'Nueva', badge: 'badge-blue' },
@@ -99,7 +100,8 @@ export default function Anfitrion() {
 
       {tab === 'businesses' && (
         <div className="mt-5 space-y-3">
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <PaymentButton />
             <button className="button-ghost" onClick={() => void load()}>
               <RefreshCw size={14} /> Actualizar
             </button>
@@ -372,5 +374,55 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
         {busy ? 'Enviando…' : 'Enviar a revisión'}
       </button>
     </form>
+  );
+}
+
+function PaymentButton() {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePayment() {
+    setBusy(true);
+    setError(null);
+    try {
+      if (!supabase) {
+        setError('Supabase no configurado');
+        return;
+      }
+      const amount = 10; // Monto ejemplo para destacar negocio
+      const remoteId = `cac_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const returnUrl = `${window.location.origin}/payment/success`;
+      const cancelUrl = `${window.location.origin}/payment/cancel`;
+
+      const { data, error } = await supabase.functions.invoke('qvapay-checkout', {
+        body: {
+          amount,
+          description: 'Destacar negocio en Casa Abierta Cuba',
+          remote_id: remoteId,
+          return_url: returnUrl,
+          cancel_url: cancelUrl,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error iniciando pago');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button className="button-primary" disabled={busy} onClick={handlePayment} type="button">
+        {busy ? 'Generando pago…' : 'Destacar mi negocio (QvaPay)'}
+      </button>
+      {error && <span className="text-xs text-terracota-600">{error}</span>}
+    </div>
   );
 }
