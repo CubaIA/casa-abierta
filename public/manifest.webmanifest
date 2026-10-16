@@ -1,0 +1,63 @@
+{
+  "name": "Casa Abierta Cuba",
+  "short_name": "Casa Abierta",
+  "description": "Descubre alojamientos, gastronomía y experiencias auténticas en Cuba con anfitriones locales verificados.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#faf7f0",
+  "theme_color": "#1B5E7A",
+  "lang": "es",
+  "categories": [
+    "travel",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "/icons/logo-icono.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/logo-icono.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/logo-icono.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/logo-completo.png",
+      "sizes": "1024x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explorar catálogo",
+      "url": "/?source=pwa"
+    },
+    {
+      "name": "Cuba Conecta IA",
+      "url": "/chat"
+    },
+    {
+      "name": "Mis solicitudes",
+      "url": "/solicitudes"
+    }
+  ],
+  "creator": "Yoanny Guillén Vargas (CEO)",
+  "author": {
+    "name": "Yoanny Guillén Vargas",
+    "url": "https://casaabiertacuba.com"
+  },
+  "dir": "ltr"
+}
