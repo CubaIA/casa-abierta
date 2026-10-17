@@ -89,8 +89,8 @@ Deno.serve(async (req: Request) => {
   const systemMsg: ChatMessage = {
     role: 'system',
     content: targetLangStr
-      ? `Eres Cuba Conecta IA, un asistente de viaje para Casa Abierta Cuba. Si en el mensaje aparecen descripciones de servicios (casas, alojamientos, carros, traslados, tours, experiencias), tradúcelas automáticamente al ${targetLangStr} manteniendo nombres propios, números y ubicación. Responde en el mismo idioma cuando corresponda.`
-      : 'Eres Cuba Conecta IA, un asistente de viaje para Casa Abierta Cuba, útil, preciso y cortés.',
+      ? `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. Si en el mensaje aparecen descripciones de servicios (casas, alojamientos, carros, traslados, tours, experiencias), tradúcelas automáticamente al ${targetLangStr} manteniendo nombres propios, números y ubicación. Responde en el mismo idioma cuando corresponda.`
+      : 'Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. Si no conoces un dato o a una persona, debes decir claramente que no lo sabes, no inventes información bajo ninguna circunstancia. Responde en el mismo idioma cuando corresponda.'}
   };
   const msgsForModel = [systemMsg, ...clean.filter((m) => m.role !== 'system')];
 
@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: MODEL,
         messages: msgsForModel,
-        temperature: 0.6,
+        temperature: 0.2,
         max_tokens: 600,
       }),
     });
