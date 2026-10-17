@@ -301,18 +301,22 @@
 .business-card:hover {
   box-shadow: 0 14px 34px rgba(27, 94, 122, 0.12);
   transform: translateY(-2px);
-}
-.business-visual {
+}.business-visual {
   height: 150px;
-  background: linear-gradient(135deg, var(--color-turquesa), var(--color-arena));
+  /* Overlay oscuro para que el texto blanco se lea sobre la foto */
+  background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.4)) ,
+    linear-gradient(135deg, var(--color-turquesa), var(--color-arena)) ;
+  background-blend-mode: multiply, normal;
   display: grid;
   place-items: center;
   color: var(--color-azul);
 }
+
 .business-visual img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: brightness(1.1);
 }
 
 /* ---------- Badges de estado ---------- */

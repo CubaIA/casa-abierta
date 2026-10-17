@@ -24,7 +24,7 @@ const SECCIONES: {
     img: '/img/Comida.jpeg',
     alt: 'Plato tradicional cubano',
     title: 'Gastronomía',
-    desc: 'Ropa vieja, congrí, tostones y la cocina de siempre servida por quienes la cocinan.',
+    desc: 'Ropa vieja, congrí, tostones y la cocina de siempre servida por quien la cocine.',
     serviceType: 'gastronomia',
   },
   {
@@ -35,12 +35,16 @@ const SECCIONES: {
     serviceType: 'experiencias',
   },
   {
-    img: '/img/lgbtq-inclusivo.svg',
-    alt: 'Espacio inclusivo LGBTQ+ con arcoíris',
+    img: '/img/lgbtq.jpeg',
+    alt: 'Espacio inclusivo LGBTQ+',
     title: 'LGBTQ+ friendly',
     desc: 'Espacios inclusivos y acogedores, revisados por la plataforma.',
   },
 ];
+
+/* Hero portada: fondo gigante con la foto portada.jpeg y overlay oscuro */
+const heroBg = "url('/img/portada.jpeg')";
+
 
 export default function Home() {
   const { userId } = useAuth();
@@ -85,7 +89,7 @@ export default function Home() {
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/img/Playa.jpg')", backgroundColor: '#102B47' }}
+          style={{ backgroundImage: heroBg, backgroundColor: '#102B47' }}
         />
         <div aria-hidden className="absolute inset-0 bg-azul/75" />
         <div className="relative mx-auto max-w-6xl px-4 py-14 sm:py-20 grid gap-8 lg:grid-cols-[1.4fr_1fr] items-center">
