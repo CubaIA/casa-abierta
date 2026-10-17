@@ -46,24 +46,44 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const payload = {
+      amount: Number(amount),
+      description: description || 'Pago Casa Abierta Cuba',
+      remote_id,
+      signed: 1,
+      return_url,
+      cancel_url,
+    };
+
+    // Diagnóstico: ver qué enviamos (sin secretos) y qué responde QvaPay.
+    console.log('QvaPay request →', QVAPAY_CREATE_INVOICE_URL, JSON.stringify(payload));
+
     const res = await fetch(QVAPAY_CREATE_INVOICE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Autenticación documentada por QvaPay para /v2/* (además de los
+        // campos credenciales del body, que se mantienen por compatibilidad).
+        'app-id': appId,
+        'app-secret': appSecret,
       },
       body: JSON.stringify({
         app_id: appId,
         app_secret: appSecret,
-        amount: Number(amount),
-        description: description || 'Pago Casa Abierta Cuba',
-        remote_id,
-        signed: 1,
-        return_url,
-        cancel_url,
+        ...payload,
       }),
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    console.log('QvaPay response ←', res.status, rawText);
+
+    let data: any;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      return json({ error: 'Respuesta no JSON de QvaPay', details: rawText.slice(0, 500) }, 502);
+    }
+
     if (!res.ok) {
       console.error('QvaPay create invoice error:', res.status, data);
       return json({ error: 'Error creando factura QvaPay', details: data }, res.status);
