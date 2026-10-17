@@ -12,7 +12,9 @@ const INQUIRY_TYPES = [
 ];
 
 export default function Contacto() {
-  const { userId } = useAuth();
+  const { userId, profile } = useAuth();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [inquiryType, setInquiryType] = useState('general');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -22,13 +24,26 @@ export default function Contacto() {
 
   useEffect(() => {
     document.title = 'Contacto | Casa Abierta Cuba';
-  }, []);
+    if (profile) {
+      if (!name) setName(profile.full_name ?? '');
+      if (!email) setEmail(profile.email ?? '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!userId) {
       setError('Inicia sesión para enviar un mensaje de contacto.');
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError('Escribe tu nombre.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Escribe un correo válido para poder responderte.');
       return;
     }
     if (subject.trim().length < 3) {
@@ -41,7 +56,13 @@ export default function Contacto() {
     }
     setBusy(true);
     try {
-      await createContactMessage({ senderId: userId, inquiryType, subject: subject.trim(), message: message.trim() });
+      // La BD real no tiene columna inquiry_type: el tipo se antepone al mensaje.
+      await createContactMessage({
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim(),
+        message: `[${inquiryType}] ${message.trim()}`,
+      });
       setSent(true);
       setSubject('');
       setMessage('');
@@ -62,6 +83,16 @@ export default function Contacto() {
       </p>
 
       <form onSubmit={onSubmit} className="panel mt-5 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="field-label" htmlFor="c-name">Tu nombre *</label>
+            <input id="c-name" className="field-input" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Cómo te llamas" />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="c-email">Tu correo *</label>
+            <input id="c-email" type="email" className="field-input" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Para responderte" />
+          </div>
+        </div>
         <div>
           <label className="field-label" htmlFor="c-type">Tipo de consulta</label>
           <select id="c-type" className="field-input" value={inquiryType} onChange={(e) => setInquiryType(e.target.value)}>

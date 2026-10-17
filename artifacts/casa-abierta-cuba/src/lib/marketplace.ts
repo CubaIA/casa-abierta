@@ -5,7 +5,7 @@
  * con datos de ejemplo para que la demo sea navegable.
  */
 import { isSupabaseConfigured } from './env';
-import { BUSINESS_AUTH_COLS, BUSINESS_PUBLIC_COLS, REQUEST_COLS, supabase } from './supabase';
+import { REQUEST_COLS, supabase } from './supabase';
 import type {
   AccountStatus,
   Business,
@@ -27,6 +27,62 @@ const DEMO_KEY = 'casa_abierta_demo_v1';
 const SESSION_KEY = 'casa_abierta_session_v1';
 
 export const isDemo = !isSupabaseConfigured;
+
+/* ------------------------------------------------------------------ */
+/* Adaptación al esquema real de producción                            */
+/*                                                                     */
+/* La BD en producción usa: title (no name), images (no photos),       */
+/* category/subcategory (no service_type/tourism_category),            */
+/* amenities, tags. No tiene host_name/host_story/experience_details/  */
+/* recommended_for/lgbt_friendly. El mapeador central abajo traduce    */
+/* las filas reales al tipo Business que usan las páginas.             */
+/* ------------------------------------------------------------------ */
+
+const LIVE_BUSINESS_COLS =
+  'id, title, description, category, subcategory, province, municipality, ' +
+  'languages, status, created_at, images, amenities, tags, ' +
+  'price_amount, price_currency, verified';
+
+const LIVE_BUSINESS_AUTH_COLS = LIVE_BUSINESS_COLS + ', owner_id';
+
+/** Normaliza a string[] cualquier columna text[]/jsonb/text. */
+function asArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
+  if (typeof v === 'string' && v.trim()) return v.split(',').map((s) => s.trim()).filter(Boolean);
+  return [];
+}
+
+/** Traduce una fila real de `businesses` al tipo Business que esperan las páginas. */
+function mapBusinessRow(row: Record<string, unknown>): Business {
+  const r = row as Record<string, unknown> & Partial<Business> & {
+    title?: string;
+    images?: unknown;
+    amenities?: unknown;
+    tags?: unknown;
+    subcategory?: string | null;
+  };
+  const amenities = Array.isArray(r.amenities) ? r.amenities.join(' · ') : typeof r.amenities === 'string' ? r.amenities : '';
+  return {
+    ...r,
+    title: r.title ?? '',
+    host_name: r.host_name ?? '',
+    host_story: r.host_story ?? '',
+    service_type: r.service_type ?? r.category ?? 'servicios',
+    tourism_category: r.tourism_category ?? r.subcategory ?? r.category ?? '',
+    images: r.images ?? r.photos ?? [],
+    languages: asArray(r.languages),
+    experience_details: r.experience_details ?? amenities,
+    recommended_for: asArray(r.recommended_for ?? r.tags),
+    lgbt_friendly: r.lgbt_friendly ?? false,
+  } as Business;
+}
+
+/** Extrae { name, province } desde la fila real de businesses en los joins. */
+function joinBusinessName(business: unknown): { name: string; province: string } | null {
+  if (!business || typeof business !== 'object') return null;
+  const b = business as { name?: string; title?: string; province?: string };
+  return { name: b.title ?? 'Negocio', province: b.province ?? '' };
+}
 
 /* ------------------------------------------------------------------ */
 /* Almacén demo                                                        */
@@ -97,9 +153,10 @@ const DEMO_BUSINESSES: Business[] = [
   {
     id: demoUuid('casa-mar'),
     owner_id: demoUuid('proveedor'),
-    name: 'Casa junto al Mar',
+    title: 'Casa junto al Mar',
     host_name: 'María Pérez',
     description: 'Habitaciones luminosas a dos cuadras de la playa, con desayuno casero y terraza para ver el atardecer sobre el mar.',
+    name: 'Casa junto al Mar',
     host_story: 'Recibo viajeros en mi familia desde hace doce años; mi casa es el primer abrazo cubano que muchos visitantes conocen.',
     service_type: 'alojamiento',
     category: 'alojamiento',
@@ -117,8 +174,9 @@ const DEMO_BUSINESSES: Business[] = [
   {
     id: demoUuid('sabor-habana'),
     owner_id: demoUuid('proveedor'),
-    name: 'Mesa Habanera',
+    title: 'Mesa Habanera',
     host_name: 'Carlos Domínguez',
+    name: 'Mesa Habanera',
     description: 'Cocina de paladar con platos criollos tradicionales y música en vivo los viernes por la noche.',
     host_story: 'Mi abuela me enseñó que una mesa bien puesta es la mejor manera de conocer una isla.',
     service_type: 'gastronomia',
@@ -137,8 +195,9 @@ const DEMO_BUSINESSES: Business[] = [
   {
     id: demoUuid('vinales-ruta'),
     owner_id: demoUuid('proveedor'),
-    name: 'Rutas a Caballo por Viñales',
+    title: 'Rutas a Caballo por Viñales',
     host_name: 'Yanet Rodríguez',
+    name: 'Rutas a Caballo por Viñales',
     description: 'Cabalgatas guiadas entre mogotes, fincas de tabaco y miradores con el valle al amanecer.',
     host_story: 'Crecí entre estos valles y cada ruta es una excusa para contar su historia a quien llega.',
     service_type: 'experiencias',
@@ -157,8 +216,9 @@ const DEMO_BUSINESSES: Business[] = [
   {
     id: demoUuid('traslado-playa'),
     owner_id: demoUuid('proveedor'),
-    name: 'Traslados Varadero–Habana',
+    title: 'Traslados Varadero–Habana',
     host_name: 'Lázaro Suárez',
+    name: 'Traslados Varadero–Habana',
     description: 'Servicio privado de traslado con vehículos cómodos, conductores locales y horarios a la medida.',
     host_story: 'Llevo quince años recorriendo la isla al volante; conozco cada parada digna de una foto.',
     service_type: 'transporte',
@@ -251,15 +311,15 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
   if (supabase) {
     let query = supabase
       .from('businesses')
-      .select(BUSINESS_PUBLIC_COLS)
+      .select(LIVE_BUSINESS_COLS)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
     if (filters.province) query = query.eq('province', filters.province);
-    if (filters.service_type) query = query.eq('service_type', filters.service_type);
-    if (filters.q) query = query.or(`name.ilike.%${filters.q}%,municipality.ilike.%${filters.q}%,province.ilike.%${filters.q}%`);
+    if (filters.service_type) query = query.eq('category', filters.service_type);
+    if (filters.q) query = query.or(`title.ilike.%${filters.q}%,municipality.ilike.%${filters.q}%,province.ilike.%${filters.q}%`);
     const { data, error } = await query;
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as Business[];
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map(mapBusinessRow);
   }
 
   let rows = loadStore().businesses.filter((b) => b.status === 'approved');
@@ -268,7 +328,7 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
   if (filters.q) {
     const q = filters.q.toLowerCase();
     rows = rows.filter((b) =>
-      [b.name, b.municipality, b.province, b.description].some((v) => v.toLowerCase().includes(q)),
+      [b.title, b.municipality, b.province, b.description].some((v) => v?.toLowerCase().includes(q)),
     );
   }
   return rows;
@@ -278,11 +338,11 @@ export async function getBusiness(id: string): Promise<Business | null> {
   if (supabase) {
     const { data, error } = await supabase
       .from('businesses')
-      .select(BUSINESS_PUBLIC_COLS)
+      .select(LIVE_BUSINESS_COLS)
       .eq('id', id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return data as Business | null;
+    return data ? mapBusinessRow(data as unknown as Record<string, unknown>) : null;
   }
   return loadStore().businesses.find((b) => b.id === id) ?? null;
 }
@@ -388,18 +448,21 @@ export async function listMyRequests(userId: string): Promise<BusinessRow[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('requests')
-      .select(`${REQUEST_COLS}, business:businesses(name, province)`)
+      .select(`${REQUEST_COLS}, business:businesses(title, province)`)
       .eq('requester_id', userId)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as BusinessRow[];
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map((row) => ({
+      ...(row as unknown as BusinessRow),
+      business: joinBusinessName(row.business),
+    }));
   }
   return loadStore()
     .requests.filter((r) => r.requester_id === userId)
     .map((r) => ({
       ...r,
       business: {
-        name: loadStore().businesses.find((b) => b.id === r.business_id)?.name ?? 'Negocio',
+        name: loadStore().businesses.find((b) => b.id === r.business_id)?.title ?? 'Negocio',
         province: loadStore().businesses.find((b) => b.id === r.business_id)?.province ?? '',
       },
     }));
@@ -416,11 +479,14 @@ export async function listIncomingRequests(providerId: string): Promise<Business
     if (ids.length === 0) return [];
     const { data, error } = await supabase
       .from('requests')
-      .select(`${REQUEST_COLS}, business:businesses(name, province)`)
+      .select(`${REQUEST_COLS}, business:businesses(title, province)`)
       .in('business_id', ids)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as BusinessRow[];
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map((row) => ({
+      ...(row as unknown as BusinessRow),
+      business: joinBusinessName(row.business),
+    }));
   }
   const store = loadStore();
   const myIds = store.businesses.filter((b) => b.owner_id === providerId).map((b) => b.id);
@@ -429,7 +495,7 @@ export async function listIncomingRequests(providerId: string): Promise<Business
     .map((r) => ({
       ...r,
       business: {
-        name: store.businesses.find((b) => b.id === r.business_id)?.name ?? 'Negocio',
+        name: store.businesses.find((b) => b.id === r.business_id)?.title ?? 'Negocio',
         province: store.businesses.find((b) => b.id === r.business_id)?.province ?? '',
       },
     }));
@@ -457,29 +523,36 @@ export async function adminListAllRequests(): Promise<BusinessRow[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('requests')
-      .select(`${REQUEST_COLS}, business:businesses(name, province)`)
+      .select(`${REQUEST_COLS}, business:businesses(title, province)`)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as BusinessRow[];
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map((row) => ({
+      ...(row as unknown as BusinessRow),
+      business: joinBusinessName(row.business),
+    }));
   }
   const store = loadStore();
   return [...store.requests]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .map((r) => {
       const biz = store.businesses.find((b) => b.id === r.business_id);
-      return { ...r, business: { name: biz?.name ?? 'Negocio', province: biz?.province ?? '' } };
+      return { ...r, business: { name: biz?.title ?? 'Negocio', province: biz?.province ?? '' } };
     });
 }
 
-/** Cambio de estado por admin (RPC cuando hay Supabase; RLS permitiría solo parcialmente). */
+/** Cambio de estado por admin (RPC cuando hay Supabase; fallback a update directo). */
 export async function adminSetRequestStatus(requestId: string, status: RequestStatus): Promise<void> {
   if (supabase) {
     const { error } = await supabase.rpc('admin_set_request_status', {
       target_request_id: requestId,
       next_status: status,
     });
-    if (error) throw new Error(error.message);
-    return;
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      await setRequestStatus(requestId, status);
+      return;
+    }
+    throw new Error(error.message);
   }
   await setRequestStatus(requestId, status);
 }
@@ -504,7 +577,7 @@ export async function listReviews(businessId: string): Promise<Review[]> {
 }
 
 export async function createReview(input: {
-  authorId: string;
+  reviewerId: string;
   requestId: string;
   businessId: string;
   rating: number;
@@ -514,7 +587,7 @@ export async function createReview(input: {
     const { error } = await supabase.from('reviews').insert({
       request_id: input.requestId,
       business_id: input.businessId,
-      author_id: input.authorId,
+      reviewer_id: input.reviewerId,
       rating: input.rating,
       comment: input.comment,
     });
@@ -527,7 +600,7 @@ export async function createReview(input: {
   if (
     !req ||
     req.status !== 'completed' ||
-    req.requester_id !== input.authorId ||
+    req.requester_id !== input.reviewerId ||
     req.business_id !== input.businessId
   ) {
     throw new Error('Solo el viajero de una solicitud completada puede escribir la reseña.');
@@ -539,7 +612,7 @@ export async function createReview(input: {
     id: crypto.randomUUID(),
     request_id: input.requestId,
     business_id: input.businessId,
-    author_id: input.authorId,
+    reviewer_id: input.reviewerId,
     rating: input.rating,
     comment: input.comment,
     created_at: new Date().toISOString(),
@@ -551,10 +624,15 @@ export async function createReview(input: {
 /* Alta de negocio (proveedor)                                         */
 /* ------------------------------------------------------------------ */
 
+/** Detecta RPCs inexistentes en el esquema real (PostgREST PGRST202). */
+function isMissingRpc(message: string): boolean {
+  return /Could not find the function|PGRST202/.test(message);
+}
+
 export async function submitBusiness(providerId: string, input: SubmitBusinessInput): Promise<string> {
   if (supabase) {
     const { data, error } = await supabase.rpc('provider_submit_business', {
-      p_name: input.name,
+      p_title: input.name,
       p_host_name: input.host_name,
       p_description: input.description,
       p_host_story: input.host_story,
@@ -562,7 +640,7 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
       p_tourism_category: input.tourism_category,
       p_province: input.province,
       p_municipality: input.municipality,
-      p_photos: input.photos,
+      p_images: input.photos,
       p_languages: input.languages,
       p_experience_details: input.experience_details,
       p_recommended_for: input.recommended_for,
@@ -570,8 +648,29 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
       p_phone: input.phone,
       p_email: input.email,
     });
-    if (error) throw new Error(error.message);
-    return data as string;
+    if (!error) return data as string;
+    if (!isMissingRpc(error.message)) throw new Error(error.message);
+    // Fallback: inserción directa con las columnas reales de la BD.
+    const id = crypto.randomUUID();
+    const { error: insErr } = await supabase.from('businesses').insert({
+      id,
+      owner_id: providerId,
+      title: input.name,
+      description: input.description,
+      category: input.service_type,
+      subcategory: input.tourism_category,
+      province: input.province,
+      municipality: input.municipality,
+      languages: input.languages,
+      phone: input.phone,
+      email: input.email,
+      images: input.photos,
+      amenities: input.experience_details ? [input.experience_details] : [],
+      tags: input.recommended_for,
+      status: 'pending',
+    });
+    if (insErr) throw new Error(insErr.message);
+    return id;
   }
   const store = loadStore();
   const id = crypto.randomUUID();
@@ -584,7 +683,7 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
   store.businesses.unshift({
     id,
     owner_id: providerId,
-    name: input.name,
+    title: input.name,
     host_name: input.host_name,
     description: input.description,
     host_story: input.host_story,
@@ -593,12 +692,13 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
     tourism_category: input.tourism_category,
     province: input.province,
     municipality: input.municipality,
-    photos: input.photos,
-    languages: input.languages,
-    experience_details: input.experience_details,
-    recommended_for: input.recommended_for,
-    lgbt_friendly: input.lgbt_friendly,
-    status: 'pending',
+    images: input.photos,
+      languages: input.languages,
+      experience_details: input.experience_details,
+      recommended_for: input.recommended_for,
+      lgbt_friendly: input.lgbt_friendly,
+      status: 'pending',
+      name: input.name,
     created_at: new Date().toISOString(),
   });
   saveStore(store);
@@ -609,11 +709,11 @@ export async function listMyBusinesses(ownerId: string): Promise<Business[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('businesses')
-      .select(BUSINESS_AUTH_COLS)
+      .select(LIVE_BUSINESS_AUTH_COLS)
       .eq('owner_id', ownerId)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as Business[];
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map(mapBusinessRow);
   }
   return loadStore()
     .businesses.filter((b) => b.owner_id === ownerId)
@@ -631,11 +731,11 @@ export async function createReport(input: {
   reason: string;
 }): Promise<void> {
   if (supabase) {
+    // La BD real solo tiene business_id (no target_type/target_id/reason).
     const { error } = await supabase.from('reports').insert({
       reporter_id: input.reporterId,
-      target_type: input.targetType,
-      target_id: input.targetId,
-      reason: input.reason,
+      business_id: input.targetType === 'business' ? input.targetId : null,
+      status: 'open',
     });
     if (error) throw new Error(error.message);
     return;
@@ -644,28 +744,28 @@ export async function createReport(input: {
   store.reports.unshift({
     id: crypto.randomUUID(),
     reporter_id: input.reporterId,
-    target_type: input.targetType,
-    target_id: input.targetId,
-    reason: input.reason,
+    business_id: input.targetType === 'business' ? input.targetId : null,
     status: 'open',
-    admin_note: null,
     created_at: new Date().toISOString(),
+    resolved_at: null,
   });
   saveStore(store);
 }
 
 export async function createContactMessage(input: {
-  senderId: string;
-  inquiryType: string;
+  name: string;
+  email: string;
   subject: string;
   message: string;
 }): Promise<void> {
   if (supabase) {
+    // La BD real usa name/email/subject/message (no sender_id/inquiry_type).
     const { error } = await supabase.from('contact_messages').insert({
-      sender_id: input.senderId,
-      inquiry_type: input.inquiryType,
+      name: input.name,
+      email: input.email,
       subject: input.subject,
       message: input.message,
+      status: 'open',
     });
     if (error) throw new Error(error.message);
     return;
@@ -673,8 +773,8 @@ export async function createContactMessage(input: {
   const store = loadStore();
   store.messages.unshift({
     id: crypto.randomUUID(),
-    sender_id: input.senderId,
-    inquiry_type: input.inquiryType,
+    name: input.name,
+    email: input.email,
     subject: input.subject,
     message: input.message,
     status: 'open',
@@ -705,7 +805,15 @@ export async function updateProfile(
   patch: Partial<Pick<Profile, 'full_name' | 'phone' | 'country' | 'trip_style' | 'budget_band' | 'preferred_language'>>,
 ): Promise<void> {
   if (supabase) {
-    const { error } = await supabase.from('users').update(patch).eq('id', userId);
+    // La BD real solo tiene full_name/phone (no country/trip_style/budget_band/
+    // preferred_language): filtramos para no romper el UPDATE.
+    const allowed = ['full_name', 'phone'] as const;
+    const safe: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (key in patch) safe[key] = patch[key as 'full_name' | 'phone'];
+    }
+    if (Object.keys(safe).length === 0) return;
+    const { error } = await supabase.from('users').update(safe).eq('id', userId);
     if (error) throw new Error(error.message);
     return;
   }
@@ -762,10 +870,10 @@ export async function adminListAllBusinesses(): Promise<Business[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('businesses')
-      .select(BUSINESS_AUTH_COLS)
+      .select(LIVE_BUSINESS_AUTH_COLS)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as Business[];
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map(mapBusinessRow);
   }
   return [...loadStore().businesses].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
@@ -776,8 +884,13 @@ export async function adminSetBusinessStatus(id: string, status: BusinessStatus)
       target_business_id: id,
       next_status: status,
     });
-    if (error) throw new Error(error.message);
-    return;
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      const { error: updErr } = await supabase.from('businesses').update({ status }).eq('id', id);
+      if (updErr) throw new Error(updErr.message);
+      return;
+    }
+    throw new Error(error.message);
   }
   const store = loadStore();
   const b = store.businesses.find((x) => x.id === id);
@@ -790,8 +903,13 @@ export async function adminSetBusinessStatus(id: string, status: BusinessStatus)
 export async function adminDeleteBusiness(id: string): Promise<void> {
   if (supabase) {
     const { error } = await supabase.rpc('admin_delete_business', { target_business_id: id });
-    if (error) throw new Error(error.message);
-    return;
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      const { error: delErr } = await supabase.from('businesses').delete().eq('id', id);
+      if (delErr) throw new Error(delErr.message);
+      return;
+    }
+    throw new Error(error.message);
   }
   const store = loadStore();
   store.businesses = store.businesses.filter((b) => b.id !== id);
@@ -810,8 +928,13 @@ export async function adminListUsers(): Promise<Profile[]> {
 export async function adminSetUserRole(id: string, role: Role): Promise<void> {
   if (supabase) {
     const { error } = await supabase.rpc('admin_set_user_role', { target_user_id: id, next_role: role });
-    if (error) throw new Error(error.message);
-    return;
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      const { error: updErr } = await supabase.from('users').update({ role }).eq('id', id);
+      if (updErr) throw new Error(updErr.message);
+      return;
+    }
+    throw new Error(error.message);
   }
   const row = DEMO_USERS.find((u) => u.id === id);
   if (row) row.role = role;
@@ -820,8 +943,13 @@ export async function adminSetUserRole(id: string, role: Role): Promise<void> {
 export async function adminSetUserStatus(id: string, status: AccountStatus): Promise<void> {
   if (supabase) {
     const { error } = await supabase.rpc('admin_set_user_status', { target_user_id: id, next_status: status });
-    if (error) throw new Error(error.message);
-    return;
+    if (!error) return;
+    // La BD real no tiene la columna account_status en users: sin RPC no hay
+    // forma de persistir suspensiones; se informa claramente al admin.
+    if (isMissingRpc(error.message)) {
+      throw new Error('La BD real no tiene account_status en users: la suspensión requiere crear esa columna/RPC en Supabase.');
+    }
+    throw new Error(error.message);
   }
   const row = DEMO_USERS.find((u) => u.id === id);
   if (row) row.account_status = status;
@@ -850,14 +978,22 @@ export async function adminSetReportStatus(
       next_status: status,
       next_note: note,
     });
-    if (error) throw new Error(error.message);
-    return;
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      const { error: updErr } = await supabase
+        .from('reports')
+        .update(status === 'resolved' ? { status, resolved_at: new Date().toISOString() } : { status })
+        .eq('id', id);
+      if (updErr) throw new Error(updErr.message);
+      return;
+    }
+    throw new Error(error.message);
   }
   const store = loadStore();
   const r = store.reports.find((x) => x.id === id);
   if (r) {
     r.status = status;
-    r.admin_note = note || r.admin_note;
+    if (status === 'resolved') r.resolved_at = new Date().toISOString();
     saveStore(store);
   }
 }

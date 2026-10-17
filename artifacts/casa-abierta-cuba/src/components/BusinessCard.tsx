@@ -3,7 +3,7 @@ import { MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
 
 export function BusinessCard({ business, serviceLabel }: { business: Business; serviceLabel: string }) {
-  const photo = business.photos[0];
+  const photo = (business.photos ?? [])[0];
   return (
     <article className="business-card">
       <div className="business-visual">

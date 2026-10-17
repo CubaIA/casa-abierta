@@ -78,8 +78,8 @@ export default function Perfil() {
           <span className={`badge ${profile.role === 'admin' ? 'badge-red' : profile.role === 'provider' ? 'badge-blue' : 'badge-neutral'}`}>
             {profile.role === 'admin' ? 'Administrador' : profile.role === 'provider' ? 'Anfitrión' : 'Viajero'}
           </span>
-          <span className={`badge ${profile.account_status === 'active' ? 'badge-green' : 'badge-red'}`}>
-            {profile.account_status === 'active' ? 'Cuenta activa' : 'Cuenta suspendida'}
+          <span className={`badge ${(profile.account_status ?? 'active') === 'active' ? 'badge-green' : 'badge-red'}`}>
+            {(profile.account_status ?? 'active') === 'active' ? 'Cuenta activa' : 'Cuenta suspendida'}
           </span>
           <span className="badge badge-neutral">{profile.email}</span>
         </div>

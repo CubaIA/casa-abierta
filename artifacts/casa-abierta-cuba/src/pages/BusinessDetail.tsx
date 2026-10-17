@@ -149,7 +149,7 @@ export default function BusinessDetail() {
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div>
-          {business.photos[0] ? (
+          {business.photos?.[0] ? (
             <img
               src={business.photos[0]}
               alt={business.name}

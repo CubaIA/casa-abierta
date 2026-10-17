@@ -25,6 +25,7 @@ export interface Business {
   id: string;
   owner_id?: string;
   name: string;
+  title?: string;
   host_name: string;
   description: string;
   host_story: string;
@@ -37,7 +38,9 @@ export interface Business {
   city_id?: string | null;
   price_currency?: string | null;
   price_amount?: number | null;
-  photos: string[];
+  images?: unknown;
+  amenities?: unknown;
+  tags?: unknown;
   languages: string[];
   experience_details: string;
   recommended_for: string[];
@@ -47,6 +50,8 @@ export interface Business {
   is_experience?: boolean;
   status: BusinessStatus;
   created_at: string;
+  // Campos calculados por el mapeador (no vienen de la BD directamente).
+  photos?: string[];
 }
 
 export interface BusinessRow {
@@ -66,7 +71,8 @@ export interface Review {
   id: string;
   request_id: string;
   business_id: string;
-  author_id: string;
+  /** Columna real de la BD en producción (antes author_id). */
+  reviewer_id: string;
   rating: number;
   comment: string;
   created_at: string;
@@ -75,18 +81,18 @@ export interface Review {
 export interface Report {
   id: string;
   reporter_id: string;
-  target_type: 'business' | 'user' | 'request';
-  target_id: string;
-  reason: string;
+  /** En la BD en producción el reporte apunta a un negocio (no hay target_type/target_id). */
+  business_id: string | null;
   status: ReportStatus;
-  admin_note: string | null;
   created_at: string;
+  resolved_at: string | null;
 }
 
 export interface ContactMessage {
   id: string;
-  sender_id: string;
-  inquiry_type: string;
+  /** Columnas reales de la BD en producción (antes sender_id/inquiry_type). */
+  name: string;
+  email: string;
   subject: string;
   message: string;
   status: ContactStatus;

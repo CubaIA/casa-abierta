@@ -143,7 +143,7 @@ function ReviewDialog({
     setError(null);
     try {
       await createReview({
-        authorId,
+        reviewerId: authorId,
         requestId: row.id,
         businessId: row.business_id ?? '',
         rating,

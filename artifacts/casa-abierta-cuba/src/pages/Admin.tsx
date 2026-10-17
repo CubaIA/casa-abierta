@@ -202,8 +202,8 @@ function UsersTab({ onError }: { onError: (m: string | null) => void }) {
             <span className={`badge ${u.role === 'admin' ? 'badge-red' : u.role === 'provider' ? 'badge-blue' : 'badge-neutral'}`}>
               {u.role}
             </span>
-            <span className={`badge ${u.account_status === 'active' ? 'badge-green' : 'badge-red'}`}>
-              {u.account_status}
+            <span className={`badge ${(u.account_status ?? 'active') === 'active' ? 'badge-green' : 'badge-red'}`}>
+              {u.account_status ?? 'active'}
             </span>
             {u.id !== myId && (
               <>
@@ -220,12 +220,12 @@ function UsersTab({ onError }: { onError: (m: string | null) => void }) {
                 <button
                   className="button-ghost !text-xs !py-1 !px-2.5"
                   onClick={wrap(
-                    () => adminSetUserStatus(u.id, u.account_status === 'active' ? 'suspended' : 'active'),
+                    () => adminSetUserStatus(u.id, (u.account_status ?? 'active') === 'active' ? 'suspended' : 'active'),
                     onError,
                     reload,
                   )}
                 >
-                  {u.account_status === 'active' ? 'Suspender' : 'Reactivar'}
+                  {(u.account_status ?? 'active') === 'active' ? 'Suspender' : 'Reactivar'}
                 </button>
               </>
             )}
@@ -335,12 +335,16 @@ function ReportsTab({ onError }: { onError: (m: string | null) => void }) {
       {reports?.map((r) => (
         <article key={r.id} className="panel !p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="font-bold text-azul">Reporte de {r.target_type}</p>
+            <p className="font-bold text-azul">Reporte de negocio{r.business_id ? '' : ' (sin negocio)'}</p>
             <span className={`badge ${r.status === 'resolved' ? 'badge-green' : r.status === 'open' ? 'badge-red' : 'badge-gold'}`}>
               {r.status}
             </span>
           </div>
-          <p className="mt-1 text-sm text-tinta/80">{r.reason}</p>
+          {r.business_id && (
+            <p className="mt-1 text-sm text-tinta/80">
+              Negocio: <Link href={`/negocio/${r.business_id}`} className="text-link">ver ficha</Link>
+            </p>
+          )}
           <p className="text-xs text-tinta/50">{new Date(r.created_at).toLocaleString('es-ES')}</p>
           {r.status !== 'resolved' && r.status !== 'dismissed' && (
             <div className="mt-2 flex gap-2">
@@ -381,7 +385,7 @@ function MessagesTab({ onError }: { onError: (m: string | null) => void }) {
               {m.status}
             </span>
           </div>
-          <p className="text-xs text-tinta/55">{m.inquiry_type} · {new Date(m.created_at).toLocaleString('es-ES')}</p>
+          <p className="text-xs text-tinta/55">{m.name} · {m.email} · {new Date(m.created_at).toLocaleString('es-ES')}</p>
           <p className="mt-1.5 text-sm text-tinta/80">{m.message}</p>
           {m.status === 'open' && (
             <div className="mt-2 flex gap-2">
