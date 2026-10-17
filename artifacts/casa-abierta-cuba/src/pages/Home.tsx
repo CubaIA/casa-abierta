@@ -14,7 +14,7 @@ const SECCIONES: {
   serviceType?: string;
 }[] = [
   {
-    img: '/img/Habitación.jpeg',
+    img: '/img/Habitación.jpg',
     alt: 'Habitación con anfitrión local',
     title: 'Alojamiento',
     desc: 'Casas coloniales, casas de huéspedes y habitaciones con anfitrión local.',
@@ -28,7 +28,7 @@ const SECCIONES: {
     serviceType: 'gastronomia',
   },
   {
-    img: '/img/Taxis.jpeg',
+    img: '/img/Taxis.jpg',
     alt: 'Transporte y servicios locales',
     title: 'Servicios y Experiencias',
     desc: 'Música en vivo, baile, rutas culturales, transporte y planes auténticos con guías locales.',
@@ -85,7 +85,7 @@ export default function Home() {
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/img/Playa.jpeg')", backgroundColor: '#102B47' }}
+          style={{ backgroundImage: "url('/img/Playa.jpg')", backgroundColor: '#102B47' }}
         />
         <div aria-hidden className="absolute inset-0 bg-azul/75" />
         <div className="relative mx-auto max-w-6xl px-4 py-14 sm:py-20 grid gap-8 lg:grid-cols-[1.4fr_1fr] items-center">
