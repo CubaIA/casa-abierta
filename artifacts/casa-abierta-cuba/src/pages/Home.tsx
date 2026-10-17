@@ -14,24 +14,24 @@ const SECCIONES: {
   serviceType?: string;
 }[] = [
   {
-    img: '/img/alojamiento-colonial.svg',
-    alt: 'Casa colonial cubana de colores vivos',
+    img: '/img/Habitación.jpeg',
+    alt: 'Habitación con anfitrión local',
     title: 'Alojamiento',
     desc: 'Casas coloniales, casas de huéspedes y habitaciones con anfitrión local.',
     serviceType: 'alojamiento',
   },
   {
-    img: '/img/gastronomia-cubana.svg',
+    img: '/img/Comida.jpeg',
     alt: 'Plato tradicional cubano',
     title: 'Gastronomía',
     desc: 'Ropa vieja, congrí, tostones y la cocina de siempre servida por quienes la cocinan.',
     serviceType: 'gastronomia',
   },
   {
-    img: '/img/experiencias-culturales.svg',
-    alt: 'Música en vivo y baile cubano',
-    title: 'Experiencias',
-    desc: 'Música en vivo, baile, rutas culturales y planes auténticos con guías locales.',
+    img: '/img/Taxis.jpeg',
+    alt: 'Transporte y servicios locales',
+    title: 'Servicios y Experiencias',
+    desc: 'Música en vivo, baile, rutas culturales, transporte y planes auténticos con guías locales.',
     serviceType: 'experiencias',
   },
   {
@@ -85,7 +85,7 @@ export default function Home() {
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/img/hero-varadero.svg')" }}
+          style={{ backgroundImage: "url('/img/Playa.jpeg')", backgroundColor: '#102B47' }}
         />
         <div aria-hidden className="absolute inset-0 bg-azul/75" />
         <div className="relative mx-auto max-w-6xl px-4 py-14 sm:py-20 grid gap-8 lg:grid-cols-[1.4fr_1fr] items-center">
@@ -139,7 +139,14 @@ export default function Home() {
               }}
             >
               <div className="business-visual !h-36">
-                <img src={s.img} alt={s.alt} loading="lazy" />
+                <img
+                  src={s.img}
+                  alt={s.alt}
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  }}
+                />
               </div>
               <div className="p-4">
                 <h3 className="font-bold text-azul group-hover:text-terracota-600 transition">{s.title}</h3>

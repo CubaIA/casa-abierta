@@ -38,7 +38,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="bg-azul text-white sticky top-0 z-40 shadow-md">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2 font-extrabold text-lg tracking-tight">
-            <img src="/icons/logo-completo.png" alt="Casa Abierta Cuba" className="h-8 w-auto object-contain" onError={(e) => {
+            <img src="/img/Logo.jpeg" alt="Casa Abierta Cuba" className="h-8 w-auto object-contain" onError={(e) => {
               const target = e.currentTarget as HTMLImageElement;
               target.style.display = 'none';
               const fallback = target.nextElementSibling as HTMLElement;
