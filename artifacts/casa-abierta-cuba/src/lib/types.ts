@@ -50,6 +50,7 @@ export interface Business {
   is_experience?: boolean;
   status: BusinessStatus;
   created_at: string;
+  slug?: string;
   // Campos calculados por el mapeador (no vienen de la BD directamente).
   photos?: string[];
 }

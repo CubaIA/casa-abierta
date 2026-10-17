@@ -24,6 +24,20 @@ import type {
 } from './types';
 
 const DEMO_KEY = 'casa_abierta_demo_v1';
+
+/** Genera un slug a partir del título para la tabla businesses.
+ *  Minúsculas, quita acentos, reemplaza espacios por guiones, elimina caracteres especiales.
+ *  Ej: "Mi Negocio" -> "mi-negocio".
+ */
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
 const SESSION_KEY = 'casa_abierta_session_v1';
 
 export const isDemo = !isSupabaseConfigured;
@@ -652,8 +666,10 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
     if (!isMissingRpc(error.message)) throw new Error(error.message);
     // Fallback: inserción directa con las columnas reales de la BD.
     const id = crypto.randomUUID();
+    const slug = generateSlug(input.name);
     const { error: insErr } = await supabase.from('businesses').insert({
       id,
+      slug,
       owner_id: providerId,
       title: input.name,
       description: input.description,
@@ -672,6 +688,7 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
     if (insErr) throw new Error(insErr.message);
     return id;
   }
+  const slug = generateSlug(input.name);
   const store = loadStore();
   const id = crypto.randomUUID();
   const broad =
@@ -682,7 +699,9 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
         : 'servicios';
   store.businesses.unshift({
     id,
+    slug,
     owner_id: providerId,
+    name: input.name,
     title: input.name,
     host_name: input.host_name,
     description: input.description,
@@ -693,12 +712,11 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
     province: input.province,
     municipality: input.municipality,
     images: input.photos,
-      languages: input.languages,
-      experience_details: input.experience_details,
-      recommended_for: input.recommended_for,
-      lgbt_friendly: input.lgbt_friendly,
-      status: 'pending',
-      name: input.name,
+    languages: input.languages,
+    experience_details: input.experience_details,
+    recommended_for: input.recommended_for,
+    lgbt_friendly: input.lgbt_friendly,
+    status: 'pending',
     created_at: new Date().toISOString(),
   });
   saveStore(store);
@@ -1076,6 +1094,7 @@ export async function signUp(input: {
   if (DEMO_USERS.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
     throw new Error('Ese correo ya está registrado en la demo.');
   }
+  const slug = generateSlug(input.fullName || input.email);
   const user: Profile & { password: string } = {
     id: crypto.randomUUID(),
     email: input.email,
