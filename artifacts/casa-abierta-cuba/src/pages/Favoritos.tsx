@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { Heart } from 'lucide-react';
-import { listBusinesses, listFavoriteIds } from '@/lib/marketplace';
+import { listBusinesses, listFavoriteIds, toggleFavorite } from '@/lib/marketplace';
 import type { Business } from '@/lib/types';
 import { BusinessCard } from '@/components/BusinessCard';
 import { useAuth } from '@/lib/auth';
@@ -57,7 +57,21 @@ export default function Favoritos() {
           </div>
         )}
         {rows?.map((b) => (
-          <BusinessCard key={b.id} business={b} serviceLabel={b.service_type} />
+          <BusinessCard
+            key={b.id}
+            business={b}
+            favorite
+            layout="grid"
+            onToggleFavorite={async (business) => {
+              if (!userId) return;
+              try {
+                await toggleFavorite(userId, business.id);
+                setRows((prev) => (prev ?? []).filter((x) => x.id !== business.id));
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'No se pudo actualizar el favorito');
+              }
+            }}
+          />
         ))}
       </div>
     </div>

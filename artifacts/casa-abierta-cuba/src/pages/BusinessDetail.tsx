@@ -1,6 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams } from 'wouter';
-import { ArrowLeft, Flag, Heart, MapPin, Send, Star, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bath,
+  BedDouble,
+  CalendarCheck,
+  Check,
+  ChevronDown,
+  Flag,
+  Heart,
+  ImageOff,
+  Languages,
+  MapPin,
+  Share2,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Users,
+  UtensilsCrossed,
+  Wifi,
+} from 'lucide-react';
 import {
   createReport,
   createRequest,
@@ -8,10 +27,15 @@ import {
   listFavoriteIds,
   listReviews,
   toggleFavorite,
+  SERVICE_TYPES,
 } from '@/lib/marketplace';
 import type { Business, Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
-import { SERVICE_TYPES } from '@/lib/marketplace';
+import { formatPrice } from '@/components/BusinessCard';
+
+const RESERVA_ROSA = 'bg-[#FF385C] hover:bg-[#E31C5F]';
+
+const AMENITY_ICONS = [BedDouble, Bath, Wifi, UtensilsCrossed, Users, Languages, MapPin, Sparkles];
 
 export default function BusinessDetail() {
   const params = useParams<{ id: string }>();
@@ -24,6 +48,7 @@ export default function BusinessDetail() {
   const [favorite, setFavorite] = useState(false);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   const [requestOpen, setRequestOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -80,6 +105,32 @@ export default function BusinessDetail() {
     }
   }
 
+  async function onShare() {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: business?.name ?? 'Casa Abierta Cuba', url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2200);
+    } catch {
+      /* el usuario canceló el diálogo o el portapapeles no está disponible */
+    }
+  }
+
+  function onReservar() {
+    if (!userId) {
+      navigate('/entrar');
+      return;
+    }
+    setRequestOpen(true);
+    requestAnimationFrame(() => {
+      document.getElementById('solicitar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   async function onRequest(e: React.FormEvent) {
     e.preventDefault();
     if (!userId || !profile) {
@@ -125,7 +176,14 @@ export default function BusinessDetail() {
   }
 
   if (status === 'loading') {
-    return <div className="page-shell"><div className="empty-state">Cargando ficha…</div></div>;
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        <div className="h-[280px] animate-pulse rounded-2xl bg-azul/10 sm:h-[420px]" />
+        <div className="mt-6 h-8 w-2/3 animate-pulse rounded-full bg-azul/10" />
+        <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-azul/10" />
+        <span className="sr-only">Cargando ficha…</span>
+      </div>
+    );
   }
 
   if (status === 'error' || !business) {
@@ -140,198 +198,418 @@ export default function BusinessDetail() {
   }
 
   const avg = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
+  const favoritoEntreHuespedes = avg !== null && avg >= 4.8;
+  const tipoLabel =
+    SERVICE_TYPES.find((s) => s.value === business.service_type)?.label ??
+    business.service_type.charAt(0).toUpperCase() + business.service_type.slice(1);
+  const precio = formatPrice(business);
+  const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
+  const foto = (business.photos ?? []).filter(Boolean)[0];
+  const iniciales = (business.host_name || business.name)
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('');
+  const amenidades = [
+    ...business.experience_details.split('·').map((s) => s.trim()),
+    ...business.languages.map((l) => `Habla ${l}`),
+    ...business.recommended_for.map((r) => `Ideal para ${r}`),
+  ].filter(Boolean);
+  const subtitulo = [
+    `${tipoLabel} en ${business.municipality}, ${business.province}`,
+    business.recommended_for.length > 0 ? `Ideal para ${business.recommended_for.join(', ')}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <div className="page-shell">
-      <button className="button-ghost mb-5" onClick={() => navigate('/')}>
-        <ArrowLeft size={16} /> Volver
-      </button>
-
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <div>
-          {business.photos?.[0] ? (
-            <img
-              src={business.photos[0]}
-              alt={business.name}
-              className="w-full h-64 sm:h-80 object-cover rounded-2xl border border-arena-2"
-            />
+    <div className="mx-auto max-w-5xl px-4 pb-40 pt-3 md:pb-28">
+      {/* ---------------------------------------------------------- */}
+      {/* Galería superior                                            */}
+      {/* ---------------------------------------------------------- */}
+      <div className="relative overflow-hidden rounded-2xl bg-azul-700 sm:rounded-3xl">
+        <div className="h-[300px] w-full sm:h-[420px]">
+          {foto ? (
+            <img src={foto} alt={`Foto de ${business.name}`} className="h-full w-full object-cover" />
           ) : (
-            <div className="business-visual !h-56 rounded-2xl border border-arena-2">
-              <span aria-hidden className="text-6xl">🏠</span>
+            <div className="grid h-full w-full place-items-center bg-gradient-to-br from-azul to-azul-700 text-white/70">
+              <ImageOff size={44} aria-hidden />
             </div>
           )}
-
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="badge badge-blue">{business.service_type}</span>
-            {business.lgbt_friendly && <span className="badge badge-green">LGBT friendly</span>}
-            {avg !== null && (
-              <span className="badge badge-gold inline-flex items-center gap-1">
-                <Star size={12} className="fill-current" /> {avg.toFixed(1)} · {reviews.length} reseña{reviews.length === 1 ? '' : 's'}
-              </span>
-            )}
-          </div>
-
-          <h1 className="mt-3 text-3xl font-extrabold text-azul">{business.name}</h1>
-          <p className="mt-1 text-tinta/60 inline-flex items-center gap-1">
-            <MapPin size={15} /> {business.municipality}, {business.province}
-          </p>
-
-          <p className="mt-4 text-tinta/85 leading-relaxed">{business.description}</p>
-
-          <section className="panel mt-6">
-            <h2 className="text-lg font-extrabold text-azul">Conoce a tu anfitrión</h2>
-            <p className="mt-1 font-semibold">{business.host_name}</p>
-            <p className="mt-2 text-sm text-tinta/75 leading-relaxed">{business.host_story}</p>
-            {business.experience_details && (
-              <p className="mt-3 text-sm text-tinta/75 leading-relaxed">{business.experience_details}</p>
-            )}
-            <div className="mt-4 flex flex-wrap gap-4 text-sm text-tinta/70">
-              {business.languages.length > 0 && (
-                <span className="inline-flex items-center gap-1">🌐 {business.languages.join(', ')}</span>
-              )}
-              {business.recommended_for.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Users size={15} /> Recomendado para: {business.recommended_for.join(', ')}
-                </span>
-              )}
-            </div>
-          </section>
-
-          <section className="mt-6" aria-label="Reseñas">
-            <h2 className="text-lg font-extrabold text-azul">Reseñas de viajeros</h2>
-            {reviews.length === 0 ? (
-              <p className="mt-2 text-sm text-tinta/60">
-                Aún no hay reseñas. Las reseñas se escriben al completar una solicitud.
-              </p>
-            ) : (
-              <ul className="mt-3 space-y-3">
-                {reviews.map((r) => (
-                  <li key={r.id} className="panel !p-4">
-                    <div className="flex items-center gap-1 text-dorado" aria-label={`${r.rating} de 5`}>
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star key={i} size={14} className={i < r.rating ? 'fill-dorado' : 'opacity-30'} />
-                      ))}
-                    </div>
-                    <p className="mt-1.5 text-sm text-tinta/80">{r.comment}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <div className="mt-6">
-            <button
-              className="text-sm text-terracota-600 font-semibold inline-flex items-center gap-1 hover:underline"
-              onClick={() => setReportOpen((v) => !v)}
-            >
-              <Flag size={14} /> Reportar esta publicación
-            </button>
-            {reportOpen && (
-              reportSent ? (
-                <p className="form-success">Reporte enviado. El equipo de Casa Abierta lo revisará.</p>
-              ) : (
-                <form onSubmit={onReport} className="panel mt-3">
-                  <label className="field-label" htmlFor="report-reason">¿Qué está mal en esta publicación?</label>
-                  <textarea
-                    id="report-reason"
-                    className="field-input"
-                    rows={3}
-                    required
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                    placeholder="Describe el problema (fotos engañosas, datos falsos, etc.)"
-                  />
-                  <button className="button-primary mt-3" type="submit">Enviar reporte</button>
-                </form>
-              )
-            )}
-          </div>
         </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent"
+        />
 
-        <aside className="space-y-4">
-          <div className="panel sticky top-24">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-extrabold text-azul">Solicitar contacto</h2>
-              <button
-                onClick={() => void onFavorite()}
-                aria-pressed={favorite}
-                aria-label={favorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-                className={`rounded-full p-2 border transition ${
-                  favorite ? 'bg-terracota-600 border-terracota-600 text-white' : 'border-arena-2 text-tinta/50 hover:border-terracota-600'
-                }`}
-              >
-                <Heart size={18} className={favorite ? 'fill-white' : ''} />
-              </button>
-            </div>
-            <p className="mt-1 text-sm text-tinta/65">
-              Envía tu consulta al anfitrión. Casa Abierta registra la solicitud y facilita la conexión; no procesa
-              pagos ni reservas.
-            </p>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-sm font-semibold text-azul shadow transition hover:bg-white"
+        >
+          <ArrowLeft size={17} aria-hidden /> Volver
+        </button>
 
-            {!userId && (
-              <div className="mt-4">
-                <p className="text-sm text-tinta/70">Necesitas una cuenta para enviar solicitudes.</p>
-                <button className="button-primary mt-2 w-full justify-center" onClick={() => navigate('/entrar')}>
-                  Entrar o registrarme
-                </button>
-              </div>
-            )}
-
-            {userId && requestOpen === false && !sent && (
-              <button className="button-primary mt-4 w-full justify-center" onClick={() => setRequestOpen(true)}>
-                <Send size={16} /> Enviar solicitud
-              </button>
-            )}
-
-            {userId && sent && (
-              <p className="form-success">
-                ¡Solicitud enviada! Sigue su estado en <strong>Mis solicitudes</strong>.
-              </p>
-            )}
-
-            {userId && requestOpen && !sent && (
-              <form onSubmit={onRequest} className="mt-4 space-y-3">
-                <div>
-                  <label className="field-label" htmlFor="req-service">¿Qué necesitas?</label>
-                  <select
-                    id="req-service"
-                    className="field-input"
-                    value={serviceRequested}
-                    onChange={(e) => setServiceRequested(e.target.value)}
-                  >
-                    <option value="">Selecciona un servicio</option>
-                    {SERVICE_TYPES.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="field-label" htmlFor="req-message">Mensaje para el anfitrión</label>
-                  <textarea
-                    id="req-message"
-                    className="field-input"
-                    rows={4}
-                    required
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Fechas, cantidad de personas, qué buscas…"
-                  />
-                  <p className="field-hint">
-                    Tu correo ({profile?.email}) se guarda con la solicitud para que el equipo pueda gestionarla; no se
-                    muestra públicamente.
-                  </p>
-                </div>
-                {requestError && <p className="form-error" role="alert">{requestError}</p>}
-                <button className="button-primary w-full justify-center" disabled={sending} type="submit">
-                  {sending ? 'Enviando…' : 'Enviar solicitud'}
-                </button>
-              </form>
-            )}
-          </div>
-        </aside>
+        <div className="absolute right-3 top-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void onShare()}
+            aria-label="Compartir esta publicación"
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-azul shadow transition hover:bg-white"
+          >
+            {copiado ? <Check size={18} aria-hidden /> : <Share2 size={18} aria-hidden />}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onFavorite()}
+            aria-pressed={favorite}
+            aria-label={favorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-azul shadow transition hover:bg-white"
+          >
+            <Heart size={18} aria-hidden className={favorite ? 'fill-[#FF385C] text-[#FF385C]' : ''} />
+          </button>
+        </div>
+        {copiado && (
+          <p className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white">
+            Enlace copiado
+          </p>
+        )}
       </div>
 
-      {errorMessage && status === 'ready' && <p className="form-error mt-4" role="alert">{errorMessage}</p>}
+      {/* ---------------------------------------------------------- */}
+      {/* Información principal                                       */}
+      {/* ---------------------------------------------------------- */}
+      <div className="mt-5">
+        <h1 className="text-2xl font-extrabold text-azul sm:text-3xl">{business.name}</h1>
+        <p className="mt-1 text-tinta/70">{subtitulo}</p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+          <span className="inline-flex items-center gap-1 font-bold text-tinta">
+            <Star size={14} className="fill-tinta" aria-hidden />
+            {avg !== null ? avg.toFixed(2) : 'Nuevo'}
+          </span>
+          {avg !== null && (
+            <span className="flex items-center gap-0.5 text-dorado" aria-hidden>
+              {Array.from({ length: 5 }, (_, i) => (
+                <Star key={i} size={13} className={i < Math.round(avg) ? 'fill-dorado' : 'opacity-25'} />
+              ))}
+            </span>
+          )}
+          <span className="text-tinta/60">
+            · {reviews.length} reseña{reviews.length === 1 ? '' : 's'}
+          </span>
+          {favoritoEntreHuespedes && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-arena px-2.5 py-1 text-xs font-bold text-azul-700">
+              <Sparkles size={12} aria-hidden /> Favorito entre huéspedes
+            </span>
+          )}
+          {business.lgbt_friendly && (
+            <span className="rounded-full bg-verde/10 px-2.5 py-1 text-xs font-bold text-verde-700">
+              LGBTQ+ friendly
+            </span>
+          )}
+        </div>
+      </div>
+
+      <hr className="my-6 border-arena-2" />
+
+      {/* Anfitrión */}
+      <div className="flex items-center gap-4">
+        <div
+          aria-hidden
+          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-azul text-lg font-extrabold text-white"
+        >
+          {iniciales || 'CA'}
+        </div>
+        <div className="min-w-0">
+          <p className="font-bold text-azul">Anfitrión: {business.host_name || 'Equipo Casa Abierta'}</p>
+          <p className="text-sm text-tinta/70">
+            {business.verified || favoritoEntreHuespedes ? 'SuperAnfitrión' : 'Anfitrión local'} · Casa Abierta Cuba
+          </p>
+          <p className="text-xs text-tinta/55">
+            Índice de respuesta: rápido · Responde por la plataforma
+          </p>
+        </div>
+      </div>
+
+      <hr className="my-6 border-arena-2" />
+
+      {/* Descripción y amenidades */}
+      <section>
+        <h2 className="text-lg font-extrabold text-azul">Sobre este lugar</h2>
+        <p className="mt-2 whitespace-pre-line leading-relaxed text-tinta/85">{business.description}</p>
+
+        {amenidades.length > 0 && (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {amenidades.map((a, i) => {
+              const Icon = AMENITY_ICONS[i % AMENITY_ICONS.length];
+              return (
+                <li key={`${a}-${i}`} className="flex items-start gap-3 text-sm text-tinta/80">
+                  <Icon size={19} aria-hidden className="mt-0.5 shrink-0 text-azul-600" />
+                  <span>{a}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Secciones desplegables                                      */}
+      {/* ---------------------------------------------------------- */}
+      <div className="mt-8 divide-y divide-arena-2 border-y border-arena-2">
+        <Desplegable titulo="Conoce al anfitrión" abierto>
+          <p className="leading-relaxed text-tinta/85">{business.host_story}</p>
+          {business.experience_details && (
+            <p className="mt-3 leading-relaxed text-tinta/75">{business.experience_details}</p>
+          )}
+          <p className="mt-3 text-sm text-tinta/60">
+            <Languages size={14} aria-hidden className="mr-1 inline" />
+            {business.languages.length > 0 ? `Idiomas: ${business.languages.join(', ')}` : 'Idiomas: español'}
+          </p>
+        </Desplegable>
+
+        <Desplegable titulo="Lo que debes saber">
+          <div className="grid gap-5 sm:grid-cols-3">
+            <div>
+              <h3 className="text-sm font-bold text-azul">Reglas de la casa</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-tinta/75">
+                <li>Llegada después de las 15:00</li>
+                <li>Salida antes de las 11:00</li>
+                <li>No se permiten fiestas ni eventos</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-azul">Seguridad y propiedad</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-tinta/75">
+                <li>Anfitrión verificado por la plataforma</li>
+                <li>Solicitudes registradas y trazables</li>
+                <li>Prohibido compartir datos fuera de la app</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-azul">Política de cancelación</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-tinta/75">
+                <li>Cancelación gratuita hasta 7 días antes</li>
+                <li>Reembolso completo si el anfitrión cancela</li>
+                <li>Casa Abierta media en cualquier disputa</li>
+              </ul>
+            </div>
+          </div>
+        </Desplegable>
+
+        <Desplegable titulo="A dónde irás">
+          <div className="relative h-52 overflow-hidden rounded-xl border border-arena-2 bg-[#e8eef2]">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-60"
+              style={{
+                backgroundImage:
+                  'linear-gradient(#c9d8e2 1px, transparent 1px), linear-gradient(90deg, #c9d8e2 1px, transparent 1px)',
+                backgroundSize: '32px 32px',
+              }}
+            />
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="flex flex-col items-center gap-1 rounded-xl bg-white/90 px-4 py-3 text-center shadow">
+                <MapPin size={22} aria-hidden className="text-terracota-600" />
+                <p className="text-sm font-bold text-azul">
+                  {business.municipality}, {business.province}
+                </p>
+                <p className="text-xs text-tinta/60">La ubicación exacta se comparte al confirmar la solicitud</p>
+              </div>
+            </div>
+          </div>
+        </Desplegable>
+      </div>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Reseñas                                                     */}
+      {/* ---------------------------------------------------------- */}
+      <section className="mt-8" aria-label="Reseñas">
+        <h2 className="inline-flex items-center gap-2 text-lg font-extrabold text-azul">
+          <Star size={18} className="fill-azul" aria-hidden />
+          {avg !== null ? `${avg.toFixed(2)} · ` : ''}
+          {reviews.length} reseña{reviews.length === 1 ? '' : 's'}
+        </h2>
+        {reviews.length === 0 ? (
+          <p className="mt-2 text-sm text-tinta/60">
+            Aún no hay reseñas. Las reseñas se escriben al completar una solicitud.
+          </p>
+        ) : (
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+            {reviews.map((r) => (
+              <li key={r.id} className="rounded-2xl border border-arena-2 bg-white p-4">
+                <div className="flex items-center gap-0.5 text-dorado" aria-label={`${r.rating} de 5`}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star key={i} size={13} className={i < r.rating ? 'fill-dorado' : 'opacity-25'} />
+                  ))}
+                </div>
+                <p className="mt-1.5 text-sm text-tinta/80">{r.comment}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Reserva / solicitud                                         */}
+      {/* ---------------------------------------------------------- */}
+      <section id="solicitar" className="mt-8 scroll-mt-24 rounded-2xl border border-arena-2 bg-white p-5 sm:p-6">
+        <h2 className="inline-flex items-center gap-2 text-lg font-extrabold text-azul">
+          <CalendarCheck size={18} aria-hidden /> Solicita tu reserva
+        </h2>
+        <p className="mt-1 text-sm text-tinta/65">
+          Envía tu consulta al anfitrión. Casa Abierta registra la solicitud y facilita la conexión; la coordinación
+          del pago se acuerda directamente con el anfitrión.
+        </p>
+
+        {!userId && (
+          <div className="mt-4">
+            <p className="text-sm text-tinta/70">Necesitas una cuenta para enviar solicitudes.</p>
+            <button className="button-primary mt-2 w-full justify-center sm:w-auto" onClick={() => navigate('/entrar')}>
+              Entrar o registrarme
+            </button>
+          </div>
+        )}
+
+        {userId && sent && (
+          <p className="form-success mt-4">
+            ¡Solicitud enviada! Sigue su estado en <strong>Mis solicitudes</strong>.
+          </p>
+        )}
+
+        {userId && !sent && !requestOpen && (
+          <button className="button-primary mt-4 w-full justify-center sm:w-auto" onClick={() => setRequestOpen(true)}>
+            Enviar solicitud
+          </button>
+        )}
+
+        {userId && !sent && requestOpen && (
+          <form onSubmit={onRequest} className="mt-4 space-y-3">
+            <div>
+              <label className="field-label" htmlFor="req-service">¿Qué necesitas?</label>
+              <select
+                id="req-service"
+                className="field-input"
+                value={serviceRequested}
+                onChange={(e) => setServiceRequested(e.target.value)}
+              >
+                <option value="">Selecciona un servicio</option>
+                {SERVICE_TYPES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label" htmlFor="req-message">Mensaje para el anfitrión</label>
+              <textarea
+                id="req-message"
+                className="field-input"
+                rows={4}
+                required
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Fechas, cantidad de personas, qué buscas…"
+              />
+              <p className="field-hint">
+                Tu correo ({profile?.email}) se guarda con la solicitud para que el equipo pueda gestionarla; no se
+                muestra públicamente.
+              </p>
+            </div>
+            {requestError && <p className="form-error" role="alert">{requestError}</p>}
+            <button className="button-primary w-full justify-center" disabled={sending} type="submit">
+              {sending ? 'Enviando…' : 'Enviar solicitud'}
+            </button>
+          </form>
+        )}
+      </section>
+
+      {/* Reportar */}
+      <div className="mt-6">
+        <button
+          className="inline-flex items-center gap-1 text-sm font-semibold text-terracota-600 hover:underline"
+          onClick={() => setReportOpen((v) => !v)}
+        >
+          <Flag size={14} /> Reportar esta publicación
+        </button>
+        {reportOpen &&
+          (reportSent ? (
+            <p className="form-success">Reporte enviado. El equipo de Casa Abierta lo revisará.</p>
+          ) : (
+            <form onSubmit={onReport} className="panel mt-3">
+              <label className="field-label" htmlFor="report-reason">¿Qué está mal en esta publicación?</label>
+              <textarea
+                id="report-reason"
+                className="field-input"
+                rows={3}
+                required
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Describe el problema (fotos engañosas, datos falsos, etc.)"
+              />
+              <button className="button-primary mt-3" type="submit">Enviar reporte</button>
+            </form>
+          ))}
+      </div>
+
+      {errorMessage && status === 'ready' && (
+        <p className="form-error mt-4" role="alert">{errorMessage}</p>
+      )}
+
+      {/* ---------------------------------------------------------- */}
+      {/* Barra flotante inferior                                     */}
+      {/* ---------------------------------------------------------- */}
+      <div className="booking-bar fixed inset-x-0 bottom-[68px] z-30 border-t border-arena-2 bg-white/95 px-4 py-3 backdrop-blur md:bottom-0">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-extrabold text-azul">
+              {precio ?? 'Consultar precio'}
+            </p>
+            <p className="truncate text-xs text-tinta/60">
+              {precio ? unidad : 'El anfitrión confirma disponibilidad'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onReservar}
+            className={`shrink-0 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition sm:text-base ${RESERVA_ROSA}`}
+          >
+            Reservar
+          </button>
+        </div>
+      </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Sección desplegable                                                 */
+/* ------------------------------------------------------------------ */
+
+function Desplegable({
+  titulo,
+  abierto = false,
+  children,
+}: {
+  titulo: string;
+  abierto?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group py-4" open={abierto}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-base font-extrabold text-azul">
+        <span className="inline-flex items-center gap-2">
+          <ShieldCheck size={17} aria-hidden className="text-azul-600" />
+          {titulo}
+        </span>
+        <ChevronDown
+          size={20}
+          aria-hidden
+          className="shrink-0 text-tinta/50 transition-transform group-open:rotate-180"
+        />
+      </summary>
+      <div className="mt-3 text-sm">{children}</div>
+    </details>
   );
 }

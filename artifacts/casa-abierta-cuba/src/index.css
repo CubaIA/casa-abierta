@@ -356,3 +356,17 @@
   .editorial-pillars { grid-template-columns: 1fr; }
   .page-shell { padding: 1.75rem 1rem 3rem; }
 }
+
+/* ---------- Utilidades estilo Airbnb ---------- */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Barra flotante de reserva en la ficha del negocio */
+.booking-bar {
+  box-shadow: 0 -10px 30px rgba(15, 43, 76, 0.12);
+}

@@ -51,6 +51,9 @@ export interface Business {
   status: BusinessStatus;
   created_at: string;
   slug?: string;
+  /** Promedio de reseñas, cuando la fuente lo expone (opcional). */
+  rating?: number | null;
+  review_count?: number | null;
   // Campos calculados por el mapeador (no vienen de la BD directamente).
   photos?: string[];
 }

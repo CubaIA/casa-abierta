@@ -1,6 +1,18 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Compass, Heart, LogOut, Menu, MessageSquare, ShieldCheck, User, X } from 'lucide-react';
+import {
+  Briefcase,
+  Compass,
+  Heart,
+  LogOut,
+  Menu,
+  MessageCircle,
+  MessageSquare,
+  Search,
+  ShieldCheck,
+  User,
+  X,
+} from 'lucide-react';
 import { useAuth, demoMode } from '@/lib/auth';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelect } from './LanguageSelect';
@@ -38,7 +50,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="bg-azul text-white sticky top-0 z-40 shadow-md">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2 font-extrabold text-lg tracking-tight">
-            <img src="/img/Logo.jpg" alt="Casa Abierta Cuba" className="h-8 w-auto object-contain" onError={(e) => {
+            <img src="/img/Logo.jpeg" alt="Casa Abierta Cuba" className="h-8 w-auto object-contain" onError={(e) => {
               const target = e.currentTarget as HTMLImageElement;
               target.style.display = 'none';
               const fallback = target.nextElementSibling as HTMLElement;
@@ -134,13 +146,57 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main id="contenido" className="flex-1">
+      <main id="contenido" className="flex-1 pb-[76px] md:pb-0">
         {children}
       </main>
 
       <EmergencyButton />
       <Footer />
+      <BottomNav />
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Menú de navegación inferior (solo móvil, estilo Airbnb)             */
+/* ------------------------------------------------------------------ */
+const BOTTOM_NAV = [
+  { href: '/', label: 'Explora', icon: Search },
+  { href: '/favoritos', label: 'Favoritos', icon: Heart },
+  { href: '/solicitudes', label: 'Viajes', icon: Briefcase },
+  { href: '/contacto', label: 'Mensajes', icon: MessageCircle },
+  { href: '/perfil', label: 'Perfil', icon: User },
+];
+
+function BottomNav() {
+  const [location] = useLocation();
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-arena-2 bg-white/95 backdrop-blur md:hidden"
+      aria-label="Navegación inferior"
+    >
+      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-1">
+        {BOTTOM_NAV.map((item) => {
+          const Icon = item.icon;
+          const activo = item.href === '/' ? location === '/' : location.startsWith(item.href);
+          return (
+            <li key={item.href} className="flex-1">
+              <Link
+                href={item.href}
+                aria-current={activo ? 'page' : undefined}
+                className={`flex flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-semibold transition ${
+                  activo ? 'text-terracota-600' : 'text-tinta/55 hover:text-azul'
+                }`}
+              >
+                <Icon size={21} strokeWidth={activo ? 2.4 : 1.9} aria-hidden />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 
