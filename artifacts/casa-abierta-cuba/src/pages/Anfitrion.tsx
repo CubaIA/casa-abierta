@@ -10,6 +10,7 @@ import {
   submitBusiness,
   SERVICE_TYPES,
 } from '@/lib/marketplace';
+import { uploadBusinessImages } from '@/lib/storage';
 import type { Business, BusinessRow, RequestStatus, SubmitBusinessInput } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -235,6 +236,8 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreview, setPhotoPreview] = useState<string[]>([]);
 
   const [form, setForm] = useState<SubmitBusinessInput>({
     name: '',
@@ -276,9 +279,16 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return setError('El correo de contacto no es válido.');
 
     if (!userId) return setError('Inicia sesión para publicar un negocio.');
+    if (photos.length > 8) return setError('No puedes subir más de 8 fotos.');
     setBusy(true);
     try {
-      await submitBusiness(userId, { ...form, name: form.name.trim(), municipality: form.municipality.trim() });
+      const photoUrls = userId && supabase ? await uploadBusinessImages(userId, 'pending', photos) : [];
+      await submitBusiness(userId, {
+        ...form,
+        name: form.name.trim(),
+        municipality: form.municipality.trim(),
+        photos: photoUrls.length ? photoUrls : form.photos,
+      });
       setSuccess(true);
       setTimeout(onDone, 1400);
     } catch (e) {
@@ -333,6 +343,53 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
           <input id="b-email" type="email" className="field-input" required value={form.email} onChange={(e) => set('email', e.target.value)} />
           <p className="field-hint">No se muestra en el catálogo público.</p>
         </div>
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor="b-photos">Fotos del negocio</label>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {photoPreview.map((url, i) => (
+            <span key={url} className="relative inline-block w-[84px] h-[84px] overflow-hidden rounded-xl border border-arena-2 bg-azul-900">
+              <img src={url} alt={`preview ${i}`} className="h-full w-full object-cover" />
+              <button
+                type="button"
+                className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 text-white text-xs font-semibold hover:bg-black/50"
+                onClick={() => {
+                  const rest = photos.filter((_, j) => j !== i);
+                  setPhotos(rest);
+                  setPhotoPreview(photoPreview.filter((_, j) => j !== i));
+                }}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-arena-2 bg-white/50 px-3 py-2 text-sm text-tinta/70 hover:bg-white/80 hover:border-arena transition">
+            <span className="relative flex h-8 w-8 items-center justify-center">
+              <input
+                id="b-photos"
+                type="file"
+                multiple
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  if (!files.length) return;
+                  setPhotos((prev) => [...prev, ...files]);
+                  setPhotoPreview((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+                  e.target.value = '';
+                }}
+              />
+              <svg className="h-4 w-4 text-arena" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </span>
+            Añadir fotos
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-tinta/60">Puedes subir hasta 8 fotos. Las últimas subidas se usarán como portada del catálogo.</p>
       </div>
 
       <div>
