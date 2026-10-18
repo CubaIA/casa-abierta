@@ -62,7 +62,11 @@ const LIVE_BUSINESS_AUTH_COLS = LIVE_BUSINESS_COLS + ', owner_id';
 /** Normaliza a string[] cualquier columna text[]/jsonb/text. */
 function asArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
-  if (typeof v === 'string' && v.trim()) return v.split(',').map((s) => s.trim()).filter(Boolean);
+  if (typeof v === 'string') {
+    const trimmed = v.trim();
+    if (!trimmed) return [];
+    return trimmed.split(/[,.]/).map((s) => s.trim()).filter(Boolean);
+  }
   return [];
 }
 

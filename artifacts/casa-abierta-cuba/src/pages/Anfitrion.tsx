@@ -410,14 +410,28 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="field-label" htmlFor="b-langs">Idiomas (separados por coma)</label>
-          <input id="b-langs" className="field-input" value={form.languages.join(', ')} onChange={(e) => set('languages', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="b-rec">Recomendado para (separado por coma)</label>
-          <input id="b-rec" className="field-input" value={form.recommended_for.join(', ')} onChange={(e) => set('recommended_for', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} placeholder="parejas, familias, grupos…" />
-        </div>
+      <div>
+        <label className="field-label" htmlFor="b-langs">Idiomas</label>
+        <input
+          id="b-langs"
+          className="field-input"
+          value={form.languages.join(', ')}
+          onChange={(e) => set('languages', parseTagList(e.target.value))}
+          placeholder="ej. español, inglés, francés"
+        />
+        <p className="field-hint">Separa con comas o puntos; el formulario acepta ambos al guardar.</p>
+      </div>
+      <div>
+        <label className="field-label" htmlFor="b-rec">Recomendado para</label>
+        <input
+          id="b-rec"
+          className="field-input"
+          value={form.recommended_for.join(', ')}
+          onChange={(e) => set('recommended_for', parseTagList(e.target.value))}
+          placeholder="ej. parejas, familias, grupos"
+        />
+        <p className="field-hint">Separa con comas o puntos; el formulario acepta ambos al guardar.</p>
+      </div>
       </div>
 
       <label className="inline-flex items-center gap-2 text-sm font-semibold">
@@ -433,6 +447,19 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
       </button>
     </form>
   );
+}
+
+/** Convierte un texto libre en lista de etiquetas.
+ *  Acepta comas y/o puntos como separadores; elimina vacíos y normaliza espacios.
+ *  Este helper vive aquí para que el input de idiomas/recomendado sea libre
+ *  durante la edición (puede escribir comas y espacios sin efecto adverso).
+ */
+function parseTagList(raw: string): string[] {
+  if (!raw) return [];
+  return raw
+    .split(/[,.]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function PaymentButton() {

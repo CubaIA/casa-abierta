@@ -47,7 +47,7 @@ export function normalizePhotos(input: unknown): string[] {
 /** Divide un string por comas y limpia espacios/urls inválidas. */
 function splitPhotosCsv(raw: string): string[] {
   return raw
-    .split(',')
+    .split(/[,.]/)
     .map((s) => s.trim())
     .filter((url) => url.length > 0);
 }
