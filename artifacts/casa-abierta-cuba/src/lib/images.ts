@@ -52,24 +52,28 @@ function splitPhotosCsv(raw: string): string[] {
     .filter((url) => url.length > 0);
 }
 
-/** Extrae el primer valor útil para <img src> sin depender del orden en BD. */
-export function firstPhoto(business: Business): string | null {
-  // Preferimos el campo que el mapeador ya normaliza (photos).
-  const photos = business.photos ?? [];
-  for (const url of photos) {
-    if (typeof url === 'string' && url.trim().length > 0) return url.trim();
-  }
+/** Extrae la primera foto válida para <img src>.
+ *
+ * Si el negocio expone un array de fotos, podemos evitar mostrar el logo
+ * (normalmente el primer elemento) usando skipFirstLogoWhenAvailable.
+ * Cuando no hay segunda foto válida, nos quedamos con la primera.
+ */
+export function firstPhoto(
+  business: Business,
+  options?: { skipFirstLogoWhenAvailable?: boolean },
+): string | null {
+  const photos = resolvePhotos(business);
 
-  // Fallback directo desde images (puede ser texto crudo en legacy).
-  if (typeof business.images === 'string') {
-    const parsed = normalizePhotos(business.images);
-    if (parsed.length) return parsed[0];
-  }
-
-  if (Array.isArray(business.images)) {
-    for (const url of business.images) {
+  if (options?.skipFirstLogoWhenAvailable && photos.length > 1) {
+    // Saltar el primer elemento sospechoso (logo) y tomar el siguiente válido.
+    for (let i = 1; i < photos.length; i++) {
+      const url = photos[i];
       if (typeof url === 'string' && url.trim().length > 0) return url.trim();
     }
+  }
+
+  for (const url of photos) {
+    if (typeof url === 'string' && url.trim().length > 0) return url.trim();
   }
 
   return null;

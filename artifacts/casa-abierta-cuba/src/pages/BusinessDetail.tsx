@@ -112,8 +112,9 @@ export default function BusinessDetail() {
   }, [id, load]);
 
   useEffect(() => {
-    if (business) document.title = `${business.name} | Casa Abierta Cuba`;
-  }, [business]);
+    if (!business?.name) return;
+    document.title = `${business.name} | Casa Abierta Cuba`;
+  }, [business?.name]);
 
   async function onFavorite() {
     if (!userId) {
@@ -223,25 +224,25 @@ export default function BusinessDetail() {
   const avg = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
   const favoritoEntreHuespedes = avg !== null && avg >= 4.8;
   const tipoLabel =
-    SERVICE_TYPES.find((s) => s.value === business.service_type)?.label ??
-    business.service_type.charAt(0).toUpperCase() + business.service_type.slice(1);
+    SERVICE_TYPES.find((s) => s.value === business?.service_type)?.label ??
+    (business?.service_type ?? '').charAt(0).toUpperCase() + (business?.service_type ?? '').slice(1);
   const precio = formatPrice(business);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
-  const foto = firstPhoto(business);
-  const iniciales = (business.host_name || business.name)
+  const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
+  const iniciales = (business?.host_name || business?.name)
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? '')
     .join('');
   const amenidades = [
-    ...business.experience_details.split('·').map((s) => s.trim()),
-    ...business.languages.map((l) => `Habla ${l}`),
-    ...business.recommended_for.map((r) => `Ideal para ${r}`),
+    ...(business?.experience_details ?? '').split('·').map((s) => s.trim()),
+    ...(business?.languages ?? []).map((l) => `Habla ${l}`),
+    ...(business?.recommended_for ?? []).map((r) => `Ideal para ${r}`),
   ].filter(Boolean);
   const subtitulo = [
     `${tipoLabel} en ${business.municipality}, ${business.province}`,
-    business.recommended_for.length > 0 ? `Ideal para ${business.recommended_for.join(', ')}` : null,
+    ((business?.recommended_for ?? []).length > 0 ? `Ideal para ${business.recommended_for.join(', ')}` : null) ?? null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -327,7 +328,7 @@ export default function BusinessDetail() {
               <Sparkles size={12} aria-hidden /> Favorito entre huéspedes
             </span>
           )}
-          {business.lgbt_friendly && (
+          {(business?.lgbt_friendly ?? false) && (
             <span className="rounded-full bg-verde/10 px-2.5 py-1 text-xs font-bold text-verde-700">
               LGBTQ+ friendly
             </span>
@@ -348,7 +349,7 @@ export default function BusinessDetail() {
         <div className="min-w-0">
           <p className="font-bold text-azul">Anfitrión: {business.host_name || 'Equipo Casa Abierta'}</p>
           <p className="text-sm text-tinta/70">
-            {business.verified || favoritoEntreHuespedes ? 'SuperAnfitrión' : 'Anfitrión local'} · Casa Abierta Cuba
+            {(business?.verified ?? false) || favoritoEntreHuespedes ? 'SuperAnfitrión' : 'Anfitrión local'} · Casa Abierta Cuba
           </p>
           <p className="text-xs text-tinta/55">
             Índice de respuesta: rápido · Responde por la plataforma
@@ -389,7 +390,7 @@ export default function BusinessDetail() {
           )}
           <p className="mt-3 text-sm text-tinta/60">
             <Languages size={14} aria-hidden className="mr-1 inline" />
-            {business.languages.length > 0 ? `Idiomas: ${business.languages.join(', ')}` : 'Idiomas: español'}
+            {(business?.languages ?? []).length > 0 ? `Idiomas: ${business.languages.join(', ')}` : 'Idiomas: español'}
           </p>
         </Desplegable>
 

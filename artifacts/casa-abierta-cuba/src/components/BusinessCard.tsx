@@ -36,7 +36,7 @@ export function BusinessCard({
   layout = 'carousel',
   className = '',
 }: BusinessCardProps) {
-  const photo = firstPhoto(business);
+  const photo = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
   const price = formatPrice(business);
   const unit = priceUnit(business);
   const rating = typeof business.rating === 'number' ? business.rating : null;
