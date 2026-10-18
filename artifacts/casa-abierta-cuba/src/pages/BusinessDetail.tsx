@@ -229,14 +229,17 @@ export default function BusinessDetail() {
   const precio = formatPrice(business);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
   const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
-  const iniciales = (business?.host_name || business?.name)
+  const nombreCompuesto = (business?.host_name ?? business?.name ?? '');
+  const iniciales = nombreCompuesto
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? '')
     .join('');
+
+  const detalles = (business?.experience_details ?? '');
   const amenidades = [
-    ...(business?.experience_details ?? '').split('·').map((s) => s.trim()),
+    ...detalles.split('·').map((s) => s.trim()),
     ...(business?.languages ?? []).map((l) => `Habla ${l}`),
     ...(business?.recommended_for ?? []).map((r) => `Ideal para ${r}`),
   ].filter(Boolean);

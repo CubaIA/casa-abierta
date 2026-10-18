@@ -492,6 +492,17 @@ function Carrusel({ title, subtitle, items, favoritos, onToggleFavorite }: Carru
     const el = ref.current;
     if (!el) return;
     const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
+
+    // El botón “Ver más” envía al catálogo completo para la sección
+    // “Disponibles en Cuba”; en el resto de carruseles solo hace scroll.
+    if (title === 'Disponibles en Cuba') {
+      const catalogo = document.getElementById('catalogo');
+      if (catalogo) {
+        catalogo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+
     el.scrollTo({ left: atEnd ? 0 : el.scrollLeft + el.clientWidth * 0.85, behavior: 'smooth' });
   }
 
