@@ -32,6 +32,10 @@ import {
 import type { Business, Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { formatPrice } from '@/components/BusinessCard';
+import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { adminGetUserAvatarUrl } from '@/lib/avatars';
+import { supabase } from '@/lib/supabase';
+
 
 const RESERVA_ROSA = 'bg-[#FF385C] hover:bg-[#E31C5F]';
 
@@ -45,8 +49,10 @@ export default function BusinessDetail() {
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewerAvatars, setReviewerAvatars] = useState<Record<string, string | null>>({});
   const [favorite, setFavorite] = useState(false);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [avatarLoadError, setAvatarLoadError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
@@ -71,7 +77,23 @@ export default function BusinessDetail() {
         return;
       }
       setBusiness(b);
-      setReviews(await listReviews(id));
+      const reviewsList = await listReviews(id);
+      setReviews(reviewsList);
+      if (userId && reviewsList.length > 0) {
+        const owners = new Set<string>(reviewsList.map((r) => r.reviewer_id));
+        const fetched: Record<string, string | null> = {};
+        if (supabase) {
+          for (const ownerId of owners) {
+            try {
+              fetched[ownerId] = await adminGetUserAvatarUrl(ownerId);
+            } catch {
+              fetched[ownerId] = null;
+            }
+          }
+        }
+        setReviewerAvatars(fetched);
+        setAvatarLoadError(null);
+      }
       if (userId) {
         const ids = await listFavoriteIds(userId);
         setFavorite(ids.includes(id));
@@ -427,6 +449,11 @@ export default function BusinessDetail() {
       {/* Reseñas                                                     */}
       {/* ---------------------------------------------------------- */}
       <section className="mt-8" aria-label="Reseñas">
+        {avatarLoadError && (
+          <p className="mb-2 text-xs text-terracota-700" role="status">
+            No se pudieron cargar algunas fotos de los reseñantes.
+          </p>
+        )}
         <h2 className="inline-flex items-center gap-2 text-lg font-extrabold text-azul">
           <Star size={18} className="fill-azul" aria-hidden />
           {avg !== null ? `${avg.toFixed(2)} · ` : ''}
@@ -440,12 +467,23 @@ export default function BusinessDetail() {
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {reviews.map((r) => (
               <li key={r.id} className="rounded-2xl border border-arena-2 bg-white p-4">
-                <div className="flex items-center gap-0.5 text-dorado" aria-label={`${r.rating} de 5`}>
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Star key={i} size={13} className={i < r.rating ? 'fill-dorado' : 'opacity-25'} />
-                  ))}
+                <div className="flex items-center gap-3">
+                  <ProfileAvatar
+                    avatarUrl={reviewerAvatars[r.reviewer_id] ?? null}
+                    userId={r.reviewer_id}
+                    size={36}
+                    upload={false}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-azul">{r.comment ? 'Anónimo' : 'Viajero'}</p>
+                    <div className="flex items-center gap-0.5 text-dorado" aria-label={`${r.rating} de 5`}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <Star key={i} size={13} className={i < r.rating ? 'fill-dorado' : 'opacity-25'} />
+                      ))}
+                    </div>
+                    <p className="mt-1.5 text-sm text-tinta/80">{r.comment || 'Reseña breve'}</p>
+                  </div>
                 </div>
-                <p className="mt-1.5 text-sm text-tinta/80">{r.comment}</p>
               </li>
             ))}
           </ul>

@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
+  Sparkles,
+  Bot,
   Briefcase,
   Compass,
   Heart,
@@ -26,6 +28,7 @@ const NAV = [
   { href: '/anfitrion', key: 'host', icon: User, roles: ['provider', 'admin'] },
   { href: '/admin', key: 'admin', icon: ShieldCheck, roles: ['admin'] },
   { href: '/contacto', key: 'contact', icon: MessageSquare },
+  { href: '/chat-ia', key: 'chat_ia', icon: Bot, auth: true },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -39,6 +42,8 @@ export function Layout({ children }: { children: ReactNode }) {
     if (item.roles && !item.roles.includes(profile?.role ?? '')) return false;
     return true;
   });
+
+  const chatIaVisible = userId && location === '/chat-ia';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -153,6 +158,26 @@ export function Layout({ children }: { children: ReactNode }) {
       <EmergencyButton />
       <Footer />
       <BottomNav />
+      {userId && !loading && <ChatIaQuickButton navigate />}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Botón rápido de IA siempre visible para usuarios autenticados       */
+/* ------------------------------------------------------------------ */
+function ChatIaQuickButton({ navigate }: { navigate: (href: string) => void }) {
+  return (
+    <div className="fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6">
+      <Link
+        href="/chat-ia"
+        onClick={() => navigate('/chat-ia')}
+        className="inline-flex items-center gap-2 rounded-full bg-azul px-4 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 transition hover:bg-azul-700 hover:scale-[1.03]"
+      >
+        <Sparkles size={18} className="text-dorado" />
+        <span className="hidden sm:inline">Preguntar a Cuba Conecta IA</span>
+        <span className="sm:hidden">IA</span>
+      </Link>
     </div>
   );
 }

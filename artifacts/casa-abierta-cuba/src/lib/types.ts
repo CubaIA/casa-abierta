@@ -18,6 +18,8 @@ export interface Profile {
   preferred_language: string | null;
   trip_style: string | null;
   budget_band: string | null;
+  /** Dirección Storage pública del avatar (bucket `avatars`). */
+  avatar_url?: string | null;
   created_at: string;
 }
 

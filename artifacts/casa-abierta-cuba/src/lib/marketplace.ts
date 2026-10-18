@@ -131,6 +131,7 @@ export const DEMO_USERS: Array<Profile & { password: string }> = [
     preferred_language: 'español',
     trip_style: 'Cultural',
     budget_band: 'Moderado',
+    avatar_url: null,
     created_at: new Date().toISOString(),
   },
   {
@@ -145,6 +146,7 @@ export const DEMO_USERS: Array<Profile & { password: string }> = [
     preferred_language: 'español',
     trip_style: null,
     budget_band: null,
+    avatar_url: null,
     created_at: new Date().toISOString(),
   },
   {
@@ -823,7 +825,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
 export async function updateProfile(
   userId: string,
-  patch: Partial<Pick<Profile, 'full_name' | 'phone' | 'country' | 'trip_style' | 'budget_band' | 'preferred_language'>>,
+  patch: Partial<Pick<Profile, 'full_name' | 'phone' | 'country' | 'trip_style' | 'budget_band' | 'preferred_language' | 'avatar_url'>>,
 ): Promise<void> {
   if (supabase) {
     // La BD real solo tiene full_name/phone (no country/trip_style/budget_band/
@@ -833,7 +835,7 @@ export async function updateProfile(
     for (const key of allowed) {
       if (key in patch) safe[key] = patch[key as 'full_name' | 'phone'];
     }
-    if (Object.keys(safe).length === 0) return;
+    if (Object.keys(safe).length === 0 && !('avatar_url' in patch)) return;
     const { error } = await supabase.from('users').update(safe).eq('id', userId);
     if (error) throw new Error(error.message);
     return;
@@ -1110,6 +1112,7 @@ export async function signUp(input: {
     preferred_language: 'español',
     trip_style: null,
     budget_band: null,
+    avatar_url: null,
     created_at: new Date().toISOString(),
   };
   DEMO_USERS.push(user);

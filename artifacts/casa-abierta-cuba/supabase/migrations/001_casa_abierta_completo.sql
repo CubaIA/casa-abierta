@@ -74,6 +74,10 @@ alter table public.users
   add column if not exists role text not null default 'traveler',
   add column if not exists created_at timestamptz not null default now();
 
+-- Foto de perfil (avatars)
+alter table public.users
+  add column if not exists avatar_url text;
+
 -- 002: preferencias de viajero + estado de cuenta
 alter table public.users
   add column if not exists country text,
@@ -1149,6 +1153,7 @@ revoke all on function public.admin_set_request_status(uuid,text) from public, a
 revoke all on function public.admin_set_report_status(uuid,text,text) from public, anon;
 revoke all on function public.admin_get_request_contact(uuid) from public, anon;
 revoke all on function public.casa_abierta_user_active() from public, anon;            -- [FIX-3]
+revoke all on function public.admin_get_user_avatar_url(uuid) from public, anon;
 grant execute on function public.provider_submit_business(text,text,text,text,text,text,text,text,text[],text[],text,text[],boolean,text,text) to authenticated;
 grant execute on function public.casa_abierta_user_active() to authenticated;
 grant execute on function public.admin_set_user_status(uuid,text) to authenticated;
@@ -1159,6 +1164,54 @@ grant execute on function public.admin_delete_business(uuid) to authenticated;
 grant execute on function public.admin_set_request_status(uuid,text) to authenticated;
 grant execute on function public.admin_set_report_status(uuid,text,text) to authenticated;
 grant execute on function public.admin_get_request_contact(uuid) to authenticated;
+
+-- Avatar de perfil (única vía segura de leer avatar_url desde la app).
+-- `users` no concede SELECT general, y avatar_url puede ser null.
+create or replace function public.admin_get_user_avatar_url(p_user_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.casa_abierta_is_admin() then
+    raise exception 'Administrator role required' using errcode = '42501';
+  end if;
+  return (select avatar_url from public.users where id = p_user_id);
+end;
+$$;
+grant execute on function public.admin_get_user_avatar_url(uuid) to authenticated;
+
+-- Storage: bucket público `avatars` (solo el dueño sube/borra su propio avatar)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'avatars',
+  'avatars',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/webp']::text[]
+)
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists casa_abierta_avatars_public_read on storage.objects;
+create policy casa_abierta_avatars_public_read
+  on storage.objects for select to anon, authenticated
+  using (bucket_id = 'avatars');
+drop policy if exists casa_abierta_avatars_owner_write on storage.objects;
+create policy casa_abierta_avatars_owner_write
+  on storage.objects for insert, delete to authenticated
+  with check (
+    bucket_id = 'avatars'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+drop policy if exists casa_abierta_avatars_active_guard on storage.objects;
+create policy casa_abierta_avatars_active_guard
+  on storage.objects as restrictive for all to authenticated
+  using (bucket_id <> 'avatars' or public.casa_abierta_user_active())
+  with check (bucket_id <> 'avatars' or public.casa_abierta_user_active());
 
 commit;
 
