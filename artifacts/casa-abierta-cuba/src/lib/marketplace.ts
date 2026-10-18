@@ -665,12 +665,15 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
     if (!error) return data as string;
     if (!isMissingRpc(error.message)) throw new Error(error.message);
     // Fallback: inserción directa con las columnas reales de la BD.
+    // owner_id se resuelve de la sesión actual cuando providerId no es suficiente.
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) throw new Error('No hay sesión autenticada');
     const id = crypto.randomUUID();
     const slug = generateSlug(input.name);
     const { error: insErr } = await supabase.from('businesses').insert({
       id,
       slug,
-      owner_id: providerId,
+      owner_id: authUser.id,
       title: input.name,
       description: input.description,
       category: input.service_type,

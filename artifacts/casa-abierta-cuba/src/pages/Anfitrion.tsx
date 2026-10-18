@@ -275,6 +275,7 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
     if (form.phone.trim().length < 5) return setError('Indica un teléfono de contacto válido.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return setError('El correo de contacto no es válido.');
 
+    if (!userId) return setError('Inicia sesión para publicar un negocio.');
     setBusy(true);
     try {
       await submitBusiness(userId, { ...form, name: form.name.trim(), municipality: form.municipality.trim() });
