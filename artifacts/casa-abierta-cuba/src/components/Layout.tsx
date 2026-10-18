@@ -158,7 +158,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <EmergencyButton />
       <Footer />
       <BottomNav />
-      {userId && !loading && <ChatIaFab navigate />}
+      {userId && !loading && <ChatIaFab />}
     </div>
   );
 }
@@ -166,11 +166,10 @@ export function Layout({ children }: { children: ReactNode }) {
 /* ------------------------------------------------------------------ */
 /* Botón rápido de IA siempre visible para usuarios autenticados       */
 /* ------------------------------------------------------------------ */
-function ChatIaFab({ navigate }: { navigate: (href: string) => void }) {
+function ChatIaFab() {
   return (
     <Link
       href="/chat"
-      onClick={() => navigate('/chat')}
       className="fixed bottom-20 right-4 z-50 h-14 w-14 shrink-0 grid place-items-center rounded-full bg-azul shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       aria-label="Preguntar a Cuba Conecta IA"
     >
@@ -179,7 +178,6 @@ function ChatIaFab({ navigate }: { navigate: (href: string) => void }) {
     </Link>
   );
 }
-
 /* ------------------------------------------------------------------ */
 /* Menú de navegación inferior (solo móvil, estilo Airbnb)             */
 /* ------------------------------------------------------------------ */
