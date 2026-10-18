@@ -158,7 +158,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <EmergencyButton />
       <Footer />
       <BottomNav />
-      {userId && !loading && <ChatIaQuickButton navigate />}
+      {userId && !loading && <ChatIaFab navigate />}
     </div>
   );
 }
@@ -166,19 +166,17 @@ export function Layout({ children }: { children: ReactNode }) {
 /* ------------------------------------------------------------------ */
 /* Botón rápido de IA siempre visible para usuarios autenticados       */
 /* ------------------------------------------------------------------ */
-function ChatIaQuickButton({ navigate }: { navigate: (href: string) => void }) {
+function ChatIaFab({ navigate }: { navigate: (href: string) => void }) {
   return (
-    <div className="fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6">
-      <Link
-        href="/chat-ia"
-        onClick={() => navigate('/chat-ia')}
-        className="inline-flex items-center gap-2 rounded-full bg-azul px-4 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 transition hover:bg-azul-700 hover:scale-[1.03]"
-      >
-        <Sparkles size={18} className="text-dorado" />
-        <span className="hidden sm:inline">Preguntar a Cuba Conecta IA</span>
-        <span className="sm:hidden">IA</span>
-      </Link>
-    </div>
+    <Link
+      href="/chat"
+      onClick={() => navigate('/chat')}
+      className="fixed bottom-20 right-4 z-50 h-14 w-14 shrink-0 grid place-items-center rounded-full bg-azul shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      aria-label="Preguntar a Cuba Conecta IA"
+    >
+      <Sparkles size={24} className="text-dorado" aria-hidden />
+      <span className="sr-only">Chat IA</span>
+    </Link>
   );
 }
 
