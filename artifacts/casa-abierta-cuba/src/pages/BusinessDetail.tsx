@@ -31,6 +31,7 @@ import {
 } from '@/lib/marketplace';
 import type { Business, Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { firstPhoto, resolvePhotos } from '@/lib/images';
 import { formatPrice } from '@/components/BusinessCard';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { adminGetUserAvatarUrl } from '@/lib/avatars';
@@ -226,7 +227,7 @@ export default function BusinessDetail() {
     business.service_type.charAt(0).toUpperCase() + business.service_type.slice(1);
   const precio = formatPrice(business);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
-  const foto = (business.photos ?? []).filter(Boolean)[0];
+  const foto = firstPhoto(business);
   const iniciales = (business.host_name || business.name)
     .split(' ')
     .filter(Boolean)

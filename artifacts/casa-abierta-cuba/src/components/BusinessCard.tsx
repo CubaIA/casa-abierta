@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 import { Link } from 'wouter';
 import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
+import { firstPhoto } from '@/lib/images';
 
 /** Precio legible para las tarjetas ("$12 USD"). */
 export function formatPrice(business: Business): string | null {
@@ -35,7 +36,7 @@ export function BusinessCard({
   layout = 'carousel',
   className = '',
 }: BusinessCardProps) {
-  const photo = (business.photos ?? []).filter(Boolean)[0];
+  const photo = firstPhoto(business);
   const price = formatPrice(business);
   const unit = priceUnit(business);
   const rating = typeof business.rating === 'number' ? business.rating : null;
