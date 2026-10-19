@@ -72,6 +72,13 @@ export default function BusinessDetail() {
   const [reportReason, setReportReason] = useState('');
   const [reportSent, setReportSent] = useState(false);
 
+  /* Hooks de la galería SIEMPRE en la parte superior: nunca después de un
+   * early return. Si se declaran tras `if (status...) return`, React lanza
+   * el error #310 ("Rendered more hooks than during the previous render")
+   * y la página queda en blanco. */
+  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
+  const [fotoActual, setFotoActual] = useState<number | null>(null);
+
   const load = useCallback(async () => {
     setStatus('loading');
     try {
@@ -248,7 +255,9 @@ export default function BusinessDetail() {
   const miniaturas = fotosValidas.slice(0, 4);
   const hayGaleria = fotosValidas.length > 1;
 
-  const nombreCompuesto = (business?.host_name ?? business?.name ?? '');
+  /* Datos de Supabase blindados: cualquier campo puede venir null/vacío.
+   * Todos los split/join trabajan sobre strings o arrays ya validados. */
+  const nombreCompuesto = String(business?.host_name ?? business?.name ?? '');
   const iniciales = nombreCompuesto
     .split(' ')
     .filter(Boolean)
@@ -256,21 +265,20 @@ export default function BusinessDetail() {
     .map((p) => p[0]?.toUpperCase() ?? '')
     .join('');
 
-  const detalles = (business?.experience_details ?? '');
+  const detalles = String(business?.experience_details ?? '');
+  const idiomas = Array.isArray(business?.languages) ? business.languages : [];
+  const recomendados = Array.isArray(business?.recommended_for) ? business.recommended_for : [];
   const amenidades = [
     ...detalles.split('·').map((s) => s.trim()),
-    ...(business?.languages ?? []).map((l) => `Habla ${l}`),
-    ...(business?.recommended_for ?? []).map((r) => `Ideal para ${r}`),
+    ...idiomas.map((l) => `Habla ${l}`),
+    ...recomendados.map((r) => `Ideal para ${r}`),
   ].filter(Boolean);
   const subtitulo = [
-    `${tipoLabel} en ${business.municipality}, ${business.province}`,
-    ((business?.recommended_for ?? []).length > 0 ? `Ideal para ${business.recommended_for.join(', ')}` : null) ?? null,
+    `${tipoLabel} en ${business.municipality || '—'}, ${business.province || '—'}`,
+    (recomendados.length > 0 ? `Ideal para ${recomendados.join(', ')}` : null) ?? null,
   ]
     .filter(Boolean)
     .join(' · ');
-
-  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
-  const [fotoActual, setFotoActual] = useState<number | null>(null);
 
   function abrirGaleriaEn(indice: number) {
     setFotoActual(indice);
@@ -416,7 +424,7 @@ export default function BusinessDetail() {
       {/* Información principal                                       */}
       {/* ---------------------------------------------------------- */}
       <div className="mt-5">
-        <h1 className="text-2xl font-extrabold text-azul sm:text-3xl">{business.name}</h1>
+        <h1 className="text-2xl font-extrabold text-azul sm:text-3xl">{business.name || 'Negocio'}</h1>
         <p className="mt-1 text-tinta/70">{subtitulo}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
@@ -473,7 +481,7 @@ export default function BusinessDetail() {
       {/* Descripción y amenidades */}
       <section>
         <h2 className="text-lg font-extrabold text-azul">Sobre este lugar</h2>
-        <p className="mt-2 whitespace-pre-line leading-relaxed text-tinta/85">{business.description}</p>
+        <p className="mt-2 whitespace-pre-line leading-relaxed text-tinta/85">{business.description || ''}</p>
 
         {amenidades.length > 0 && (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -495,13 +503,13 @@ export default function BusinessDetail() {
       {/* ---------------------------------------------------------- */}
       <div className="mt-8 divide-y divide-arena-2 border-y border-arena-2">
         <Desplegable titulo="Conoce al anfitrión" abierto>
-          <p className="leading-relaxed text-tinta/85">{business.host_story}</p>
+          <p className="leading-relaxed text-tinta/85">{business.host_story || ''}</p>
           {business.experience_details && (
             <p className="mt-3 leading-relaxed text-tinta/75">{business.experience_details}</p>
           )}
           <p className="mt-3 text-sm text-tinta/60">
             <Languages size={14} aria-hidden className="mr-1 inline" />
-            {(business?.languages ?? []).length > 0 ? `Idiomas: ${business.languages.join(', ')}` : 'Idiomas: español'}
+            {idiomas.length > 0 ? `Idiomas: ${idiomas.join(', ')}` : 'Idiomas: español'}
           </p>
         </Desplegable>
 
