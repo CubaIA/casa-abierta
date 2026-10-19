@@ -29,14 +29,20 @@ export default function Entrar() {
     setError(null);
     setBusy(true);
     try {
+      const mail = email.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) {
+        throw new Error('Introduce un correo electrónico válido.');
+      }
       if (mode === 'login') {
-        await signIn(email.trim(), password);
+        const perfil = await signIn(mail, password);
+        // Los administradores entran directamente al panel; el resto, al catálogo.
+        navigate(perfil?.role === 'admin' ? '/admin' : '/');
       } else {
         if (fullName.trim().length < 2) throw new Error('Indica tu nombre completo.');
         if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
-        await signUp({ email: email.trim(), password, fullName: fullName.trim(), accountType });
+        await signUp({ email: mail, password, fullName: fullName.trim(), accountType });
+        navigate('/');
       }
-      navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo completar la operación');
     } finally {

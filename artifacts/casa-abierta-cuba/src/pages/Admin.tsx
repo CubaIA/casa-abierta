@@ -18,8 +18,18 @@ import {
 } from '@/lib/marketplace';
 import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
 
 type Tab = 'businesses' | 'users' | 'requests' | 'reports' | 'messages';
+
+/** Secciones del panel mostradas en la sidebar de administración. */
+const ADMIN_TABS: AdminTabItem[] = [
+  { key: 'businesses', label: 'Negocios', icon: CheckCircle2 },
+  { key: 'users', label: 'Usuarios', icon: Users },
+  { key: 'requests', label: 'Solicitudes', icon: MessageSquare },
+  { key: 'reports', label: 'Reportes', icon: Flag },
+  { key: 'messages', label: 'Mensajes', icon: Inbox },
+];
 
 export default function Admin() {
   const { userId, profile, loading } = useAuth();
@@ -38,42 +48,14 @@ export default function Admin() {
   }
 
   return (
-    <div className="page-shell">
-      <p className="section-kicker">Moderación</p>
-      <h1 className="text-3xl font-extrabold text-azul">Panel de administración</h1>
-      <p className="mt-2 text-tinta/70">Aprueba publicaciones, gestiona usuarios y revisa reportes y mensajes.</p>
-
-      <div className="mt-5 flex flex-wrap gap-2" role="tablist">
-        <TabButton active={tab === 'businesses'} onClick={() => setTab('businesses')}><CheckCircle2 size={15} /> Negocios</TabButton>
-        <TabButton active={tab === 'users'} onClick={() => setTab('users')}><Users size={15} /> Usuarios</TabButton>
-        <TabButton active={tab === 'requests'} onClick={() => setTab('requests')}><MessageSquare size={15} /> Solicitudes</TabButton>
-        <TabButton active={tab === 'reports'} onClick={() => setTab('reports')}><Flag size={15} /> Reportes</TabButton>
-        <TabButton active={tab === 'messages'} onClick={() => setTab('messages')}><MessageSquare size={15} /> Mensajes</TabButton>
-      </div>
-
-      {error && <p className="form-error mt-4" role="alert">{error}</p>}
-
-      <div className="mt-5">
-        {tab === 'businesses' && <BusinessesTab onError={setError} />}
-        {tab === 'users' && <UsersTab onError={setError} />}
-        {tab === 'requests' && <RequestsTab onError={setError} />}
-        {tab === 'reports' && <ReportsTab onError={setError} />}
-        {tab === 'messages' && <MessagesTab onError={setError} />}
-      </div>
-    </div>
-  );
-}
-
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      role="tab"
-      aria-selected={active}
-      className={`button-ghost ${active ? '!bg-azul !text-white !border-azul' : ''}`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
+    <AdminLayout items={ADMIN_TABS} active={tab} onSelect={(key) => setTab(key as Tab)}>
+      {error && <p className="form-error mb-4" role="alert">{error}</p>}
+      {tab === 'businesses' && <BusinessesTab onError={setError} />}
+      {tab === 'users' && <UsersTab onError={setError} />}
+      {tab === 'requests' && <RequestsTab onError={setError} />}
+      {tab === 'reports' && <ReportsTab onError={setError} />}
+      {tab === 'messages' && <MessagesTab onError={setError} />}
+    </AdminLayout>
   );
 }
 

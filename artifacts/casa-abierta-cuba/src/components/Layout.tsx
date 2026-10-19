@@ -5,7 +5,10 @@ import {
   Bot,
   Briefcase,
   Compass,
+  Facebook,
+  Globe,
   Heart,
+  Instagram,
   LogOut,
   Menu,
   MessageCircle,
@@ -20,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageSelect } from './LanguageSelect';
 import { CurrencySelect } from './CurrencySelect';
 import { EmergencyButton } from './EmergencyButton';
+import { SocialsCasaAbierta } from './AdminLayout';
 
 const NAV = [
   { href: '/', key: 'explore', icon: Compass },
@@ -54,18 +58,31 @@ export function Layout({ children }: { children: ReactNode }) {
 
       <header className="bg-azul text-white sticky top-0 z-40 shadow-md">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2 font-extrabold text-lg tracking-tight">
-            <img src="/img/Logo.jpeg" alt="Casa Abierta Cuba" className="h-8 w-auto object-contain" onError={(e) => {
-              const target = e.currentTarget as HTMLImageElement;
-              target.style.display = 'none';
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) fallback.style.display = 'flex';
-            }} />
+          <Link href="/" className="flex shrink-0 items-center gap-2.5 font-extrabold tracking-tight" aria-label="Casa Abierta Cuba — inicio">
+            <img
+              src="/img/isotipo.svg"
+              alt=""
+              width={44}
+              height={44}
+              className="h-11 w-11 shrink-0 object-contain md:h-10 md:w-10"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
             <span className="flex items-center gap-2" style={{ display: 'none' }}>
               <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-terracota-600 text-sm">CA</span>
               <span>
                 Casa <span className="text-dorado">Abierta</span>
               </span>
+            </span>
+            <span className="hidden flex-col leading-tight md:flex">
+              <span className="text-base">
+                Casa <span className="text-dorado">Abierta</span> Cuba
+              </span>
+              <span className="text-[10px] font-medium text-azul-200">Una puerta abierta al mundo</span>
             </span>
           </Link>
 
@@ -226,9 +243,12 @@ function Footer() {
     <footer className="mt-16 bg-azul-700 text-azul-200">
       <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <div className="flex items-center gap-2 font-extrabold text-white text-lg">
-            <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-terracota-600 text-sm">CA</span>
-            Casa Abierta
+          <div className="flex items-center gap-2.5 font-extrabold text-white text-lg">
+            <img src="/img/isotipo.svg" alt="" width={40} height={40} className="h-10 w-10 shrink-0 object-contain" loading="lazy" />
+            <span>
+              Casa Abierta Cuba
+              <span className="block text-[11px] font-medium text-azul-200">Una puerta abierta al mundo</span>
+            </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed">
             Plataforma intermediaria digital de conexión turística con Cuba auténtica: alojamientos, gastronomía,
@@ -263,6 +283,10 @@ function Footer() {
             <span className="font-semibold text-white">Sígueme en redes:</span>
             <a href="https://instagram.com/mirry.93" target="_blank" rel="noopener noreferrer" className="text-dorado hover:text-white underline decoration-dotted underline-offset-2">@mirry.93</a>
           </p>
+          <p className="mt-3 text-xs font-semibold text-white">Casa Abierta Cuba — @casaabiertacuba</p>
+          <div className="mt-1.5">
+            <SocialsCasaAbierta />
+          </div>
         </div>
         <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Confianza</h3>

@@ -10,7 +10,7 @@ interface AuthContextValue {
   profile: Profile | null;
   role: Role | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<Profile | null>;
   signUp: (input: { email: string; password: string; fullName: string; accountType: 'traveler' | 'provider' }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -28,8 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const p = await db.getProfile(id);
       setProfile(p);
+      return p;
     } catch {
       setProfile(null);
+      return null;
     }
   }, []);
 
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = await db.signIn(mail, password);
       setUserId(session.user.id);
       setEmail(session.user.email);
-      await loadProfile(session.user.id);
+      return await loadProfile(session.user.id);
     },
     [loadProfile],
   );

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Casa Abierta Cuba">
+  <title>Casa Abierta Cuba — Una puerta abierta al mundo</title>
+  <!-- Fondo azul turquesa de marca -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#1B5E7A"/>
+  <!-- Sol dorado -->
+  <circle cx="32" cy="19" r="9" fill="#F5B335"/>
+  <!-- Palmera: tronco -->
+  <path d="M11 54 C9.5 44 10.5 37 14 31" fill="none" stroke="#3FAE8F" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- Palmera: frondas -->
+  <path d="M14 31 C9 27 6 27 3.5 29.5 M14 31 C11 25.5 8 24.5 5.5 25.5 M14 31 C16 25 19 23 22 23.5 M14 31 C18 27 21.5 26.5 24.5 28" fill="none" stroke="#3FAE8F" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- Marco de puerta colonial (arco crema) -->
+  <path d="M25 57 V34 A11 11 0 0 1 47 34 V57 Z" fill="#FAF7F0"/>
+  <!-- Interior del vano -->
+  <path d="M30 57 V36 A6 6 0 0 1 42 36 V57 Z" fill="#0E2F3E"/>
+  <!-- Hoja de puerta abierta (terracota) -->
+  <path d="M42 37 C47.5 39 51 43.5 51 49.5 V57 H42 Z" fill="#E07A3C"/>
+  <!-- Remate de la hoja -->
+  <circle cx="44.6" cy="47.5" r="1.1" fill="#FAF7F0"/>
+</svg>

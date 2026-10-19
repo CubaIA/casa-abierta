@@ -1074,7 +1074,13 @@ export async function adminGetRequestContact(requestId: string): Promise<string 
 export async function signIn(email: string, password: string): Promise<Session> {
   if (supabase) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) {
+      const code = (error as { code?: string }).code;
+      if (code === 'email_not_confirmed' || /not confirmed/i.test(error.message)) {
+        throw new Error('Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.');
+      }
+      throw new Error(error.message);
+    }
     return { user: { id: data.user.id, email: data.user.email ?? email } };
   }
   const user = DEMO_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
@@ -1098,6 +1104,10 @@ export async function signUp(input: {
     });
     if (error) throw new Error(error.message);
     if (!data.user) throw new Error('No se pudo crear la cuenta. Revisa tu correo de confirmación.');
+    if (!data.session) {
+      // Alta con «Confirmar correo» activo en Supabase: aún no hay sesión.
+      throw new Error('Cuenta creada. Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.');
+    }
     return { user: { id: data.user.id, email: data.user.email ?? input.email } };
   }
   if (DEMO_USERS.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {

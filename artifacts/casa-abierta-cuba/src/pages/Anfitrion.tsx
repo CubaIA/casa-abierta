@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { Building2, Inbox, PlusCircle, RefreshCw } from 'lucide-react';
+import { Building2, Inbox, MessageCircle, PlusCircle, RefreshCw } from 'lucide-react';
 import {
   DEMO_CATEGORIES,
   listCategories,
@@ -95,6 +95,22 @@ export default function Anfitrion() {
         <button className={`button-ghost ${tab === 'form' ? '!bg-azul !text-white !border-azul' : ''}`} onClick={() => setTab('form')} role="tab" aria-selected={tab === 'form'}>
           <PlusCircle size={15} /> Nueva publicación
         </button>
+      </div>
+
+      <div className="panel mt-5 border-2 border-dorado bg-azul-50">
+        <p className="text-sm font-extrabold text-azul">Registrarse y publicar tu negocio es GRATIS.</p>
+        <p className="mt-1 text-sm text-tinta/75">
+          El plan Premium es opcional y sirve para destacar tu negocio y obtener mayor visibilidad, gestionado por Casa
+          Abierta Cuba.
+        </p>
+        <a
+          href="https://wa.me/+5356289645?text=Hola,%20quiero%20información%20sobre%20promoción%20fuera%20de%20la%20app%20de%20mi%20negocio%20en%20Casa%20Abierta%20Cuba"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-verde px-4 py-2 text-sm font-bold text-white hover:brightness-95"
+        >
+          <MessageCircle size={15} aria-hidden /> ¿Deseas promoción fuera de la app? Contáctanos
+        </a>
       </div>
 
       {error && <p className="form-error mt-4" role="alert">{error}</p>}
@@ -508,6 +524,9 @@ function PaymentButton() {
         {busy ? 'Generando pago…' : 'Destacar mi negocio (QvaPay)'}
       </button>
       {error && <span className="text-xs text-terracota-600">{error}</span>}
+      <span className="text-xs text-tinta/60">
+        ¿No dispones de QvaPay? Comunícate con la administración de Casa Abierta Cuba para coordinar otra forma de pago.
+      </span>
     </div>
   );
 }
