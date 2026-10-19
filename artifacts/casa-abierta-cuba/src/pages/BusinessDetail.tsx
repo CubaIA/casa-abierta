@@ -7,6 +7,8 @@ import {
   CalendarCheck,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Flag,
   Heart,
   ImageOff,
@@ -19,7 +21,16 @@ import {
   Users,
   UtensilsCrossed,
   Wifi,
+  X,
 } from 'lucide-react';
+import type { Business, Review } from '@/lib/types';
+import { useAuth } from '@/lib/auth';
+import { firstPhoto, resolvePhotos } from '@/lib/images';
+import { formatPrice } from '@/components/BusinessCard';
+import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { adminGetUserAvatarUrl } from '@/lib/avatars';
+import { supabase } from '@/lib/supabase';
+
 import {
   createReport,
   createRequest,
@@ -29,13 +40,6 @@ import {
   toggleFavorite,
   SERVICE_TYPES,
 } from '@/lib/marketplace';
-import type { Business, Review } from '@/lib/types';
-import { useAuth } from '@/lib/auth';
-import { firstPhoto, resolvePhotos } from '@/lib/images';
-import { formatPrice } from '@/components/BusinessCard';
-import { ProfileAvatar } from '@/components/ProfileAvatar';
-import { adminGetUserAvatarUrl } from '@/lib/avatars';
-import { supabase } from '@/lib/supabase';
 
 
 const RESERVA_ROSA = 'bg-[#FF385C] hover:bg-[#E31C5F]';
@@ -126,6 +130,17 @@ export default function BusinessDetail() {
       setFavorite(next);
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : 'No se pudo actualizar el favorito');
+    } finally {
+      // Consistencia local rápida aunque el servidor falle en algún entorno:
+      // volvemos a calcular el estado desde el backend cuando hay sesión.
+      if (userId && business) {
+        try {
+          const ids = await listFavoriteIds(userId);
+          setFavorite(ids.includes(id));
+        } catch {
+          /* sin efecto */
+        }
+      }
     }
   }
 
@@ -229,6 +244,10 @@ export default function BusinessDetail() {
   const precio = formatPrice(business);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
   const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
+  const todasLasFotos = resolvePhotos(business);
+  const miniaturas = todasLasFotos.slice(0, 4);
+  const hayGaleria = todasLasFotos.length > 1;
+
   const nombreCompuesto = (business?.host_name ?? business?.name ?? '');
   const iniciales = nombreCompuesto
     .split(' ')
@@ -249,6 +268,93 @@ export default function BusinessDetail() {
   ]
     .filter(Boolean)
     .join(' · ');
+
+  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
+  const [fotoActual, setFotoActual] = useState(0);
+
+  function abrirGaleriaEn(indice: number) {
+    setFotoActual(indice);
+    setGaleriaAbierta(true);
+  }
+
+  function cerrarGaleria() {
+    setGaleriaAbierta(false);
+    setFotoActual(0);
+  }
+
+  function fotoPrevia() {
+    setFotoActual((i) => (i > 0 ? i - 1 : todasLasFotos.length - 1));
+  }
+
+  function fotoSiguiente() {
+    setFotoActual((i) => (i < todasLasFotos.length - 1 ? i + 1 : 0));
+  }
+
+  function seccionGaleria() {
+    return (
+      <section className="mt-5" aria-label="Galería de fotos">
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-extrabold text-azul">Fotos del anuncio</p>
+          {hayGaleria && (
+            <span className="text-xs text-tinta/60">
+              {todasLasFotos.length} fotos
+            </span>
+          )}
+        </div>
+
+        {miniaturas.length === 0 ? (
+          <div className="mt-3 flex h-40 items-center justify-center rounded-2xl border border-dashed border-arena-2 bg-azul-50 text-sm text-tinta/50">
+            {ImageOff && <ImageOff size={20} className="mr-2" />}
+            Sin fotos disponibles
+          </div>
+        ) : (
+          <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-4">
+            {miniaturas.map((url, i) => (
+              <button
+                key={`${business?.id ?? ''}-${i}-${url}`}
+                type="button"
+                onClick={() => business && abrirGaleriaEn(i)}
+                className={`group relative overflow-hidden rounded-xl bg-azul-700 border border-arena-2 disabled:opacity-50 ${i === 0 ? 'ring-2 ring-azul ring-offset-2' : ''}`}
+                aria-label={`Ver foto ${i + 1}`}
+                disabled={!business}
+              >
+                {url ? (
+                  <img
+                    src={url}
+                    alt={`Foto ${i + 1} de ${business?.name ?? ''}`}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full w-full place-items-center text-white/60">
+                    <ImageOff size={20} />
+                  </div>
+                )}
+                {i === 0 && (
+                  <span className="absolute left-1.5 bottom-1.5 rounded-full bg-azul/80 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white sr-only sm:not-sr-only">
+                    Portada
+                  </span>
+                )}
+              </button>
+            ))}
+            {hayGaleria && (
+              <button
+                type="button"
+                onClick={() => abrirGaleriaEn(miniaturas.length)}
+                className="flex h-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-arena-2 bg-white/60 text-center text-sm text-tinta/60 transition hover:bg-white hover:border-arena"
+                aria-label={`Ver resto de fotos (${todasLasFotos.length - miniaturas.length} más)`}
+              >
+                {todasLasFotos.length - miniaturas.length} más
+              </button>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-40 pt-3 md:pb-28">
@@ -622,6 +728,89 @@ export default function BusinessDetail() {
           </button>
         </div>
       </div>
+      {seccionGaleria()}
+
+      {/* Galería modal ligera */}
+      {galeriaAbierta && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Galería de fotos de ${business?.name ?? ''}`}
+          className="fixed inset-0 z-50 bg-black/90 p-4 backdrop-blur-sm"
+          onClick={cerrarGaleria}
+        >            <button
+            type="button"
+            onClick={cerrarGaleria}
+            className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-sm font-semibold text-azul shadow transition hover:bg-white"
+            aria-label="Cerrar galería"
+          >
+            <X size={16} />
+            Cerrar
+          </button>
+
+          <div
+            className="relative mx-auto w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(business && todasLasFotos.length === 0) ? (
+              <div className="mx-auto h-[70vh] flex items-center justify-center text-white/70">
+                <ImageOff size={40} className="mb-3" />
+                <p className="text-sm">Sin fotos disponibles</p>
+              </div>
+            ) : business ? (
+              <>
+                <div className="overflow-hidden rounded-xl bg-azul-900">
+                  {fotoActual > 0 && (
+                    <button
+                      type="button"
+                      onClick={fotoPrevia}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-azul shadow transition hover:bg-white"
+                      aria-label="Foto anterior"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                  )}
+
+                  <img
+                    src={todasLasFotos[fotoActual]}
+                    alt={`Foto ${fotoActual + 1} de ${business.name}`}
+                    className="h-[70vh] w-full object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.opacity = '0.3';
+                    }}
+                  />
+
+                  {fotoActual < todasLasFotos.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={fotoSiguiente}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-azul shadow transition hover:bg-white"
+                      aria-label="Foto siguiente"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <p className="text-tinta/70">
+                    Foto {fotoActual + 1} de {todasLasFotos.length}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={cerrarGaleria}
+                    className="rounded-full bg-white/90 px-4 py-1.5 text-azul font-semibold shadow transition hover:bg-white"
+                  >
+                    <X size={14} />
+                    Cerrar
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

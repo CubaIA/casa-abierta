@@ -18,6 +18,8 @@ import type { Business } from '@/lib/types';
 import { BusinessCard } from '@/components/BusinessCard';
 import { useAuth } from '@/lib/auth';
 
+
+
 /* ------------------------------------------------------------------ */
 /* Imágenes oficiales (nombres exactos tal y como están en /public/img) */
 /* ------------------------------------------------------------------ */
@@ -146,6 +148,17 @@ export default function Home() {
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo actualizar el favorito');
+    } finally {
+      // Consistencia local rápida aunque el servidor falle en algún entorno:
+      // volvemos a calcular el estado desde el backend cuando hay sesión.
+      if (userId && !businesses) {
+        try {
+          const ids = await listFavoriteIds(userId);
+          setFavoritos(new Set(ids));
+        } catch {
+          /* sin efecto */
+        }
+      }
     }
   }
 

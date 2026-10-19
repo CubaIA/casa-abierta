@@ -61,16 +61,35 @@ export default function Favoritos() {
             key={b.id}
             business={b}
             favorite
-            layout="grid"
-            onToggleFavorite={async (business) => {
-              if (!userId) return;
-              try {
-                await toggleFavorite(userId, business.id);
-                setRows((prev) => (prev ?? []).filter((x) => x.id !== business.id));
-              } catch (e) {
-                setError(e instanceof Error ? e.message : 'No se pudo actualizar el favorito');
-              }
-            }}
+            layout="grid"              onToggleFavorite={async (business) => {
+                if (!userId) return;
+                try {
+                  const isFav = await toggleFavorite(userId, business.id);
+                  if (isFav) {
+                    setRows((prev) => (prev ?? []).filter((x) => x.id !== business.id));
+                  } else {
+                    // El negocio salió de favoritos: refresh desde backend para evitar
+                    // estado desincronizado en modo demo o si la petición ni se completó.
+                    try {
+                      const ids = await listFavoriteIds(userId);
+                      setRows((prev) => (prev ?? []).filter((x) => ids.includes(x.id)));
+                    } catch {
+                      /* sin efecto */
+                    }
+                  }
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'No se pudo actualizar el favorito');
+                } finally {
+                  if (userId && !rows) {
+                    try {
+                      const ids = await listFavoriteIds(userId);
+                      setRows((prev) => (prev ?? []).filter((x) => ids.includes(x.id)));
+                    } catch {
+                      /* sin efecto */
+                    }
+                  }
+                }
+              }}
           />
         ))}
       </div>
