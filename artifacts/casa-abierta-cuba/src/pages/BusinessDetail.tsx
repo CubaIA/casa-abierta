@@ -244,9 +244,9 @@ export default function BusinessDetail() {
   const precio = formatPrice(business);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
   const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
-  const todasLasFotos = resolvePhotos(business);
-  const miniaturas = todasLasFotos.slice(0, 4);
-  const hayGaleria = todasLasFotos.length > 1;
+  const fotosValidas = resolvePhotos(business);
+  const miniaturas = fotosValidas.slice(0, 4);
+  const hayGaleria = fotosValidas.length > 1;
 
   const nombreCompuesto = (business?.host_name ?? business?.name ?? '');
   const iniciales = nombreCompuesto
@@ -270,7 +270,7 @@ export default function BusinessDetail() {
     .join(' · ');
 
   const [galeriaAbierta, setGaleriaAbierta] = useState(false);
-  const [fotoActual, setFotoActual] = useState(0);
+  const [fotoActual, setFotoActual] = useState<number | null>(null);
 
   function abrirGaleriaEn(indice: number) {
     setFotoActual(indice);
@@ -279,25 +279,28 @@ export default function BusinessDetail() {
 
   function cerrarGaleria() {
     setGaleriaAbierta(false);
-    setFotoActual(0);
+    setFotoActual(null);
   }
 
   function fotoPrevia() {
-    setFotoActual((i) => (i > 0 ? i - 1 : todasLasFotos.length - 1));
+    if (fotoActual === null) return;
+    setFotoActual((fotoActual > 0 ? fotoActual - 1 : fotosValidas.length - 1));
   }
 
   function fotoSiguiente() {
-    setFotoActual((i) => (i < todasLasFotos.length - 1 ? i + 1 : 0));
+    if (fotoActual === null) return;
+    setFotoActual((fotoActual < fotosValidas.length - 1 ? fotoActual + 1 : 0));
   }
 
   function seccionGaleria() {
+    if (!business) return null;
     return (
       <section className="mt-5" aria-label="Galería de fotos">
         <div className="flex items-center gap-3">
           <p className="text-sm font-extrabold text-azul">Fotos del anuncio</p>
           {hayGaleria && (
             <span className="text-xs text-tinta/60">
-              {todasLasFotos.length} fotos
+              {fotosValidas.length} fotos
             </span>
           )}
         </div>
@@ -311,17 +314,16 @@ export default function BusinessDetail() {
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-4">
             {miniaturas.map((url, i) => (
               <button
-                key={`${business?.id ?? ''}-${i}-${url}`}
+                key={`${business.id}-${i}-${url}`}
                 type="button"
-                onClick={() => business && abrirGaleriaEn(i)}
+                onClick={() => abrirGaleriaEn(i)}
                 className={`group relative overflow-hidden rounded-xl bg-azul-700 border border-arena-2 disabled:opacity-50 ${i === 0 ? 'ring-2 ring-azul ring-offset-2' : ''}`}
                 aria-label={`Ver foto ${i + 1}`}
-                disabled={!business}
               >
                 {url ? (
                   <img
                     src={url}
-                    alt={`Foto ${i + 1} de ${business?.name ?? ''}`}
+                    alt={`Foto ${i + 1} de ${business.name}`}
                     loading={i === 0 ? 'eager' : 'lazy'}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                     onError={(e) => {
@@ -345,9 +347,9 @@ export default function BusinessDetail() {
                 type="button"
                 onClick={() => abrirGaleriaEn(miniaturas.length)}
                 className="flex h-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-arena-2 bg-white/60 text-center text-sm text-tinta/60 transition hover:bg-white hover:border-arena"
-                aria-label={`Ver resto de fotos (${todasLasFotos.length - miniaturas.length} más)`}
+                aria-label={`Ver resto de fotos (${fotosValidas.length - miniaturas.length} más)`}
               >
-                {todasLasFotos.length - miniaturas.length} más
+                {fotosValidas.length - miniaturas.length} más
               </button>
             )}
           </div>
@@ -731,14 +733,15 @@ export default function BusinessDetail() {
       {seccionGaleria()}
 
       {/* Galería modal ligera */}
-      {galeriaAbierta && (
+      {galeriaAbierta && fotoActual !== null && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={`Galería de fotos de ${business?.name ?? ''}`}
           className="fixed inset-0 z-50 bg-black/90 p-4 backdrop-blur-sm"
           onClick={cerrarGaleria}
-        >            <button
+        >
+          <button
             type="button"
             onClick={cerrarGaleria}
             className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-sm font-semibold text-azul shadow transition hover:bg-white"
@@ -752,12 +755,12 @@ export default function BusinessDetail() {
             className="relative mx-auto w-full max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {(business && todasLasFotos.length === 0) ? (
+            {fotosValidas.length === 0 ? (
               <div className="mx-auto h-[70vh] flex items-center justify-center text-white/70">
                 <ImageOff size={40} className="mb-3" />
                 <p className="text-sm">Sin fotos disponibles</p>
               </div>
-            ) : business ? (
+            ) : (
               <>
                 <div className="overflow-hidden rounded-xl bg-azul-900">
                   {fotoActual > 0 && (
@@ -772,15 +775,15 @@ export default function BusinessDetail() {
                   )}
 
                   <img
-                    src={todasLasFotos[fotoActual]}
-                    alt={`Foto ${fotoActual + 1} de ${business.name}`}
+                    src={fotosValidas[fotoActual]}
+                    alt={`Foto ${fotoActual + 1} de ${business?.name ?? ''}`}
                     className="h-[70vh] w-full object-contain"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.opacity = '0.3';
                     }}
                   />
 
-                  {fotoActual < todasLasFotos.length - 1 && (
+                  {fotoActual < fotosValidas.length - 1 && (
                     <button
                       type="button"
                       onClick={fotoSiguiente}
@@ -794,7 +797,7 @@ export default function BusinessDetail() {
 
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <p className="text-tinta/70">
-                    Foto {fotoActual + 1} de {todasLasFotos.length}
+                    Foto {fotoActual + 1} de {fotosValidas.length}
                   </p>
                   <button
                     type="button"
@@ -806,7 +809,7 @@ export default function BusinessDetail() {
                   </button>
                 </div>
               </>
-            ) : null}
+            )}
           </div>
         </div>
       )}
