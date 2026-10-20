@@ -82,8 +82,8 @@ function mapBusinessRow(row: Record<string, unknown>): Business {
   const amenities = Array.isArray(r.amenities) ? r.amenities.join(' · ') : typeof r.amenities === 'string' ? r.amenities : '';
   return {
     ...r,
+    name: r.title ?? '',
     title: r.title ?? '',
-    host_name: r.host_name ?? '',
     host_story: r.host_story ?? '',
     service_type: r.service_type ?? r.category ?? 'servicios',
     tourism_category: r.tourism_category ?? r.subcategory ?? r.category ?? '',
@@ -99,7 +99,11 @@ function mapBusinessRow(row: Record<string, unknown>): Business {
 function joinBusinessName(business: unknown): { name: string; province: string } | null {
   if (!business || typeof business !== 'object') return null;
   const b = business as { name?: string; title?: string; province?: string };
-  return { name: b.title ?? 'Negocio', province: b.province ?? '' };
+  return { name: b.title ?? b.name ?? 'Negocio', province: b.province ?? '' };
+}
+
+function mapBusinessForCards(row: Record<string, unknown>): Business {
+  return mapBusinessRow(row);
 }
 
 /* ------------------------------------------------------------------ */
@@ -348,7 +352,7 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
   if (filters.q) {
     const q = filters.q.toLowerCase();
     rows = rows.filter((b) =>
-      [b.title, b.municipality, b.province, b.description].some((v) => v?.toLowerCase().includes(q)),
+      [b.name, b.municipality, b.province, b.description].some((v) => v?.toLowerCase().includes(q)),
     );
   }
   return rows;
