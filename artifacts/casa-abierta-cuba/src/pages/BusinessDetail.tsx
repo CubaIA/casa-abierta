@@ -298,9 +298,7 @@ export default function BusinessDetail() {
   function fotoSiguiente() {
     if (fotoActual === null) return;
     setFotoActual((fotoActual < fotosValidas.length - 1 ? fotoActual + 1 : 0));
-  }
-
-  function seccionGaleria() {
+  }  function seccionGaleria() {
     if (!business) return null;
     return (
       <section className="mt-5" aria-label="Galería de fotos">
@@ -311,6 +309,7 @@ export default function BusinessDetail() {
               {fotosValidas.length} fotos
             </span>
           )}
+
         </div>
 
         {miniaturas.length === 0 ? (
@@ -716,28 +715,6 @@ export default function BusinessDetail() {
         <p className="form-error mt-4" role="alert">{errorMessage}</p>
       )}
 
-      {/* ---------------------------------------------------------- */}
-      {/* Barra flotante inferior                                     */}
-      {/* ---------------------------------------------------------- */}
-      <div className="booking-bar fixed inset-x-0 bottom-[68px] z-30 border-t border-arena-2 bg-white/95 px-4 py-3 backdrop-blur md:bottom-0">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="truncate text-lg font-extrabold text-azul">
-              {precio ?? 'Consultar precio'}
-            </p>
-            <p className="truncate text-xs text-tinta/60">
-              {precio ? unidad : 'El anfitrión confirma disponibilidad'}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onReservar}
-            className={`shrink-0 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition sm:text-base ${RESERVA_ROSA}`}
-          >
-            Reservar
-          </button>
-        </div>
-      </div>
       {seccionGaleria()}
 
       {/* Galería modal ligera */}
