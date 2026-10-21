@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth, demoMode } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 type Mode = 'login' | 'signup';
 
@@ -27,27 +28,36 @@ export default function Entrar() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setBusy(true);
-    try {
-      const mail = email.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) {
-        throw new Error('Introduce un correo electrónico válido.');
+    setBusy(true);      try {
+        const mail = email.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) {
+          throw new Error('Introduce un correo electrónico válido.');
+        }
+        if (mode === 'login') {
+          const perfil = await signIn(mail, password);
+          // Los administradores entran directamente al panel; el resto, al catálogo.
+          navigate(perfil?.role === 'admin' ? '/admin' : '/');
+        } else {
+          if (fullName.trim().length < 2) throw new Error('Indica tu nombre completo.');
+          if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
+          await signUp({ email: mail, password, fullName: fullName.trim(), accountType });
+          navigate('/');
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'No se pudo completar la operación';
+        if (
+          mode === 'login' &&
+          (typeof err === 'object' && err !== null &&
+           (String((err as { code?: string | null }).code ?? '') === 'email_not_confirmed' ||
+            /not confirmed/i.test(message)))
+        ) {
+          setError('Debes verificar tu correo electrónico. Revisa tu bandeja de entrada.');
+        } else {
+          setError(message);
+        }
+      } finally {
+        setBusy(false);
       }
-      if (mode === 'login') {
-        const perfil = await signIn(mail, password);
-        // Los administradores entran directamente al panel; el resto, al catálogo.
-        navigate(perfil?.role === 'admin' ? '/admin' : '/');
-      } else {
-        if (fullName.trim().length < 2) throw new Error('Indica tu nombre completo.');
-        if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
-        await signUp({ email: mail, password, fullName: fullName.trim(), accountType });
-        navigate('/');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo completar la operación');
-    } finally {
-      setBusy(false);
-    }
   }
 
   return (
@@ -125,6 +135,38 @@ export default function Entrar() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mínimo 6 caracteres"
           />
+          <button
+            type="button"
+            className="ml-2 text-xs font-semibold text-azul hover:underline"
+            onClick={() => document.getElementById('reset-password')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+        <div id="reset-password" className="mt-2 text-xs text-tinta/60">
+          <button
+            type="button"
+            className="font-semibold text-azul hover:underline"
+            onClick={async () => {
+              const mail = email.trim();
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) {
+                setError('Escribe tu correo para reenviar las instrucciones de recuperación.');
+                return;
+              }
+              if (supabase) {
+                try {
+                  await supabase.auth.resetPasswordForEmail(mail);
+                  setError('Revisa tu bandeja de entrada para cambiar tu contraseña.');
+        } catch (err) {
+          setError('No se pudo enviar el correo. Intenta más tarde.');
+        }
+              } else {
+                setError('No se pudo enviar el correo. Intenta más tarde.');
+              }
+            }}
+          >
+            Reenviar instrucciones de recuperación
+          </button>
         </div>
 
         {mode === 'signup' && (

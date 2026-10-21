@@ -248,7 +248,7 @@ export default function BusinessDetail() {
   const tipoLabel =
     SERVICE_TYPES.find((s) => s.value === business?.service_type)?.label ??
     (business?.service_type ?? '').charAt(0).toUpperCase() + (business?.service_type ?? '').slice(1);
-  const precio = formatPrice(business);
+  const precio = formatPrice(business) ?? 'Consultar';
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
   const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
   const fotosValidas = resolvePhotos(business);
@@ -271,10 +271,11 @@ export default function BusinessDetail() {
   const servicio = (business?.service_type ?? '').toLowerCase();
   const descripcion = (business?.description ?? '').trim();
   const esGastronomia = servicio === 'gastronomia' || servicio === 'gastronomía' || servicio === 'gastronomia-restaurante';
+  const schedule = (business?.schedule ?? '').trim();
   const textoLoQueDebesSaber =
-    (esGastronomia && descripcion)
-      ? descripcion
-      : `Aprovecha al máximo tu visita. Llegada después de las 15:00, salida antes de las 11:00 y sin fiestas ni eventos.`;
+    esGastronomia && schedule
+      ? schedule
+      : 'Horario: Consultar directamente con el anfitrión';
   const subtitulo = [
     `${tipoLabel} en ${business.municipality || '—'}, ${business.province || '—'}`,
     (recomendados.length > 0 ? `Ideal para ${recomendados.join(', ')}` : null) ?? null,
@@ -483,12 +484,11 @@ export default function BusinessDetail() {
         </div>
       </div>
 
-      <hr className="my-6 border-arena-2" />
-
-      {/* Descripción y amenidades */}
+      <hr className="my-6 border-arena-2" />        {/* Descripción y amenidades */}
       <section>
         <h2 className="text-lg font-extrabold text-azul">Sobre este lugar</h2>
-        <p className="mt-2 whitespace-pre-line leading-relaxed text-tinta/85">{business.description || ''}</p>
+        <p className="mt-2 whitespace-pre-line leading-relaxed text-tinta/85">{(business?.description ?? '').trim() || ''}</p>
+
 
         {amenidades.length > 0 && (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -523,15 +523,18 @@ export default function BusinessDetail() {
         <Desplegable titulo="Lo que debes saber">
           <div className="rounded-xl border border-arena-2 bg-white p-4">
             <div className="space-y-3 text-sm text-tinta/85">
-              {esGastronomia && descripcion && (
-                <p className="leading-relaxed">{descripcion}</p>
+              {esGastronomia && schedule && (
+                <p className="leading-relaxed">{schedule}</p>
               )}
-              {!esGastronomia ||
-              (!descripcion && (
-                <p className="leading-relaxed text-tinta/70">Aprovecha al máximo tu visita. Llegada después de las 15:00, salida antes de las 11:00 y sin fiestas ni eventos.</p>
-              ))}
-              {esGastronomia && !descripcion && (
-                <p className="leading-relaxed text-tinta/70">Sin disponibilidad configurada para este restaurante aún.</p>
+              {!esGastronomia || (!descripcion && !schedule) ? (
+                <p className="leading-relaxed text-tinta/70">
+                  Aprovecha al máximo tu visita. Llegada después de las 15:00, salida antes de las 11:00 y sin fiestas ni eventos.
+                </p>
+              ) : null}
+              {esGastronomia && !schedule && descripcion && (
+                <p className="leading-relaxed text-tinta/70">
+                  Horario: Consultar directamente con el anfitrión
+                </p>
               )}
             </div>
           </div>
@@ -620,7 +623,7 @@ export default function BusinessDetail() {
 
         {!userId && (
           <div className="mt-4">
-            <p className="text-sm text-tinta/70">Necesitas una cuenta para enviar solicitudes.</p>
+            <p className="text-sm text-tinta/70">Necesitas una cuenta para guardar favoritos y enviar solicitudes.</p>
             <button className="button-primary mt-2 w-full justify-center sm:w-auto" onClick={() => navigate('/entrar')}>
               Entrar o registrarme
             </button>

@@ -53,6 +53,10 @@ export interface Business {
   status: BusinessStatus;
   created_at: string;
   slug?: string;
+  schedule?: string | null;
+  textos_adicionales?: string | null;
+  descuentos?: string | null;
+  pourquoi_traveler?: string | null;
   /** Promedio de reseñas, cuando la fuente lo expone (opcional). */
   rating?: number | null;
   review_count?: number | null;
