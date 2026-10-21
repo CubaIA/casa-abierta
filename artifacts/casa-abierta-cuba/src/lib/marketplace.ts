@@ -55,9 +55,14 @@ export const isDemo = !isSupabaseConfigured;
 const LIVE_BUSINESS_COLS =
   'id, title, description, category, subcategory, province, municipality, ' +
   'languages, status, created_at, images, amenities, tags, ' +
-  'price_amount, price_currency, verified';
+  'price_amount, price_currency, verified, featured';
 
 const LIVE_BUSINESS_AUTH_COLS = LIVE_BUSINESS_COLS + ', owner_id';
+
+/** Los negocios con featured = true van primero, preservando el resto del orden. */
+function featuredFirst(a: Business, b: Business): number {
+  return (b.featured === true ? 1 : 0) - (a.featured === true ? 1 : 0);
+}
 
 /** Normaliza a string[] cualquier columna text[]/jsonb/text. */
 function asArray(v: unknown): string[] {
@@ -343,10 +348,12 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
     if (filters.q) query = query.or(`title.ilike.%${filters.q}%,municipality.ilike.%${filters.q}%,province.ilike.%${filters.q}%`);
     const { data, error } = await query;
     if (error) throw new Error(error.message);
-    return ((data ?? []) as unknown as Array<Record<string, unknown>>).map(mapBusinessRow);
+    return ((data ?? []) as unknown as Array<Record<string, unknown>>)
+      .map(mapBusinessRow)
+      .sort(featuredFirst);
   }
 
-  let rows = loadStore().businesses.filter((b) => b.status === 'approved');
+  let rows = [...loadStore().businesses.filter((b) => b.status === 'approved')].sort(featuredFirst);
   if (filters.province) rows = rows.filter((b) => b.province === filters.province);
   if (filters.service_type) rows = rows.filter((b) => b.service_type === filters.service_type);
   if (filters.q) {

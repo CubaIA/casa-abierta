@@ -41,6 +41,7 @@ export function BusinessCard({
   const unit = priceUnit(business);
   const rating = typeof business.rating === 'number' ? business.rating : null;
   const href = `/negocio/${business.id}`;
+  const featured = business.featured === true;
   const width = layout === 'grid' ? 'w-full' : 'w-[68vw] max-w-[280px] shrink-0 snap-start sm:w-64';
 
   function onHeart(e: MouseEvent<HTMLButtonElement>) {
@@ -50,7 +51,11 @@ export function BusinessCard({
   }
 
   return (
-    <article className={`group relative ${width} ${className}`}>
+    <article
+      className={`group relative ${width} ${
+        featured ? 'rounded-[1.15rem] border-2 border-yellow-500 p-1.5' : ''
+      } ${className}`}
+    >
       {/* Imagen cuadrada con bordes redondeados */}
       <div className="relative aspect-square overflow-hidden rounded-2xl bg-azul-700">
         <Link href={href} aria-label={`Ver ${business.name}`} className="absolute inset-0 block">
@@ -76,8 +81,18 @@ export function BusinessCard({
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent"
         />
 
+        {featured && (
+          <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-yellow-500 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-black shadow-sm">
+            ⭐ Premium
+          </span>
+        )}
+
         {business.lgbt_friendly && (
-          <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-azul">
+          <span
+            className={`pointer-events-none absolute left-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-azul ${
+              featured ? 'top-10' : 'top-3'
+            }`}
+          >
             LGBTQ+ friendly
           </span>
         )}

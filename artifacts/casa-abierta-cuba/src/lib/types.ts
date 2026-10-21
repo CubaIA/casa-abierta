@@ -47,6 +47,8 @@ export interface Business {
   experience_details: string;
   recommended_for: string[];
   lgbt_friendly: boolean;
+  /** Negocios destacados: se muestran primero y con sello Premium. */
+  featured?: boolean | null;
   verified?: boolean;
   sustainability_badge?: string | null;
   is_experience?: boolean;
