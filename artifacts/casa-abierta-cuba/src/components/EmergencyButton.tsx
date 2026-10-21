@@ -5,7 +5,7 @@ export function EmergencyButton() {
     { name: 'Ambulancia', tel: '104' },
   ];
   return (
-    <details className="fixed bottom-20 right-4 z-50 md:bottom-4">
+    <details className="fixed bottom-32 right-4 z-50 md:bottom-6">
       <summary className="cursor-pointer rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-red-700">
         Emergencia
       </summary>

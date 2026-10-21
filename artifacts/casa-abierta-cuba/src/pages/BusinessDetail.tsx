@@ -268,17 +268,25 @@ export default function BusinessDetail() {
   const detalles = String(business?.experience_details ?? '');
   const idiomas = Array.isArray(business?.languages) ? business.languages : [];
   const recomendados = Array.isArray(business?.recommended_for) ? business.recommended_for : [];
-  const amenidades = [
-    ...detalles.split('·').map((s) => s.trim()),
-    ...idiomas.map((l) => `Habla ${l}`),
-    ...recomendados.map((r) => `Ideal para ${r}`),
-  ].filter(Boolean);
+  const servicio = (business?.service_type ?? '').toLowerCase();
+  const descripcion = (business?.description ?? '').trim();
+  const esGastronomia = servicio === 'gastronomia' || servicio === 'gastronomía' || servicio === 'gastronomia-restaurante';
+  const textoLoQueDebesSaber =
+    (esGastronomia && descripcion)
+      ? descripcion
+      : `Aprovecha al máximo tu visita. Llegada después de las 15:00, salida antes de las 11:00 y sin fiestas ni eventos.`;
   const subtitulo = [
     `${tipoLabel} en ${business.municipality || '—'}, ${business.province || '—'}`,
     (recomendados.length > 0 ? `Ideal para ${recomendados.join(', ')}` : null) ?? null,
   ]
     .filter(Boolean)
     .join(' · ');
+  const amenidades = [
+    ...detalles.split('·').map((s) => s.trim()),
+    ...idiomas.map((l) => `Habla ${l}`),
+    ...recomendados.map((r) => `Ideal para ${r}`),
+  ].filter(Boolean);
+
 
   function abrirGaleriaEn(indice: number) {
     setFotoActual(indice);
@@ -513,30 +521,18 @@ export default function BusinessDetail() {
         </Desplegable>
 
         <Desplegable titulo="Lo que debes saber">
-          <div className="grid gap-5 sm:grid-cols-3">
-            <div>
-              <h3 className="text-sm font-bold text-azul">Reglas de la casa</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-tinta/75">
-                <li>Llegada después de las 15:00</li>
-                <li>Salida antes de las 11:00</li>
-                <li>No se permiten fiestas ni eventos</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-azul">Seguridad y propiedad</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-tinta/75">
-                <li>Anfitrión verificado por la plataforma</li>
-                <li>Solicitudes registradas y trazables</li>
-                <li>Prohibido compartir datos fuera de la app</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-azul">Política de cancelación</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-tinta/75">
-                <li>Cancelación gratuita hasta 7 días antes</li>
-                <li>Reembolso completo si el anfitrión cancela</li>
-                <li>Casa Abierta media en cualquier disputa</li>
-              </ul>
+          <div className="rounded-xl border border-arena-2 bg-white p-4">
+            <div className="space-y-3 text-sm text-tinta/85">
+              {esGastronomia && descripcion && (
+                <p className="leading-relaxed">{descripcion}</p>
+              )}
+              {!esGastronomia ||
+              (!descripcion && (
+                <p className="leading-relaxed text-tinta/70">Aprovecha al máximo tu visita. Llegada después de las 15:00, salida antes de las 11:00 y sin fiestas ni eventos.</p>
+              ))}
+              {esGastronomia && !descripcion && (
+                <p className="leading-relaxed text-tinta/70">Sin disponibilidad configurada para este restaurante aún.</p>
+              )}
             </div>
           </div>
         </Desplegable>
