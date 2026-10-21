@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { CheckCircle2, Flag, Inbox, MessageSquare, RefreshCw, Users, XCircle } from 'lucide-react';
+import { CheckCircle2, Flag, Inbox, MessageSquare, RefreshCw, Star, Users, XCircle } from 'lucide-react';
 import {
   adminDeleteBusiness,
   adminGetRequestContact,
@@ -9,6 +9,7 @@ import {
   adminListContactMessages,
   adminListReports,
   adminListUsers,
+  adminSetBusinessFeatured,
   adminSetBusinessStatus,
   adminSetContactMessageStatus,
   adminSetReportStatus,
@@ -84,7 +85,12 @@ function useAdminData<T>(loader: () => Promise<T>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reloadKey]);
 
-  return { rows, err, reload };
+  /** Actualiza las filas ya cargadas sin volver a consultar el servidor. */
+  const patch = useCallback((updater: (prev: T) => T) => {
+    setRows((prev) => (prev === null ? prev : updater(prev)));
+  }, []);
+
+  return { rows, err, reload, patch };
 }
 
 function wrap(fn: () => Promise<void>, onError: (m: string | null) => void, reload: () => void) {
@@ -102,7 +108,25 @@ function wrap(fn: () => Promise<void>, onError: (m: string | null) => void, relo
 /* ---------------- Negocios ---------------- */
 
 function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
-  const { rows: businesses, err, reload } = useAdminData<Business[]>(adminListAllBusinesses);
+  const { rows: businesses, err, reload, patch } = useAdminData<Business[]>(adminListAllBusinesses);
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  /** Alterna Premium de forma optimista y revierte si Supabase falla. */
+  const toggleFeatured = async (business: Business) => {
+    const next = business.featured !== true;
+    const previous = business.featured ?? null;
+    onError(null);
+    setSavingId(business.id);
+    patch((prev) => prev.map((b) => (b.id === business.id ? { ...b, featured: next } : b)));
+    try {
+      await adminSetBusinessFeatured(business.id, next);
+    } catch (e) {
+      patch((prev) => prev.map((b) => (b.id === business.id ? { ...b, featured: previous } : b)));
+      onError(e instanceof Error ? e.message : 'No se pudo actualizar Premium');
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -149,6 +173,20 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
                 Suspender
               </button>
             )}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={b.featured === true}
+              aria-label={`Premium: ${b.name}`}
+              title={b.featured === true ? 'Quitar Premium' : 'Marcar como Premium'}
+              disabled={savingId === b.id}
+              className={`button-ghost !text-sm ${
+                b.featured === true ? '!bg-yellow-500 !border-yellow-500 !text-black' : ''
+              } ${savingId === b.id ? 'opacity-60' : ''}`}
+              onClick={() => toggleFeatured(b)}
+            >
+              <Star size={14} fill={b.featured === true ? 'currentColor' : 'none'} /> Premium
+            </button>
             <button
               className="button-ghost !text-sm !text-terracota-600 !border-terracota-500"
               onClick={wrap(async () => {

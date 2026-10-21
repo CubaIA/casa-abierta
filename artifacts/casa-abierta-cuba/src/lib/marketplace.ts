@@ -938,6 +938,30 @@ export async function adminSetBusinessStatus(id: string, status: BusinessStatus)
   }
 }
 
+/** Marca o desmarca un negocio como Premium (destacado en el catálogo). */
+export async function adminSetBusinessFeatured(id: string, featured: boolean): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_business_featured', {
+      target_business_id: id,
+      next_featured: featured,
+    });
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      // Proyectos que aún no aplicaron la migración 004: update directo (requiere grant de la columna).
+      const { error: updErr } = await supabase.from('businesses').update({ featured }).eq('id', id);
+      if (updErr) throw new Error(updErr.message);
+      return;
+    }
+    throw new Error(error.message);
+  }
+  const store = loadStore();
+  const b = store.businesses.find((x) => x.id === id);
+  if (b) {
+    b.featured = featured;
+    saveStore(store);
+  }
+}
+
 export async function adminDeleteBusiness(id: string): Promise<void> {
   if (supabase) {
     const { error } = await supabase.rpc('admin_delete_business', { target_business_id: id });
