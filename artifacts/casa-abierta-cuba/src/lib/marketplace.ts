@@ -55,7 +55,7 @@ export const isDemo = !isSupabaseConfigured;
 const LIVE_BUSINESS_COLS =
   'id, title, description, category, subcategory, province, municipality, ' +
   'languages, status, created_at, images, amenities, tags, ' +
-  'price_amount, price_currency, verified, featured';
+  'price_amount, price_currency, verified, featured, schedule, capacity';
 
 const LIVE_BUSINESS_AUTH_COLS = LIVE_BUSINESS_COLS + ', owner_id';
 
@@ -73,6 +73,21 @@ function asArray(v: unknown): string[] {
     return trimmed.split(/[,.]/).map((s) => s.trim()).filter(Boolean);
   }
   return [];
+}
+
+/** `schedule` es jsonb en producción: llega como texto, array o `{}`.
+ *  Se normaliza a texto plano para que la ficha nunca haga trim() de un objeto. */
+function asTextoPlano(v: unknown): string | null {
+  if (typeof v === 'string') return v.trim() || null;
+  if (typeof v === 'number') return String(v);
+  if (Array.isArray(v)) {
+    const partes = v
+      .filter((x): x is string => typeof x === 'string')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return partes.length ? partes.join(' · ') : null;
+  }
+  return null;
 }
 
 /** Traduce una fila real de `businesses` al tipo Business que esperan las páginas. */
@@ -95,6 +110,7 @@ function mapBusinessRow(row: Record<string, unknown>): Business {
     images: r.images ?? r.photos ?? [],
     languages: asArray(r.languages),
     experience_details: r.experience_details ?? amenities,
+    schedule: asTextoPlano(r.schedule),
     recommended_for: asArray(r.recommended_for ?? r.tags),
     lgbt_friendly: r.lgbt_friendly ?? false,
   } as Business;

@@ -317,7 +317,7 @@ export default function BusinessDetail() {
   const detalles = String(business?.experience_details ?? '');
   const idiomas = Array.isArray(business?.languages) ? business.languages : [];
   const recomendados = Array.isArray(business?.recommended_for) ? business.recommended_for : [];
-  const schedule = (business?.schedule ?? '').trim();
+  const schedule = typeof business?.schedule === 'string' ? business.schedule.trim() : '';
 
   /* Idiomas sin duplicados («Español» y «español» son el mismo idioma). */
   const idiomasUnicos = (() => {

@@ -56,6 +56,7 @@ export interface Business {
   created_at: string;
   slug?: string;
   schedule?: string | null;
+  capacity?: number | null;
   textos_adicionales?: string | null;
   descuentos?: string | null;
   pourquoi_traveler?: string | null;
