@@ -70,7 +70,14 @@ export function AdminLayout({
       <header className="sticky top-0 z-30 border-b border-dorado/40 bg-[#11161d]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <img src="/img/isotipo.svg" alt="" width={36} height={36} className="h-9 w-9 shrink-0" />
+            <img
+              src="/img/logo-oficial.png"
+              alt="Casa Abierta Cuba"
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 rounded-full object-contain"
+              decoding="async"
+            />
             <div className="min-w-0">
               <p className="truncate text-sm font-extrabold tracking-wide text-dorado sm:text-base">
                 Panel de Administración | Casa Abierta

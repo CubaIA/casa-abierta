@@ -58,32 +58,16 @@ export function Layout({ children }: { children: ReactNode }) {
 
       <header className="bg-azul text-white sticky top-0 z-40 shadow-md">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5 font-extrabold tracking-tight" aria-label="Casa Abierta Cuba — inicio">
+          <Link href="/" className="flex min-w-0 shrink-0 items-center" aria-label="Casa Abierta Cuba — inicio">
+            {/* El logo oficial ya incluye el nombre, no se repite en HTML. */}
             <img
-              src="/img/isotipo.svg"
-              alt=""
-              width={44}
-              height={44}
-              className="h-11 w-11 shrink-0 object-contain md:h-10 md:w-10"
-              onError={(e) => {
-                const target = e.currentTarget as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'flex';
-              }}
+              src="/img/logo-oficial.png"
+              alt="Casa Abierta Cuba"
+              width={56}
+              height={56}
+              className="h-12 w-12 max-w-[50px] shrink-0 rounded-full object-contain md:h-14 md:w-14 md:max-w-[60px]"
+              decoding="async"
             />
-            <span className="flex items-center gap-2" style={{ display: 'none' }}>
-              <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-terracota-600 text-sm">CA</span>
-              <span>
-                Casa <span className="text-dorado">Abierta</span>
-              </span>
-            </span>
-            <span className="hidden flex-col leading-tight md:flex">
-              <span className="text-base">
-                Casa <span className="text-dorado">Abierta</span> Cuba
-              </span>
-              <span className="text-[10px] font-medium text-azul-200">Una puerta abierta al mundo</span>
-            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Principal">
@@ -244,7 +228,15 @@ function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5 font-extrabold text-white text-lg">
-            <img src="/img/isotipo.svg" alt="" width={40} height={40} className="h-10 w-10 shrink-0 object-contain" loading="lazy" />
+            <img
+              src="/img/logo-oficial.png"
+              alt="Casa Abierta Cuba"
+              width={64}
+              height={64}
+              className="h-16 w-16 max-w-[64px] shrink-0 rounded-full object-contain"
+              loading="lazy"
+              decoding="async"
+            />
             <span>
               Casa Abierta Cuba
               <span className="block text-[11px] font-medium text-azul-200">Una puerta abierta al mundo</span>
