@@ -4,7 +4,9 @@ import {
   ArrowLeft,
   Bath,
   BedDouble,
+  Bike,
   CalendarCheck,
+  Car,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -44,7 +46,54 @@ import {
 
 const RESERVA_ROSA = 'bg-[#FF385C] hover:bg-[#E31C5F]';
 
-const AMENITY_ICONS = [BedDouble, Bath, Wifi, UtensilsCrossed, Users, Languages, MapPin, Sparkles];
+/* Cada amenidad lleva su propio icono según lo que dice el texto: los idiomas
+ * nunca deben heredar iconos de camas, baños o coches por el orden del array. */
+type AmenidadTipo = 'idioma' | 'recomendado' | 'detalle';
+interface Amenidad {
+  texto: string;
+  tipo: AmenidadTipo;
+}
+
+/** Minúsculas y sin tildes, para comparar y deduplicar textos. */
+function normalizarTexto(valor: string): string {
+  return valor
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Reduce las categorías reales de la BD (service_type, tourism_category,
+ * category) a las cuatro familias que usa la ficha. Lo que no sea
+ * alojamiento, gastronomía o transporte (guías, tours, servicios) se trata
+ * como experiencia: nunca recibe reglas de check-in de una casa.
+ */
+function familiaDeServicio(business: Business): 'alojamiento' | 'gastronomia' | 'transporte' | 'experiencia' {
+  const crudo = normalizarTexto(
+    [business.service_type, business.tourism_category, business.category].filter(Boolean).join(' '),
+  );
+  if (/gastronom|restaurant|paladar|cafeteria|comida|cocina/.test(crudo)) return 'gastronomia';
+  if (/transport|taxi|traslado|chofer|alquiler de auto|renta de auto|renta de carro/.test(crudo)) return 'transporte';
+  if (/alojamiento|hostal|hospedaje|villa|apartamento|habitacion|casa/.test(crudo)) return 'alojamiento';
+  return 'experiencia';
+}
+
+function iconoDeAmenidad(amenidad: Amenidad) {
+  if (amenidad.tipo === 'idioma') return Languages;
+  if (amenidad.tipo === 'recomendado') return Users;
+  const t = normalizarTexto(amenidad.texto);
+  if (/\bwifi\b|\binternet\b|\bwi-fi\b/.test(t)) return Wifi;
+  if (/\bbanos?\b|\bduchas?\b|agua caliente|\baseo\b/.test(t)) return Bath;
+  if (/\bcamas?\b|\bhabitacion|\bdormitorio\b|\bsuite\b|\blitera\b/.test(t)) return BedDouble;
+  if (/desayuno|\bcomidas?\b|\bcenas?\b|almuerzo|\bmenu\b|cocina|restaurant|cafeteria/.test(t)) return UtensilsCrossed;
+  if (/\btaxis?\b|traslado|\btransporte\b|recogida|\bautos?\b|\bcarros?\b|\bvehiculo\b|chofer/.test(t)) return Car;
+  if (/bici/.test(t)) return Bike;
+  if (/terraza|jardin|playa|piscina|vista|aire acondicionado|ubicaci|malecon|parqueo|estacionamiento/.test(t)) return MapPin;
+  if (/familia|grupo|pareja|ninos|capacidad|huesped/.test(t)) return Users;
+  return Check;
+}
 
 export default function BusinessDetail() {
   const params = useParams<{ id: string }>();
@@ -268,26 +317,77 @@ export default function BusinessDetail() {
   const detalles = String(business?.experience_details ?? '');
   const idiomas = Array.isArray(business?.languages) ? business.languages : [];
   const recomendados = Array.isArray(business?.recommended_for) ? business.recommended_for : [];
-  const servicio = (business?.service_type ?? '').toLowerCase();
-  const descripcion = (business?.description ?? '').trim();
-  const esGastronomia = servicio === 'gastronomia' || servicio === 'gastronomía' || servicio === 'gastronomia-restaurante';
   const schedule = (business?.schedule ?? '').trim();
-  const textoLoQueDebesSaber =
-    esGastronomia && schedule
-      ? schedule
-      : 'Horario: Consultar directamente con el anfitrión';
+
+  /* Idiomas sin duplicados («Español» y «español» son el mismo idioma). */
+  const idiomasUnicos = (() => {
+    const vistos = new Set<string>();
+    const lista: string[] = [];
+    for (const idioma of idiomas) {
+      const limpio = String(idioma ?? '').trim();
+      if (!limpio) continue;
+      const clave = normalizarTexto(limpio);
+      if (vistos.has(clave)) continue;
+      vistos.add(clave);
+      lista.push(limpio);
+    }
+    return lista;
+  })();
+
+  /* «Habla X» / «Idiomas: X» escritos dentro de los detalles no se repiten:
+   * los idiomas ya salen de `languages` con su icono propio. */
+  const esLineaDeIdioma = (texto: string) => /^(habla\b|idiomas?\s*:)/i.test(texto);
+
+  const amenidades: Amenidad[] = (() => {
+    const vistos = new Set<string>();
+    const lista: Amenidad[] = [];
+    const agregar = (texto: string, tipo: AmenidadTipo) => {
+      const limpio = texto.replace(/\s+/g, ' ').trim();
+      if (!limpio) return;
+      const clave = normalizarTexto(limpio);
+      if (vistos.has(clave)) return;
+      vistos.add(clave);
+      lista.push({ texto: limpio, tipo });
+    };
+    detalles
+      .split('·')
+      .map((s) => s.trim())
+      .filter((s) => s && !esLineaDeIdioma(s))
+      .forEach((s) => agregar(s, 'detalle'));
+    idiomasUnicos.forEach((idioma) => agregar(`Habla ${idioma}`, 'idioma'));
+    recomendados.forEach((r) => agregar(`Ideal para ${r}`, 'recomendado'));
+    return lista;
+  })();
+
+  /* Reglas de visita según la familia de servicio: solo el alojamiento tiene
+   * check-in y check-out. Taxis, guías y experiencias muestran su horario o
+   * un texto de coordinación con el anfitrión. */
+  const familia = familiaDeServicio(business);
+  const bloquesLoQueDebesSaber: string[] = (() => {
+    switch (familia) {
+      case 'alojamiento':
+        return ['Llegada después de las 15:00, salida antes de las 11:00. Sin fiestas ni eventos.'];
+      case 'transporte':
+        return [
+          schedule ||
+            'Servicio de transporte privado. Coordina la recogida y el horario directamente con el anfitrión.',
+        ];
+      case 'gastronomia':
+        return [schedule || 'Horario: Consultar directamente con el anfitrión'];
+      default:
+        return [
+          schedule ||
+            'Experiencia guiada. Coordina el punto de encuentro y los detalles directamente con el anfitrión.',
+        ];
+    }
+  })();
+
   const subtitulo = [
     `${tipoLabel} en ${business.municipality || '—'}, ${business.province || '—'}`,
     (recomendados.length > 0 ? `Ideal para ${recomendados.join(', ')}` : null) ?? null,
   ]
     .filter(Boolean)
     .join(' · ');
-  const amenidades = [
-    ...detalles.split('·').map((s) => s.trim()),
-    ...idiomas.map((l) => `Habla ${l}`),
-    ...recomendados.map((r) => `Ideal para ${r}`),
-  ].filter(Boolean);
-
 
   function abrirGaleriaEn(indice: number) {
     setFotoActual(indice);
@@ -493,11 +593,11 @@ export default function BusinessDetail() {
         {amenidades.length > 0 && (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {amenidades.map((a, i) => {
-              const Icon = AMENITY_ICONS[i % AMENITY_ICONS.length];
+              const Icon = iconoDeAmenidad(a);
               return (
-                <li key={`${a}-${i}`} className="flex items-start gap-3 text-sm text-tinta/80">
+                <li key={`${a.texto}-${i}`} className="flex items-start gap-3 text-sm text-tinta/80">
                   <Icon size={19} aria-hidden className="mt-0.5 shrink-0 text-azul-600" />
-                  <span>{a}</span>
+                  <span>{a.texto}</span>
                 </li>
               );
             })}
@@ -516,26 +616,18 @@ export default function BusinessDetail() {
           )}
           <p className="mt-3 text-sm text-tinta/60">
             <Languages size={14} aria-hidden className="mr-1 inline" />
-            {idiomas.length > 0 ? `Idiomas: ${idiomas.join(', ')}` : 'Idiomas: español'}
+            {idiomasUnicos.length > 0 ? `Idiomas: ${idiomasUnicos.join(', ')}` : 'Idiomas: español'}
           </p>
         </Desplegable>
 
         <Desplegable titulo="Lo que debes saber">
           <div className="rounded-xl border border-arena-2 bg-white p-4">
             <div className="space-y-3 text-sm text-tinta/85">
-              {esGastronomia && schedule && (
-                <p className="leading-relaxed">{schedule}</p>
-              )}
-              {!esGastronomia || (!descripcion && !schedule) ? (
-                <p className="leading-relaxed text-tinta/70">
-                  Aprovecha al máximo tu visita. Llegada después de las 15:00, salida antes de las 11:00 y sin fiestas ni eventos.
+              {bloquesLoQueDebesSaber.map((bloque) => (
+                <p key={bloque} className="leading-relaxed text-tinta/70">
+                  {bloque}
                 </p>
-              ) : null}
-              {esGastronomia && !schedule && descripcion && (
-                <p className="leading-relaxed text-tinta/70">
-                  Horario: Consultar directamente con el anfitrión
-                </p>
-              )}
+              ))}
             </div>
           </div>
         </Desplegable>
