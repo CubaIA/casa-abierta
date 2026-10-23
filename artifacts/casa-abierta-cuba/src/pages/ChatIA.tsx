@@ -149,6 +149,10 @@ export default function ChatIA() {
           </button>
         </form>
       </div>
+
+      <p className="mt-3 text-xs sm:text-sm leading-relaxed text-tinta/60">
+        La IA puede cometer errores. Verifica la información con el anfitrión. Las respuestas generadas no constituyen asesoramiento legal ni contractual.
+      </p>
     </div>
   );
 }
