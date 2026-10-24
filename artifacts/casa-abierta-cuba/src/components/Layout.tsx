@@ -336,7 +336,7 @@ function BottomNav() {
 
 function Footer() {
   return (
-    <footer className="mt-16 bg-azul-700 text-azul-200">
+    <footer className="bg-azul-700 text-azul-200">
       <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <div className="flex items-center gap-2.5 font-extrabold text-white text-lg">
