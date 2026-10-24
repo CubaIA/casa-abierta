@@ -1,8 +1,20 @@
-import type { MouseEvent } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 import { Link } from 'wouter';
 import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
 import { firstPhoto } from '@/lib/images';
+
+/** Anti-caché: añade `?v=<timestamp>` a la URL de la foto para que el navegador
+ *  descargue de nuevo la portada cuando cambia, en lugar de servir la anterior
+ *  desde su caché. Se elimina cualquier `v=` previo para no acumular parámetros. */
+function conAntiCache(url: string): string {
+  const hashIndex = url.indexOf('#');
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+  const sinHash = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const sinV = sinHash.replace(/([?&])v=[^&]*/g, '$1');
+  const base = sinV.endsWith('?') || sinV.endsWith('&') ? sinV.slice(0, -1) : sinV;
+  return `${base}${base.includes('?') ? '&' : '?'}v=${Date.now()}${hash}`;
+}
 
 /** Precio legible para las tarjetas ("$12 USD"). */
 export function formatPrice(business: Business): string | null {
@@ -36,7 +48,11 @@ export function BusinessCard({
   layout = 'carousel',
   className = '',
 }: BusinessCardProps) {
-  const photo = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
+  // Portada: SIEMPRE la primera foto válida del arreglo (images[0]).
+  const photo = firstPhoto(business);
+  // Recalcula el anti-caché solo cuando cambia la foto: así no se descarga
+  // de nuevo en cada render pero tampoco se queda la portada anterior.
+  const photoSrc = useMemo(() => (photo ? conAntiCache(photo) : null), [photo]);
   const price = formatPrice(business);
   const unit = priceUnit(business);
   const rating = typeof business.rating === 'number' ? business.rating : null;
@@ -59,9 +75,9 @@ export function BusinessCard({
       {/* Imagen cuadrada con bordes redondeados */}
       <div className="relative aspect-square overflow-hidden rounded-2xl bg-azul-700">
         <Link href={href} aria-label={`Ver ${business.name}`} className="absolute inset-0 block">
-          {photo ? (
+          {photoSrc ? (
             <img
-              src={photo}
+              src={photoSrc}
               alt={`Foto de ${business.name}`}
               loading="lazy"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

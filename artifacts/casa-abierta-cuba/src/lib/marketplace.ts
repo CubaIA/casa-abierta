@@ -5,6 +5,7 @@
  * con datos de ejemplo para que la demo sea navegable.
  */
 import { isSupabaseConfigured } from './env';
+import { normalizePhotos } from './images';
 import { REQUEST_COLS, supabase } from './supabase';
 import type {
   AccountStatus,
@@ -992,6 +993,109 @@ export async function adminDeleteBusiness(id: string): Promise<void> {
   const store = loadStore();
   store.businesses = store.businesses.filter((b) => b.id !== id);
   saveStore(store);
+}
+
+/* ------------------------------------------------------------------ */
+/* Edición de un negocio desde el panel admin                          */
+/* ------------------------------------------------------------------ */
+
+export interface AdminEditBusinessInput {
+  /** Descripción nueva (ya validada en la interfaz). */
+  description: string;
+  /** WhatsApp/teléfono de contacto. `null` o vacío = no modificarlo. */
+  phone?: string | null;
+  /** Lista completa de fotos; el elemento 0 es la portada del catálogo. */
+  images: string[];
+}
+
+/**
+ * Edita descripción, WhatsApp y fotos de cualquier negocio desde el panel admin.
+ *
+ * El UPDATE directo sobre `businesses` depende de los privilegios/RLS de cada
+ * proyecto, y la columna de fotos se llama `images` en la BD de producción pero
+ * `photos` en la migración 001: por eso se prueban las variantes y se comprueba
+ * leyendo la fila. Ojo: si RLS no deja pasar el UPDATE **no hay error**, solo 0
+ * filas afectadas, así que sin esa verificación el guardado parecería correcto.
+ * Último recurso: la RPC `admin_edit_business` (migración 005, SECURITY DEFINER).
+ */
+export async function adminEditBusiness(id: string, input: AdminEditBusinessInput): Promise<void> {
+  const description = input.description.trim();
+  const images = input.images;
+  const phone = input.phone?.trim() || null;
+
+  if (supabase) {
+    const variantes: Array<{ col: 'images' | 'photos'; conTel: boolean }> = [
+      { col: 'images', conTel: phone !== null },
+      { col: 'images', conTel: false },
+      { col: 'photos', conTel: phone !== null },
+      { col: 'photos', conTel: false },
+    ];
+
+    for (const v of variantes) {
+      const payload: Record<string, unknown> = { description, [v.col]: images };
+      if (v.conTel && phone) payload.phone = phone;
+      const { error } = await supabase.from('businesses').update(payload).eq('id', id);
+      if (error) continue; // columna inexistente o permiso denegado: siguiente variante
+      const persistido = await edicionPersistida(id, description, images, v.col);
+      if (persistido === false) continue; // 0 filas afectadas por RLS
+      if (phone && !v.conTel) await guardarTelefono(id, phone);
+      return;
+    }
+
+    const { error: rpcErr } = await supabase.rpc('admin_edit_business', {
+      target_business_id: id,
+      next_description: description,
+      next_phone: phone ?? '',
+      next_images: images,
+    });
+    if (!rpcErr) return;
+    if (!isMissingRpc(rpcErr.message)) throw new Error(rpcErr.message);
+
+    throw new Error(
+      'La base de datos no permite que el administrador edite este negocio. Aplica ' +
+        'supabase/migrations/005_admin_edit_business.sql en Supabase → SQL Editor (una sola vez) y reintenta.',
+    );
+  }
+
+  const store = loadStore();
+  const b = store.businesses.find((x) => x.id === id);
+  if (!b) throw new Error('Negocio no encontrado');
+  b.description = description;
+  b.images = images;
+  if (phone) (b as Business & { phone?: string | null }).phone = phone;
+  saveStore(store);
+}
+
+/** Lee la fila tras el UPDATE para confirmar que se guardó de verdad.
+ *  `null` = no se pudo verificar (se confía en que el UPDATE no dio error). */
+async function edicionPersistida(
+  id: string,
+  description: string,
+  images: string[],
+  col: 'images' | 'photos',
+): Promise<boolean | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('businesses')
+    .select(`description, ${col}`)
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !data) return null;
+  const fila = data as Record<string, unknown>;
+  const fotosBd = normalizePhotos(fila[col]);
+  return (
+    String(fila.description ?? '').trim() === description &&
+    fotosBd.length === images.length &&
+    fotosBd.every((url, i) => url === images[i])
+  );
+}
+
+/** Best-effort: escribe el WhatsApp en `businesses.phone` cuando la variante
+ *  usada para guardar descripción/fotos no lo incluía. */
+async function guardarTelefono(id: string, phone: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from('businesses').update({ phone }).eq('id', id);
+  if (error) console.warn('No se pudo guardar el WhatsApp del negocio:', error.message);
 }
 
 export async function adminListUsers(): Promise<Profile[]> {

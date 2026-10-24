@@ -43,3 +43,28 @@ export async function uploadBusinessImages(
 
   return urls;
 }
+
+/** Convierte la URL pública de una foto en su ruta dentro del bucket. */
+function pathDesdeUrlPublica(url: string): string | null {
+  const marca = `/${BUCKET}/`;
+  const i = url.indexOf(marca);
+  if (i === -1) return null;
+  const ruta = decodeURIComponent(url.slice(i + marca.length).split('?')[0]);
+  return ruta || null;
+}
+
+/**
+ * Borra del bucket las fotos que el administrador ha quitado de un negocio.
+ * Es best-effort: RLS solo permite borrar objetos de la propia carpeta, así que
+ * un fallo puntual no debe impedir que la edición del negocio se guarde.
+ */
+export async function removeBusinessImages(urls: string[]): Promise<void> {
+  if (!supabase || urls.length === 0) return;
+  const paths = urls
+    .map(pathDesdeUrlPublica)
+    .filter((p): p is string => p !== null);
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  if (error) console.warn('No se pudieron borrar fotos del bucket:', error.message);
+}

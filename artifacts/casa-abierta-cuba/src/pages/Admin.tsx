@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { CheckCircle2, Flag, Inbox, MessageSquare, RefreshCw, Star, Users, XCircle } from 'lucide-react';
+import { CheckCircle2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, Star, Users, XCircle } from 'lucide-react';
 import {
   adminDeleteBusiness,
+  adminEditBusiness,
   adminGetRequestContact,
   adminListAllBusinesses,
   adminListAllRequests,
@@ -17,6 +18,9 @@ import {
   adminSetUserRole,
   adminSetUserStatus,
 } from '@/lib/marketplace';
+import { removeBusinessImages, uploadBusinessImages } from '@/lib/storage';
+import { resolvePhotos } from '@/lib/images';
+import { supabase } from '@/lib/supabase';
 import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
@@ -108,8 +112,10 @@ function wrap(fn: () => Promise<void>, onError: (m: string | null) => void, relo
 /* ---------------- Negocios ---------------- */
 
 function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
+  const { userId } = useAuth();
   const { rows: businesses, err, reload, patch } = useAdminData<Business[]>(adminListAllBusinesses);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
 
   /** Alterna Premium de forma optimista y revierte si Supabase falla. */
   const toggleFeatured = async (business: Business) => {
@@ -149,6 +155,14 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
           </div>
           <p className="mt-2 text-sm text-tinta/75">{b.description}</p>
           <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`button-ghost !text-sm ${editId === b.id ? '!bg-azul !text-white !border-azul' : ''}`}
+              aria-expanded={editId === b.id}
+              onClick={() => setEditId(editId === b.id ? null : b.id)}
+            >
+              <Pencil size={14} /> Editar
+            </button>
             {b.status !== 'approved' && (
               <button
                 className="button-primary !py-1.5 !px-3 text-sm"
@@ -196,9 +210,234 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               <XCircle size={14} /> Eliminar
             </button>
           </div>
+          {editId === b.id && (
+            <BusinessEditor
+              business={b}
+              ownerId={userId}
+              onError={onError}
+              onCancel={() => setEditId(null)}
+              onSaved={(next) => {
+                patch((prev) => prev.map((x) => (x.id === b.id ? { ...x, ...next } : x)));
+                setEditId(null);
+              }}
+            />
+          )}
         </article>
       ))}
     </div>
+  );
+}
+
+/* ---------------- Edición de un negocio ---------------- */
+
+/** Fotos nuevas seleccionadas por el admin, con su preview local. */
+interface FotoNueva {
+  file: File;
+  preview: string;
+}
+
+/** Editor inline de descripción, WhatsApp y fotos de un negocio. */
+function BusinessEditor({
+  business,
+  ownerId,
+  onError,
+  onCancel,
+  onSaved,
+}: {
+  business: Business;
+  ownerId: string | null;
+  onError: (m: string | null) => void;
+  onCancel: () => void;
+  onSaved: (next: Partial<Business>) => void;
+}) {
+  const [description, setDescription] = useState(business.description ?? '');
+  const [phone, setPhone] = useState(
+    String((business as Business & { phone?: string | null }).phone ?? ''),
+  );
+  const [fotos, setFotos] = useState<string[]>(resolvePhotos(business));
+  const [quitadas, setQuitadas] = useState<string[]>([]);
+  const [nuevas, setNuevas] = useState<FotoNueva[]>([]);
+  const [localErr, setLocalErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // El teléfono no viene en la lista del admin (columna acotada): se intenta leer aparte.
+  useEffect(() => {
+    if (!supabase) return;
+    let vivo = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('businesses')
+          .select('phone')
+          .eq('id', business.id)
+          .maybeSingle();
+        if (!vivo || error || !data) return;
+        const valor = (data as { phone?: string | null }).phone;
+        if (valor) setPhone((prev) => (prev.trim() ? prev : String(valor)));
+      } catch {
+        // Columna no legible en este proyecto: el admin puede escribirla a mano.
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [business.id]);
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    setLocalErr(null);
+    onError(null);
+
+    const desc = description.trim();
+    if (desc.length < 10) {
+      setLocalErr('La descripción debe tener al menos 10 caracteres.');
+      return;
+    }
+    if (fotos.length === 0 && nuevas.length === 0) {
+      setLocalErr('El negocio necesita al menos una foto.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      let subidas: string[] = [];
+      if (nuevas.length) {
+        if (!supabase || !ownerId) {
+          throw new Error('No hay sesión con Supabase: no se pueden subir fotos.');
+        }
+        subidas = await uploadBusinessImages(ownerId, business.id, nuevas.map((n) => n.file));
+        if (!subidas.length) {
+          throw new Error('No se pudieron subir las fotos: comprueba el formato (jpg/png/webp) y el tamaño.');
+        }
+      }
+      const finales = [...fotos, ...subidas];
+      await adminEditBusiness(business.id, { description: desc, phone, images: finales });
+      if (quitadas.length) void removeBusinessImages(quitadas);
+      nuevas.forEach((n) => URL.revokeObjectURL(n.preview));
+      onSaved({ description: desc, images: finales, photos: finales });
+    } catch (err) {
+      setLocalErr(err instanceof Error ? err.message : 'No se pudo guardar la edición');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const quitarFoto = (i: number) => {
+    const url = fotos[i];
+    setFotos(fotos.filter((_, j) => j !== i));
+    setQuitadas((prev) => [...prev, url]);
+  };
+
+  const quitarNueva = (i: number) => {
+    URL.revokeObjectURL(nuevas[i].preview);
+    setNuevas(nuevas.filter((_, j) => j !== i));
+  };
+
+  return (
+    <form onSubmit={guardar} className="mt-3 space-y-4 rounded-xl border border-arena-2 bg-arena/50 p-4">
+      <div>
+        <label className="field-label" htmlFor={`edit-desc-${business.id}`}>Descripción</label>
+        <textarea
+          id={`edit-desc-${business.id}`}
+          className="field-input"
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="20 a 1200 caracteres: qué ofreces, qué incluye, ambiente…"
+        />
+        <p className="field-hint">{description.trim().length}/1200 caracteres</p>
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor={`edit-phone-${business.id}`}>WhatsApp / teléfono de contacto</label>
+        <input
+          id={`edit-phone-${business.id}`}
+          className="field-input"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+53 5 555 9876"
+        />
+        <p className="field-hint">Déjalo vacío o igual para no modificarlo.</p>
+      </div>
+
+      <div>
+        <span className="field-label">Fotos del negocio</span>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {fotos.map((url, i) => (
+            <span
+              key={url}
+              className="relative inline-block h-20 w-20 overflow-hidden rounded-xl border border-arena-2 bg-azul-900"
+            >
+              <img src={url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
+              {i === 0 && (
+                <span className="absolute left-0 top-0 rounded-br-md bg-azul px-1 py-0.5 text-[9px] font-extrabold uppercase text-white">
+                  Portada
+                </span>
+              )}
+              <button
+                type="button"
+                aria-label={`Quitar foto ${i + 1}`}
+                className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 text-sm font-semibold text-white hover:bg-black/50"
+                onClick={() => quitarFoto(i)}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          {nuevas.map((n, i) => (
+            <span
+              key={n.preview}
+              className="relative inline-block h-20 w-20 overflow-hidden rounded-xl border-2 border-dashed border-azul bg-azul-900"
+            >
+              <img src={n.preview} alt={`Foto nueva ${i + 1}`} className="h-full w-full object-cover" />
+              <span className="absolute left-0 top-0 rounded-br-md bg-verde px-1 py-0.5 text-[9px] font-extrabold uppercase text-white">
+                Nueva
+              </span>
+              <button
+                type="button"
+                aria-label={`Quitar foto nueva ${i + 1}`}
+                className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 text-sm font-semibold text-white hover:bg-black/50"
+                onClick={() => quitarNueva(i)}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          <label className="cursor-pointer inline-flex items-center gap-1.5 self-start rounded-xl border-2 border-dashed border-arena-2 bg-white/60 px-3 py-2 text-sm text-tinta/70 transition hover:border-arena hover:bg-white">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                if (!files.length) return;
+                setNuevas((prev) => [
+                  ...prev,
+                  ...files.map((f) => ({ file: f, preview: URL.createObjectURL(f) })),
+                ]);
+                e.target.value = '';
+              }}
+            />
+            <Plus size={16} aria-hidden /> Añadir fotos
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-tinta/60">
+          La primera foto es la portada del catálogo. Las fotos que quites se borran también del almacenamiento al guardar.
+        </p>
+      </div>
+
+      {localErr && <p className="form-error" role="alert">{localErr}</p>}
+
+      <div className="flex flex-wrap gap-2">
+        <button className="button-primary !py-1.5 !px-3 text-sm" type="submit" disabled={busy}>
+          {busy ? 'Guardando…' : 'Guardar cambios'}
+        </button>
+        <button className="button-ghost !text-sm" type="button" onClick={onCancel} disabled={busy}>
+          Cancelar
+        </button>
+      </div>
+    </form>
   );
 }
 
