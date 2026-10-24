@@ -45,8 +45,17 @@ export default function Entrar() {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'No se pudo completar la operación';
-        if (
-          mode === 'login' &&
+        // Login: credenciales incorrectas → mensaje personalizado
+        const isLogin = mode === 'login';
+        const wrongCreds = isLogin &&
+          (typeof err === 'object' && err !== null &&
+           (String((err as { code?: string | null }).code ?? '') === 'invalid_credentials' ||
+            /invalid credentials/i.test(message) ||
+            /Correo o contraseña/i.test(message)));
+        if (wrongCreds) {
+          setError('Correo o contraseña incorrectos. Verifica tus datos.');
+        } else if (
+          isLogin &&
           (typeof err === 'object' && err !== null &&
            (String((err as { code?: string | null }).code ?? '') === 'email_not_confirmed' ||
             /not confirmed/i.test(message)))
