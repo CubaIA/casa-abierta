@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Heart, Search } from 'lucide-react';
-import { CATALOG_IMAGES, FILTROS, type CategoryTile } from '@/lib/catalog';
+import { Link } from 'wouter';
+import { Heart, Menu, Search, Sparkles } from 'lucide-react';
+import { CATALOG_IMAGES, FILTROS } from '@/lib/catalog';
 import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
 import { CatalogExplorer } from '@/components/CatalogExplorer';
-import { CategoryTiles, HostCTA } from '@/components/HomeBlocks';
-import { ConciergeTeaser } from '@/components/ConciergeBanner';
 
+/**
+ * Portada minimalista.
+ *
+ * La vista deja sólo la cabecera, el mensaje de marca, el buscador (con sus
+ * filtros) y el acceso a la IA. El catálogo sigue cargado y disponible: sus
+ * filas, tarjetas, favoritos y fichas no se han tocado y viven además en las
+ * secciones del menú (/alojamientos, /gastronomia, /guias, /taxis, /lgbtq).
+ * Aquí los resultados se pintan sólo cuando hay una búsqueda o un filtro
+ * activo, para que la portada no muestre carruseles de entrada.
+ */
 export default function Home() {
   const { businesses, error: catalogError } = useCatalog();
   const { favoritos, error: favoritesError, toggle: onToggleFavorite } = useFavorites();
@@ -18,30 +27,32 @@ export default function Home() {
     document.title = 'Casa Abierta Cuba | Descubre la isla con quienes la viven';
   }, []);
 
-  function verCategoria(next: CategoryTile) {
-    setCat(next.serviceType ?? 'todo');
-    setInclusivo(Boolean(next.inclusivo));
+  const error = catalogError ?? favoritesError;
+  const hayFiltro = cat !== 'todo' || inclusivo || q.trim().length > 0;
+  const mostrarResultados = hayFiltro || Boolean(error);
+
+  function irAlCatalogo() {
     document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   return (
-    <div>
+    <div className="bg-crema">
       {/* ---------------------------------------------------------- */}
-      {/* Hero con Playa.jpeg + overlay oscuro                        */}
+      {/* Hero: foto de Cuba + azul marino, con aire libre alrededor  */}
       {/* ---------------------------------------------------------- */}
-      <section className="relative isolate overflow-hidden bg-azul-700 text-white">
+      <section className="relative isolate flex min-h-[calc(100svh-4.5rem)] flex-col justify-center overflow-hidden bg-azul-700 text-white md:min-h-[calc(100svh-5rem)]">
         <div
           aria-hidden
           className="absolute inset-0 -z-10 bg-cover bg-center"
           style={{ backgroundImage: `url('${CATALOG_IMAGES.hero}')` }}
         />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-azul-700/60" />
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-gradient-to-b from-azul-700/85 via-azul-700/40 to-azul-700/95"
+          className="absolute inset-0 -z-10 bg-gradient-to-b from-azul-700/90 via-azul-700/45 to-azul-700/95"
         />
 
-        <div className="mx-auto max-w-5xl px-4 pb-12 pt-14 sm:pb-16 sm:pt-20">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-44 pt-16 sm:pb-36 sm:pt-24">
           <p className="text-[0.72rem] font-extrabold uppercase tracking-[0.18em] text-dorado">
             Una puerta abierta a Cuba
           </p>
@@ -53,13 +64,13 @@ export default function Home() {
             anfitriones desde la plataforma.
           </p>
 
-          {/* Buscador píldora */}
+          {/* Buscador protagonista */}
           <form
             role="search"
-            className="mt-8"
+            className="mt-9"
             onSubmit={(e) => {
               e.preventDefault();
-              document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              irAlCatalogo();
             }}
           >
             <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-full bg-white p-2 pl-5 shadow-[0_18px_40px_rgba(0,0,0,0.35)] ring-1 ring-black/5">
@@ -85,9 +96,17 @@ export default function Home() {
             </div>
           </form>
 
+          {/* Aviso del menú: registro, sesión y todas las categorías */}
+          <p className="mx-auto mt-3 flex max-w-2xl items-start gap-2 px-2 text-[12.5px] leading-snug text-white/70 sm:px-0">
+            <Menu size={14} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+            <span>
+              Para registrarte, iniciar sesión o explorar todas las categorías, abre el menú
+            </span>
+          </p>
+
           {/* Filtros píldora deslizables */}
           <div
-            className="no-scrollbar mt-4 flex snap-x gap-2 overflow-x-auto pb-1"
+            className="no-scrollbar mt-5 flex snap-x gap-2 overflow-x-auto pb-1"
             role="tablist"
             aria-label="Filtrar por categoría"
           >
@@ -103,7 +122,7 @@ export default function Home() {
                   onClick={() => {
                     setCat(f.key);
                     setInclusivo(false);
-                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    irAlCatalogo();
                   }}
                   className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur transition ${
                     activo
@@ -123,7 +142,7 @@ export default function Home() {
               onClick={() => {
                 setInclusivo((v) => !v);
                 setCat('todo');
-                document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                irAlCatalogo();
               }}
               className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur transition ${
                 inclusivo ? 'bg-white text-azul shadow' : 'bg-white/15 text-white ring-1 ring-white/35 hover:bg-white/25'
@@ -133,31 +152,41 @@ export default function Home() {
               LGBTQ+ friendly
             </button>
           </div>
+
+          {/* Acceso a la IA */}
+          <div className="mt-7">
+            <Link
+              href="/chat"
+              className="inline-flex items-center gap-2 rounded-full border border-dorado/70 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              <Sparkles size={16} aria-hidden className="text-dorado" />
+              Preguntar a Cuba Conecta IA
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Categorías con foto + overlay para leer el texto blanco */}
-      <CategoryTiles onSelect={verCategoria} />
-
       {/* ---------------------------------------------------------- */}
-      {/* Filas de tarjetas estilo Airbnb                             */}
+      {/* Resultados: sólo se pintan con búsqueda o filtro activo     */}
       {/* ---------------------------------------------------------- */}
-      <section id="catalogo" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-10">
-        <CatalogExplorer
-          businesses={businesses}
-          error={catalogError ?? favoritesError}
-          q={q}
-          cat={cat}
-          inclusivo={inclusivo}
-          favoritos={favoritos}
-          onToggleFavorite={onToggleFavorite}
-        />
+      <section
+        id="catalogo"
+        className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pb-44 md:pb-24"
+      >
+        {mostrarResultados && (
+          <div className="pt-10">
+            <CatalogExplorer
+              businesses={businesses}
+              error={error}
+              q={q}
+              cat={cat}
+              inclusivo={inclusivo}
+              favoritos={favoritos}
+              onToggleFavorite={onToggleFavorite}
+            />
+          </div>
+        )}
       </section>
-
-      {/* Teaser de Concierge: enlaza a la página, no a WhatsApp. */}
-      <ConciergeTeaser />
-
-      <HostCTA />
     </div>
   );
 }
