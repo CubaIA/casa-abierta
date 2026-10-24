@@ -126,6 +126,18 @@ export const SECTIONS: Record<SectionKey, SectionDef> = {
   },
 };
 
+/** Orden en que las secciones aparecen en el menú de navegación. */
+export const NAV_SECTIONS: SectionDef[] = [
+  SECTIONS.inicio,
+  SECTIONS.alojamientos,
+  SECTIONS.gastronomia,
+  SECTIONS.guias,
+  SECTIONS.taxis,
+  SECTIONS.concierge,
+  SECTIONS.lgbtq,
+  SECTIONS.legal,
+];
+
 /** Secciones con catálogo propio (todas menos Inicio, Concierge y Legal). */
 export const CATALOG_SECTIONS: SectionDef[] = [
   SECTIONS.alojamientos,

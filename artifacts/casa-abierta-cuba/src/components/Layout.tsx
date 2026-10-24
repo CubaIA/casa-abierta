@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Sparkles,
@@ -24,6 +24,7 @@ import { LanguageSelect } from './LanguageSelect';
 import { CurrencySelect } from './CurrencySelect';
 import { EmergencyButton } from './EmergencyButton';
 import { SocialsCasaAbierta } from './AdminLayout';
+import { NAV_SECTIONS } from '@/lib/sections';
 
 const NAV = [
   { href: '/', key: 'explore', icon: Compass },
@@ -46,6 +47,24 @@ export function Layout({ children }: { children: ReactNode }) {
     if (item.roles && !item.roles.includes(profile?.role ?? '')) return false;
     return true;
   });
+
+  /* El menú lateral se cierra al navegar y bloquea el scroll de la página
+   * mientras está abierto (además de cerrarse con Escape). */
+  useEffect(() => setOpen(false), [location]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previo = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const alPulsar = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', alPulsar);
+    return () => {
+      document.body.style.overflow = previo;
+      window.removeEventListener('keydown', alPulsar);
+    };
+  }, [open]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -109,46 +128,138 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        {open && (
-          <nav className="md:hidden border-t border-azul-700 px-4 py-2 flex flex-col gap-1" aria-label="Móvil">
-            {visibleNav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-                  location === item.href ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700'
-                }`}
-              >
-                {t(item.key)}
-              </Link>
-            ))}
-            <div className="px-3 py-2 flex flex-col gap-2">
-              <LanguageSelect />
-              <CurrencySelect onChange={(v) => { try { localStorage.setItem('casa_currency', v); } catch {} }} />
-            </div>
-            {userId ? (
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  void signOut();
-                }}
-                className="rounded-lg bg-terracota-600 px-3 py-2 text-left text-sm font-bold"
-              >
-                {t('nav.logout')}
-              </button>
-            ) : (
-              <Link
-                href="/entrar"
-                onClick={() => setOpen(false)}
-                className="rounded-lg bg-dorado px-3 py-2 text-sm font-bold text-azul-700"
-              >
-                {t('nav.login')}
-              </Link>
-            )}
-          </nav>
-        )}
       </header>
+
+      {/* ---------------------------------------------------------- */}
+      {/* Menú lateral móvil: todas las secciones + cuenta            */}
+      {/* ---------------------------------------------------------- */}
+      {open && (
+        <div
+          className="fixed inset-0 z-[60] flex justify-end md:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de navegación"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          />
+          <aside className="relative flex h-full w-[86%] max-w-sm flex-col overflow-y-auto bg-azul text-white shadow-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-azul-700 px-4 py-3">
+              <Link href="/" onClick={() => setOpen(false)} className="flex min-w-0 items-center gap-2">
+                <img
+                  src="/img/logo-oficial.png"
+                  alt=""
+                  aria-hidden
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 shrink-0 rounded-full object-contain"
+                  decoding="async"
+                />
+                <span className="truncate text-sm font-extrabold">Casa Abierta Cuba</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Cerrar menú"
+                className="shrink-0 rounded-full p-2 hover:bg-azul-700"
+              >
+                <X size={20} aria-hidden />
+              </button>
+            </div>
+
+            <nav aria-label="Secciones" className="px-3 pb-1 pt-4">
+              <p className="px-2 pb-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-dorado">
+                Secciones
+              </p>
+              <ul>
+                {NAV_SECTIONS.map((section) => {
+                  const Icon = section.icon;
+                  const activo = location === section.path;
+                  return (
+                    <li key={section.path}>
+                      <Link
+                        href={section.path}
+                        onClick={() => setOpen(false)}
+                        aria-current={activo ? 'page' : undefined}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                          activo ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                        }`}
+                      >
+                        <Icon size={18} aria-hidden className={activo ? 'text-terracota-600' : 'text-dorado'} />
+                        {section.title}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            <nav aria-label="Mi cuenta" className="mt-2 border-t border-azul-700 px-3 pb-1 pt-3">
+              <p className="px-2 pb-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-dorado">
+                Mi cuenta
+              </p>
+              <ul>
+                {visibleNav
+                  .filter((item) => item.href !== '/')
+                  .map((item) => {
+                    const Icon = item.icon;
+                    const activo = location === item.href;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          aria-current={activo ? 'page' : undefined}
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                            activo ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                          }`}
+                        >
+                          <Icon size={18} aria-hidden className={activo ? 'text-terracota-600' : 'text-dorado'} />
+                          {t(item.key)}
+                        </Link>
+                      </li>
+                    );
+                  })}
+              </ul>
+            </nav>
+
+            <div className="mt-auto flex flex-col gap-3 border-t border-azul-700 px-4 py-4">
+              <div className="flex items-center gap-2">
+                <LanguageSelect />
+                <CurrencySelect
+                  onChange={(v) => {
+                    try {
+                      localStorage.setItem('casa_currency', v);
+                    } catch {}
+                  }}
+                />
+              </div>
+              {userId ? (
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    void signOut();
+                  }}
+                  className="inline-flex items-center justify-center gap-1 rounded-full bg-terracota-600 px-3 py-2 text-sm font-bold hover:bg-terracota-700"
+                >
+                  <LogOut size={14} aria-hidden /> {t('nav.logout')}
+                </button>
+              ) : (
+                <Link
+                  href="/entrar"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex items-center justify-center gap-1 rounded-full bg-dorado px-3 py-2 text-sm font-bold text-azul-700 hover:brightness-95"
+                >
+                  <User size={14} aria-hidden /> {t('nav.login')}
+                </Link>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <main id="contenido" className="flex-1 pb-[76px] md:pb-0">
         {children}

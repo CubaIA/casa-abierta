@@ -1,10 +1,11 @@
-import { Plane } from 'lucide-react';
+import { Link } from 'wouter';
+import { ArrowRight, Plane } from 'lucide-react';
 
 /** Enlace de WhatsApp del servicio Concierge (mismo número y mensaje que la portada). */
 export const CONCIERGE_WHATSAPP =
   'https://wa.me/+5356289645?text=Hola,%20quiero%20que%20me%20ayudes%20a%20planificar%20un%20paquete%20de%20viaje%20a%20Cuba%20a%20tu%20medida%20con%20Casa%20Abierta%20Cuba';
 
-/** Banner "Diseña tu Viaje a Medida", ahora dentro de la sección Concierge. */
+/** Banner completo de la sección Concierge (lleva directo a WhatsApp). */
 export function ConciergeBanner() {
   return (
     <a
@@ -46,5 +47,36 @@ export function ConciergeBanner() {
         </div>
       </div>
     </a>
+  );
+}
+
+/**
+ * Versión compacta para la portada: invita a la página /concierge,
+ * donde está el detalle y el botón de WhatsApp.
+ */
+export function ConciergeTeaser() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 pb-2">
+      <Link
+        href="/concierge"
+        className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-azul to-azul-700 px-5 py-5 text-white shadow-sm ring-1 ring-black/5 transition hover:shadow-lg sm:px-7"
+      >
+        <div className="min-w-0">
+          <h2 className="text-base font-extrabold sm:text-lg">
+            <span aria-hidden className="mr-1">
+              ✈️
+            </span>
+            Diseña tu Viaje a Medida
+          </h2>
+          <p className="mt-0.5 text-sm text-white/80">
+            Cuéntanos tu idea y te armamos el paquete completo.
+          </p>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold text-azul transition group-hover:bg-dorado">
+          Ver Concierge
+          <ArrowRight size={16} aria-hidden />
+        </span>
+      </Link>
+    </section>
   );
 }

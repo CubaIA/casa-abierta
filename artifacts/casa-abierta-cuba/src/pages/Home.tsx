@@ -5,6 +5,7 @@ import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
 import { CatalogExplorer } from '@/components/CatalogExplorer';
 import { CategoryTiles, HostCTA } from '@/components/HomeBlocks';
+import { ConciergeTeaser } from '@/components/ConciergeBanner';
 
 export default function Home() {
   const { businesses, error: catalogError } = useCatalog();
@@ -152,6 +153,9 @@ export default function Home() {
           onToggleFavorite={onToggleFavorite}
         />
       </section>
+
+      {/* Teaser de Concierge: enlaza a la página, no a WhatsApp. */}
+      <ConciergeTeaser />
 
       <HostCTA />
     </div>

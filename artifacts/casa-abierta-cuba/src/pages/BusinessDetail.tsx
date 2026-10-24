@@ -366,7 +366,9 @@ export default function BusinessDetail() {
   const bloquesLoQueDebesSaber: string[] = (() => {
     switch (familia) {
       case 'alojamiento':
-        return ['Llegada después de las 15:00, salida antes de las 11:00. Sin fiestas ni eventos.'];
+        /* El horario guardado en la BD manda; el texto fijo es sólo el respaldo
+         * para las fichas antiguas que todavía no tienen `schedule`. */
+        return [schedule || 'Llegada después de las 15:00, salida antes de las 11:00. Sin fiestas ni eventos.'];
       case 'transporte':
         return [
           schedule ||
