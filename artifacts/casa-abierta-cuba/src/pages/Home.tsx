@@ -46,7 +46,7 @@ export default function Home() {
       {/* pantalla y se funde con la cabecera (azul marino) y con el */}
       {/* crema de la página. Un solo lienzo, sin bloques de imagen. */}
       {/* ---------------------------------------------------------- */}
-      <section className="home-wallpaper relative isolate flex min-h-[calc(100svh-4.5rem)] flex-col justify-center overflow-hidden text-white md:min-h-[calc(100svh-5rem)]">
+      <section className="home-wallpaper relative isolate flex min-h-[calc(100svh-7.5rem)] flex-col justify-center overflow-hidden text-white md:min-h-[calc(100svh-8.5rem)]">
         <img
           src={CATALOG_IMAGES.hero}
           alt=""
@@ -60,9 +60,9 @@ export default function Home() {
         {/* Azul marino de la cabecera disuelto en el cielo. */}
         <div aria-hidden className="home-wallpaper__blend-top absolute inset-x-0 top-0 h-[58%]" />
         {/* Arena de la foto fundida con el crema de la página. */}
-        <div aria-hidden className="home-wallpaper__blend-bottom absolute inset-x-0 bottom-0 h-44 sm:h-56" />
+        <div aria-hidden className="home-wallpaper__blend-bottom absolute inset-x-0 bottom-0 h-80 sm:h-96" />
 
-        <div className="relative mx-auto w-full max-w-5xl px-5 pb-48 pt-8 sm:pb-40 sm:pt-12">
+        <div className="relative mx-auto w-full max-w-5xl px-5 pt-8 sm:pt-12">
           <p className="wallpaper-ink text-[0.72rem] font-extrabold uppercase tracking-[0.18em] text-dorado">
             Una puerta abierta a Cuba
           </p>
