@@ -1,6 +1,7 @@
 import { Route, Switch, useLocation } from 'wouter';
 import { lazy, Suspense, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { useAuth } from '@/lib/auth';
 import NotFound from '@/pages/not-found';
 import { InformationPage } from '@/pages/information';
@@ -42,6 +43,7 @@ function useSessionReady() {
 
 export default function App() {
   const ready = useSessionReady();
+  const [location] = useLocation();
 
   return (
     <Layout>
@@ -52,33 +54,36 @@ export default function App() {
         </div>
       ) : (
         <Suspense fallback={<div className="page-shell"><div className="empty-state">Cargando...</div></div>}>
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/alojamientos" component={Alojamientos} />
-            <Route path="/gastronomia" component={Gastronomia} />
-            <Route path="/guias" component={Guias} />
-            <Route path="/taxis" component={Taxis} />
-            <Route path="/concierge" component={Concierge} />
-            <Route path="/lgbtq" component={LGBTQ} />
-            <Route path="/legal" component={Legal} />
-            <Route path="/negocio/:id" component={BusinessDetail} />
-            <Route path="/entrar" component={Entrar} />
-            <Route path="/perfil" component={Perfil} />
-            <Route path="/solicitudes" component={MisSolicitudes} />
-            <Route path="/favoritos" component={Favoritos} />
-            <Route path="/anfitrion" component={Anfitrion} />
-            <Route path="/admin" component={Admin} />
-            <Route path="/contacto" component={Contacto} />
-            <Route path="/chat" component={ChatIA} />
-            <Route path="/payment/success" component={PaymentSuccess} />
-            <Route path="/payment/cancel" component={PaymentCancel} />
-            <Route path="/about" component={() => <InformationPage kind="about" />} />
-            <Route path="/privacy" component={() => <InformationPage kind="privacy" />} />
-            <Route path="/terms" component={() => <InformationPage kind="terms" />} />
-            <Route path="/providers" component={() => <InformationPage kind="providers" />} />
-            <Route path="/antifraud" component={() => <InformationPage kind="antifraud" />} />
-            <Route component={NotFound} />
-          </Switch>
+          {/* Si una vista lanza un error, se ve un aviso en vez de una página en blanco. */}
+          <AppErrorBoundary key={location}>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/alojamientos" component={Alojamientos} />
+              <Route path="/gastronomia" component={Gastronomia} />
+              <Route path="/guias" component={Guias} />
+              <Route path="/taxis" component={Taxis} />
+              <Route path="/concierge" component={Concierge} />
+              <Route path="/lgbtq" component={LGBTQ} />
+              <Route path="/legal" component={Legal} />
+              <Route path="/negocio/:id" component={BusinessDetail} />
+              <Route path="/entrar" component={Entrar} />
+              <Route path="/perfil" component={Perfil} />
+              <Route path="/solicitudes" component={MisSolicitudes} />
+              <Route path="/favoritos" component={Favoritos} />
+              <Route path="/anfitrion" component={Anfitrion} />
+              <Route path="/admin" component={Admin} />
+              <Route path="/contacto" component={Contacto} />
+              <Route path="/chat" component={ChatIA} />
+              <Route path="/payment/success" component={PaymentSuccess} />
+              <Route path="/payment/cancel" component={PaymentCancel} />
+              <Route path="/about" component={() => <InformationPage kind="about" />} />
+              <Route path="/privacy" component={() => <InformationPage kind="privacy" />} />
+              <Route path="/terms" component={() => <InformationPage kind="terms" />} />
+              <Route path="/providers" component={() => <InformationPage kind="providers" />} />
+              <Route path="/antifraud" component={() => <InformationPage kind="antifraud" />} />
+              <Route component={NotFound} />
+            </Switch>
+          </AppErrorBoundary>
         </Suspense>
       )}
     </Layout>
