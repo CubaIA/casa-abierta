@@ -73,7 +73,10 @@ export function Layout({ children }: { children: ReactNode }) {
       </a>
 
 
-      <header className="bg-azul text-white sticky top-0 z-40 shadow-md">
+      {/* En la portada la cabecera se funde con la foto: sin sombra que marque corte. */}
+      <header
+        className={`bg-azul text-white sticky top-0 z-40 ${location === '/' ? '' : 'shadow-md'}`}
+      >
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 shrink-0 items-center" aria-label="Casa Abierta Cuba — inicio">
             {/* El logo oficial ya incluye el nombre, no se repite en HTML. */}
