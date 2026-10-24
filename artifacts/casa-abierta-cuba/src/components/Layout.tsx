@@ -32,7 +32,7 @@ const NAV = [
   { href: '/anfitrion', key: 'host', icon: User, roles: ['provider', 'admin'] },
   { href: '/admin', key: 'admin', icon: ShieldCheck, roles: ['admin'] },
   { href: '/contacto', key: 'contact', icon: MessageSquare },
-  { href: '/chat-ia', key: 'chat_ia', icon: Bot, auth: true },
+  { href: '/chat', key: 'chat_ia', icon: Bot, auth: true },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -46,8 +46,6 @@ export function Layout({ children }: { children: ReactNode }) {
     if (item.roles && !item.roles.includes(profile?.role ?? '')) return false;
     return true;
   });
-
-  const chatIaVisible = userId && location === '/chat-ia';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -225,7 +223,7 @@ function BottomNav() {
 function Footer() {
   return (
     <footer className="mt-16 bg-azul-700 text-azul-200">
-      <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <div className="flex items-center gap-2.5 font-extrabold text-white text-lg">
             <img
@@ -279,15 +277,6 @@ function Footer() {
           <div className="mt-1.5">
             <SocialsCasaAbierta />
           </div>
-        </div>
-        <div>
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Confianza</h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/about" className="hover:text-white">Sobre el proyecto</Link></li>
-            <li><Link href="/antifraud" className="hover:text-white">Política antifraude</Link></li>
-            <li><Link href="/privacy" className="hover:text-white">Privacidad</Link></li>
-            <li><Link href="/terms" className="hover:text-white">Términos</Link></li>
-          </ul>
         </div>
         <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Créditos</h3>

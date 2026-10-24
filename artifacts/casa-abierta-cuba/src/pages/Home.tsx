@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'wouter';
-import { Heart, MapPin, Plane, Search } from 'lucide-react';
-import { CATEGORIAS, CATALOG_IMAGES, FILTROS, type CategoryTile } from '@/lib/catalog';
+import { Heart, Search } from 'lucide-react';
+import { CATALOG_IMAGES, FILTROS, type CategoryTile } from '@/lib/catalog';
 import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
 import { CatalogExplorer } from '@/components/CatalogExplorer';
+import { CategoryTiles, HostCTA } from '@/components/HomeBlocks';
 
 export default function Home() {
   const { businesses, error: catalogError } = useCatalog();
@@ -135,41 +135,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------------------------------------------------- */}
-      {/* Categorías con foto + overlay para leer el texto blanco     */}
-      {/* ---------------------------------------------------------- */}
-      <section className="mx-auto max-w-6xl px-4 pt-10">
-        <h2 className="text-xl font-extrabold text-azul sm:text-2xl">Explora por categoría</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {CATEGORIAS.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              onClick={() => verCategoria(c)}
-              className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-azul-700 text-left shadow-sm ring-1 ring-black/5 transition hover:shadow-lg"
-            >
-              <img
-                src={c.img}
-                alt={c.alt}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                }}
-              />
-              <span aria-hidden className="absolute inset-0 bg-black/45" />
-              <span
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
-              />
-              <span className="absolute inset-x-0 bottom-0 p-4">
-                <span className="block text-base font-extrabold text-white drop-shadow">{c.title}</span>
-                <span className="mt-1 line-clamp-2 block text-xs leading-snug text-white/85">{c.desc}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* Categorías con foto + overlay para leer el texto blanco */}
+      <CategoryTiles onSelect={verCategoria} />
 
       {/* ---------------------------------------------------------- */}
       {/* Filas de tarjetas estilo Airbnb                             */}
@@ -186,57 +153,7 @@ export default function Home() {
         />
       </section>
 
-      {/* CTA anfitrión */}
-      <section className="mx-auto max-w-6xl px-4 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-arena-2 bg-arena p-6 sm:p-8">
-          <div>
-            <p className="section-kicker">Para anfitriones</p>
-            <h2 className="text-xl font-extrabold text-azul sm:text-2xl">¿Ofreces alojamiento o un servicio local?</h2>
-            <p className="mt-1 max-w-xl text-tinta/70">
-              Publica tu propuesta, sube tus fotos y recibe solicitudes de viajeros directamente en tu panel. Toda
-              publicación se revisa antes de aparecer en el catálogo.
-            </p>
-          </div>
-          <Link href="/anfitrion" className="button-secondary">
-            <MapPin size={17} /> Publicar mi negocio
-          </Link>
-        </div>
-      </section>
-
-      {/* Concierge Premium: Diseña tu viaje a medida */}
-      <section className="mx-auto max-w-6xl px-4 pb-6">
-        <a
-          href="https://wa.me/+5356289645?text=Hola,%20quiero%20que%20me%20ayudes%20a%20planificar%20un%20paquete%20de%20viaje%20a%20Cuba%20a%20tu%20medida%20con%20Casa%20Abierta%20Cuba"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative overflow-hidden rounded-2xl shadow-lg ring-1 ring-white/20 transition duration-300 hover:scale-[1.01]"
-          style={{ backgroundImage: `url('/img/concierge-bg.jpg')`, minHeight: 'clamp(16rem, 30vh, 22rem)', backgroundPosition: 'center', backgroundSize: 'cover' }}
-        >
-          <div className="absolute inset-0 bg-black/55" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
-          <div className="relative mx-auto flex max-w-2xl flex-col gap-4 px-6 py-8 sm:flex-row sm:items-center sm:px-8">
-            <div className="shrink-0">
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-yellow-500/20 text-yellow-500">
-                <Plane size={24} aria-hidden />
-              </div>
-            </div>
-            <div className="min-w-0">
-              <p className="section-kicker text-yellow-500">Concierge Casa Abierta</p>
-              <h2 className="text-xl font-extrabold sm:text-2xl">
-                <span className="inline-block align-middle text-yellow-500">✈️ Diseña tu Viaje a Medida</span>
-              </h2>
-              <p className="mt-1 max-w-xl text-sm text-yellow-500/90">
-                Días, personas, casa, taxi, comida… cuéntame tu idea y te cotizo el paquete completo por WhatsApp.
-              </p>
-            </div>
-            <div className="shrink-0 sm:mt-0">
-              <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/60 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-yellow-500 shadow-sm">
-                <span className="text-base leading-none" aria-hidden="true">💬</span> WhatsApp directo
-              </span>
-            </div>
-          </div>
-        </a>
-      </section>
+      <HostCTA />
     </div>
   );
 }

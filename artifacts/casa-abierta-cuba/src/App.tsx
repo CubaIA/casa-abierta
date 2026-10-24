@@ -17,6 +17,13 @@ const ChatIA = lazy(() => import('@/pages/ChatIA'));
 const Perfil = lazy(() => import('@/pages/Perfil'));
 const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
+const Alojamientos = lazy(() => import('@/pages/sections/Alojamientos'));
+const Gastronomia = lazy(() => import('@/pages/sections/Gastronomia'));
+const Guias = lazy(() => import('@/pages/sections/Guias'));
+const Taxis = lazy(() => import('@/pages/sections/Taxis'));
+const Concierge = lazy(() => import('@/pages/sections/Concierge'));
+const LGBTQ = lazy(() => import('@/pages/sections/LGBTQ'));
+const Legal = lazy(() => import('@/pages/sections/Legal'));
 
 
 function ScrollToTop() {
@@ -47,6 +54,13 @@ export default function App() {
         <Suspense fallback={<div className="page-shell"><div className="empty-state">Cargando...</div></div>}>
           <Switch>
             <Route path="/" component={Home} />
+            <Route path="/alojamientos" component={Alojamientos} />
+            <Route path="/gastronomia" component={Gastronomia} />
+            <Route path="/guias" component={Guias} />
+            <Route path="/taxis" component={Taxis} />
+            <Route path="/concierge" component={Concierge} />
+            <Route path="/lgbtq" component={LGBTQ} />
+            <Route path="/legal" component={Legal} />
             <Route path="/negocio/:id" component={BusinessDetail} />
             <Route path="/entrar" component={Entrar} />
             <Route path="/perfil" component={Perfil} />
