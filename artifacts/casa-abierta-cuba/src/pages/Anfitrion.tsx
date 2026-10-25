@@ -13,6 +13,7 @@ import {
 import { uploadBusinessImages } from '@/lib/storage';
 import type { Business, BusinessRow, RequestStatus, SubmitBusinessInput } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 
 const REQUEST_STATUS_LABEL: Record<RequestStatus, { label: string; badge: string }> = {
@@ -64,7 +65,8 @@ export default function Anfitrion() {
     );
   }
 
-  if (profile && profile.role === 'traveler') {
+  // Los viajeros no ven el panel; «provider», «anfitrion» y «admin» sí.
+  if (profile && normalizeRole(profile.role) === 'traveler') {
     return (
       <div className="page-shell">
         <div className="empty-state">

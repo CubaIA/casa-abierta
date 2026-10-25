@@ -25,14 +25,29 @@ import { CurrencySelect } from './CurrencySelect';
 import { EmergencyButton } from './EmergencyButton';
 import { SocialsCasaAbierta } from './AdminLayout';
 import { NAV_SECTIONS } from '@/lib/sections';
+import { hasAllowedRole } from '@/lib/roles';
+import type { LucideIcon } from 'lucide-react';
 
-const NAV = [
+type NavItem = {
+  href: string;
+  key: string;
+  icon: LucideIcon;
+  /** Solo visible con sesión iniciada. */
+  auth?: boolean;
+  /** Roles que pueden ver el enlace (se comparan ya normalizados). */
+  roles?: string[];
+  /** Se pinta como botón dorado de acción, no como enlace de la lista. */
+  cta?: boolean;
+};
+
+/* `roles: ['provider', 'anfitrion', 'admin']`: la BD guarda el rol de
+ * anfitrión con ambos nombres, así que aceptamos los dos. La normalización
+ * convierte además «Anfitrión»/«host»/«proveedor» en `provider`. */
+const NAV: NavItem[] = [
   { href: '/', key: 'explore', icon: Compass },
   { href: '/solicitudes', key: 'my_requests', icon: MessageSquare, auth: true },
   { href: '/favoritos', key: 'favorites', icon: Heart, auth: true },
-  // "Publicar mi negocio": solo para anfitrión (provider) o admin; viajeros y
-  // visitantes no logueados no lo ven (el filtro `roles` lo oculta).
-  { href: '/anfitrion', key: 'host', icon: User, roles: ['provider', 'admin'], cta: true },
+  { href: '/anfitrion', key: 'host', icon: User, roles: ['provider', 'anfitrion', 'admin'], cta: true },
   { href: '/admin', key: 'admin', icon: ShieldCheck, roles: ['admin'] },
   { href: '/contacto', key: 'contact', icon: MessageSquare },
   { href: '/chat', key: 'chat_ia', icon: Bot, auth: true },
@@ -44,11 +59,14 @@ export function Layout({ children }: { children: ReactNode }) {
   const { userId, profile, signOut, loading } = useAuth();
   const { t } = useTranslation();
 
+  // `hasAllowedRole` normaliza el rol que llega de la BD, así que «anfitrion»,
+  // «Anfitrión» o «provider» abren igual el panel de anfitrión.
   const visibleNav = NAV.filter((item) => {
     if (item.auth && !userId) return false;
-    if (item.roles && !item.roles.includes(profile?.role ?? '')) return false;
+    if (!hasAllowedRole(item.roles, profile?.role)) return false;
     return true;
   });
+  const hostCta = visibleNav.find((item) => item.cta);
 
   /* El menú lateral se cierra al navegar y bloquea el scroll de la página
    * mientras está abierto (además de cerrarse con Escape). */
@@ -79,7 +97,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <header
         className={`bg-azul text-white sticky top-0 z-40 ${location === '/' ? '' : 'shadow-md'}`}
       >
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
+        {/* flex-wrap: en anchos intermedios los accesos bajan a una segunda
+         *  línea en vez de salirse del viewport y quedar invisibles. */}
+        <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 shrink-0 items-center" aria-label="Casa Abierta Cuba — inicio">
             {/* El logo oficial ya incluye el nombre, no se repite en HTML. */}
             <img
@@ -92,24 +112,34 @@ export function Layout({ children }: { children: ReactNode }) {
             />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1" aria-label="Principal">
-            {visibleNav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-                  location === item.href
-                    ? 'bg-white text-azul'
-                    : item.cta
-                      ? 'bg-dorado text-azul-700 hover:brightness-95'
-                      : 'text-azul-200 hover:bg-azul-700 hover:text-white'
-                }`}
-              >
-                {t(item.key)}
-              </Link>
-            ))}
+          <nav className="hidden md:flex flex-wrap items-center justify-end gap-1" aria-label="Principal">
+            {visibleNav
+              .filter((item) => !item.cta)
+              .map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                    location === item.href ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                  }`}
+                >
+                  {t(item.key)}
+                </Link>
+              ))}
             <LanguageSelect />
             <CurrencySelect onChange={(v) => { try { localStorage.setItem('casa_currency', v); } catch {} }} />
+            {!loading && hostCta && (
+              <Link
+                href={hostCta.href}
+                className={`ml-1 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
+                  location === hostCta.href
+                    ? 'bg-white text-azul'
+                    : 'bg-dorado text-azul-700 hover:brightness-95'
+                }`}
+              >
+                <User size={14} aria-hidden /> {t(hostCta.key)}
+              </Link>
+            )}
             {!loading && (userId ? (
               <button
                 onClick={() => void signOut()}
@@ -222,11 +252,19 @@ export function Layout({ children }: { children: ReactNode }) {
                           href={item.href}
                           onClick={() => setOpen(false)}
                           aria-current={activo ? 'page' : undefined}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
-                            activo ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
+                            item.cta
+                              ? 'my-1 bg-dorado font-extrabold text-azul-700 hover:brightness-95'
+                              : `font-semibold ${
+                                  activo ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                                }`
                           }`}
                         >
-                          <Icon size={18} aria-hidden className={activo ? 'text-terracota-600' : 'text-dorado'} />
+                          <Icon
+                            size={18}
+                            aria-hidden
+                            className={item.cta ? 'text-azul-700' : activo ? 'text-terracota-600' : 'text-dorado'}
+                          />
                           {t(item.key)}
                         </Link>
                       </li>

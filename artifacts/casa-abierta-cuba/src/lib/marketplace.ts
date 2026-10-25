@@ -6,6 +6,7 @@
  */
 import { isSupabaseConfigured } from './env';
 import { normalizePhotos } from './images';
+import { normalizeRole } from './roles';
 import { REQUEST_COLS, supabase } from './supabase';
 import type {
   AccountStatus,
@@ -850,7 +851,11 @@ export async function getProfile(userId: string): Promise<Profile | null> {
       .eq('id', userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return data as Profile | null;
+    if (!data) return null;
+    // La BD puede guardar el rol como «anfitrion»: lo entregamos canónico para
+    // que menú, panel y guardas comparen siempre contra `provider`.
+    const profile = data as Profile;
+    return { ...profile, role: normalizeRole(profile.role) ?? profile.role };
   }
   return DEMO_USERS.find((u) => u.id === userId) ?? null;
 }

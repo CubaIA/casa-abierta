@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth, demoMode } from '@/lib/auth';
+import { isHostRole, normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 
 type Mode = 'login' | 'signup';
 
 export default function Entrar() {
-  const { signIn, signUp, userId, loading } = useAuth();
+  const { signIn, signUp, userId, loading, profile } = useAuth();
   const [, navigate] = useLocation();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -21,9 +22,14 @@ export default function Entrar() {
     document.title = 'Entrar | Casa Abierta Cuba';
   }, []);
 
+  // Con la sesión ya iniciada: admin → /admin; anfitrión (rol «provider» o
+  // «anfitrion») → su panel; viajero → catálogo.
   useEffect(() => {
-    if (!loading && userId) navigate('/');
-  }, [loading, userId, navigate]);
+    // Se espera al perfil para no desviar a «/» mientras aún carga el rol.
+    if (loading || !userId || !profile) return;
+    const role = normalizeRole(profile.role);
+    navigate(role === 'admin' ? '/admin' : role === 'provider' ? '/anfitrion' : '/');
+  }, [loading, userId, profile, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,13 +41,15 @@ export default function Entrar() {
         }
         if (mode === 'login') {
           const perfil = await signIn(mail, password);
-          // Los administradores entran directamente al panel; el resto, al catálogo.
-          navigate(perfil?.role === 'admin' ? '/admin' : '/');
+          // Admin → panel de administración; anfitrión → su panel de negocio;
+          // viajero → catálogo.
+          navigate(perfil?.role === 'admin' ? '/admin' : isHostRole(perfil?.role) ? '/anfitrion' : '/');
         } else {
           if (fullName.trim().length < 2) throw new Error('Indica tu nombre completo.');
           if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
           await signUp({ email: mail, password, fullName: fullName.trim(), accountType });
-          navigate('/');
+          // Quien se registra como anfitrión entra directo a publicar su negocio.
+          navigate(accountType === 'provider' ? '/anfitrion' : '/');
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'No se pudo completar la operación';

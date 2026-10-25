@@ -4,6 +4,7 @@ import { Save, User } from 'lucide-react';
 import { updateProfile } from '@/lib/marketplace';
 import { uploadProfileAvatar } from '@/lib/avatars';
 import { useAuth } from '@/lib/auth';
+import { normalizeRole } from '@/lib/roles';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 
 const TRIP_STYLES = ['Cultural', 'Aventura', 'Relajo', 'Gastronómico', 'Natural'];
@@ -101,8 +102,8 @@ export default function Perfil() {
 
       {profile && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <span className={`badge ${profile.role === 'admin' ? 'badge-red' : profile.role === 'provider' ? 'badge-blue' : 'badge-neutral'}`}>
-            {profile.role === 'admin' ? 'Administrador' : profile.role === 'provider' ? 'Anfitrión' : 'Viajero'}
+          <span className={`badge ${normalizeRole(profile.role) === 'admin' ? 'badge-red' : normalizeRole(profile.role) === 'provider' ? 'badge-blue' : 'badge-neutral'}`}>
+            {normalizeRole(profile.role) === 'admin' ? 'Administrador' : normalizeRole(profile.role) === 'provider' ? 'Anfitrión' : 'Viajero'}
           </span>
           <span className={`badge ${(profile.account_status ?? 'active') === 'active' ? 'badge-green' : 'badge-red'}`}>
             {(profile.account_status ?? 'active') === 'active' ? 'Cuenta activa' : 'Cuenta suspendida'}
