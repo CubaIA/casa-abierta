@@ -30,7 +30,9 @@ const NAV = [
   { href: '/', key: 'explore', icon: Compass },
   { href: '/solicitudes', key: 'my_requests', icon: MessageSquare, auth: true },
   { href: '/favoritos', key: 'favorites', icon: Heart, auth: true },
-  { href: '/anfitrion', key: 'host', icon: User, roles: ['provider', 'admin'] },
+  // "Publicar mi negocio": solo para anfitrión (provider) o admin; viajeros y
+  // visitantes no logueados no lo ven (el filtro `roles` lo oculta).
+  { href: '/anfitrion', key: 'host', icon: User, roles: ['provider', 'admin'], cta: true },
   { href: '/admin', key: 'admin', icon: ShieldCheck, roles: ['admin'] },
   { href: '/contacto', key: 'contact', icon: MessageSquare },
   { href: '/chat', key: 'chat_ia', icon: Bot, auth: true },
@@ -96,7 +98,11 @@ export function Layout({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-                  location === item.href ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                  location === item.href
+                    ? 'bg-white text-azul'
+                    : item.cta
+                      ? 'bg-dorado text-azul-700 hover:brightness-95'
+                      : 'text-azul-200 hover:bg-azul-700 hover:text-white'
                 }`}
               >
                 {t(item.key)}
@@ -226,6 +232,9 @@ export function Layout({ children }: { children: ReactNode }) {
                       </li>
                     );
                   })}
+                {/* Nota: el mismo filtro `visibleNav` gobierna este menú y el
+                    escritorio: "Publicar mi negocio" solo aparece con rol
+                    provider/admin. */}
               </ul>
             </nav>
 
