@@ -26,6 +26,7 @@ import { EmergencyButton } from './EmergencyButton';
 import { SocialsCasaAbierta } from './AdminLayout';
 import { NAV_SECTIONS } from '@/lib/sections';
 import { hasAllowedRole } from '@/lib/roles';
+import { MENSAJE_SOPORTE, SUPPORT_WHATSAPP, whatsappLink } from '@/lib/whatsapp';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -209,6 +210,21 @@ export function Layout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
+            {/* Acción principal para anfitriones: botón dorado a la vista,
+             *  fuera de la lista, para que no se pierda entre los enlaces. */}
+            {!loading && hostCta && (
+              <div className="px-3 pt-4">
+                <Link
+                  href={hostCta.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={location === hostCta.href ? 'page' : undefined}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-dorado px-4 py-3 text-center text-sm font-extrabold text-azul-700 shadow-lg transition hover:brightness-95"
+                >
+                  <User size={18} aria-hidden /> {t(hostCta.key)}
+                </Link>
+              </div>
+            )}
+
             <nav aria-label="Secciones" className="px-3 pb-1 pt-4">
               <p className="px-2 pb-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-dorado">
                 Secciones
@@ -242,7 +258,8 @@ export function Layout({ children }: { children: ReactNode }) {
               </p>
               <ul>
                 {visibleNav
-                  .filter((item) => item.href !== '/')
+                  /* El CTA de anfitrión ya se pinta arriba como botón dorado. */
+                  .filter((item) => item.href !== '/' && !item.cta)
                   .map((item) => {
                     const Icon = item.icon;
                     const activo = location === item.href;
@@ -252,18 +269,14 @@ export function Layout({ children }: { children: ReactNode }) {
                           href={item.href}
                           onClick={() => setOpen(false)}
                           aria-current={activo ? 'page' : undefined}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                            item.cta
-                              ? 'my-1 bg-dorado font-extrabold text-azul-700 hover:brightness-95'
-                              : `font-semibold ${
-                                  activo ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
-                                }`
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                            activo ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
                           }`}
                         >
                           <Icon
                             size={18}
                             aria-hidden
-                            className={item.cta ? 'text-azul-700' : activo ? 'text-terracota-600' : 'text-dorado'}
+                            className={activo ? 'text-terracota-600' : 'text-dorado'}
                           />
                           {t(item.key)}
                         </Link>
@@ -271,8 +284,8 @@ export function Layout({ children }: { children: ReactNode }) {
                     );
                   })}
                 {/* Nota: el mismo filtro `visibleNav` gobierna este menú y el
-                    escritorio: "Publicar mi negocio" solo aparece con rol
-                    provider/admin. */}
+                    escritorio: "Publicar mi negocio" aparece con rol
+                    provider/anfitrion/admin. */}
               </ul>
             </nav>
 
@@ -413,6 +426,16 @@ function Footer() {
             <li><Link href="/providers" className="hover:text-white">Normas para proveedores</Link></li>
             <li><Link href="/anfitrion" className="hover:text-white">Publicar mi negocio</Link></li>
             <li><Link href="/contacto" className="hover:text-white">Contacto</Link></li>
+            <li>
+              <a
+                href={whatsappLink(SUPPORT_WHATSAPP, MENSAJE_SOPORTE)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 hover:text-white"
+              >
+                <MessageCircle size={14} aria-hidden /> Soporte Casa Abierta
+              </a>
+            </li>
           </ul>
         </div>
         <div>

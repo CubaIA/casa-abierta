@@ -396,6 +396,35 @@ export async function getBusiness(id: string): Promise<Business | null> {
   return loadStore().businesses.find((b) => b.id === id) ?? null;
 }
 
+/**
+ * WhatsApp del negocio para el botón de contacto directo (best-effort).
+ *
+ * La migración 001 revoca `select (phone, email)` de `businesses` para
+ * anon/authenticated, así que esta lectura puede no estar permitida: en ese
+ * caso devuelve `null` (la ficha cae al WhatsApp de soporte) y nunca lanza.
+ * `business_contacts` solo responde al dueño o a un admin por RLS.
+ */
+export async function getBusinessWhatsapp(id: string): Promise<string | null> {
+  if (!supabase) {
+    const b = loadStore().businesses.find((x) => x.id === id);
+    return b?.whatsapp ?? b?.phone ?? null;
+  }
+  const client = supabase;
+
+  const leer = async (tabla: 'businesses' | 'business_contacts', col: 'id' | 'business_id') => {
+    try {
+      const { data, error } = await client.from(tabla).select('phone').eq(col, id).maybeSingle();
+      if (error || !data) return null;
+      const valor = (data as { phone?: string | null }).phone;
+      return valor && valor.trim() ? valor.trim() : null;
+    } catch {
+      return null; // columna privada o tabla ausente: sin contacto directo
+    }
+  };
+
+  return (await leer('businesses', 'id')) ?? (await leer('business_contacts', 'business_id'));
+}
+
 export async function listProvinces(): Promise<string[]> {
   const rows = await listBusinesses();
   return Array.from(new Set(rows.map((b) => b.province))).sort();

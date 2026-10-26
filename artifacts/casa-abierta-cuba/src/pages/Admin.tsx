@@ -20,6 +20,7 @@ import {
 } from '@/lib/marketplace';
 import { removeBusinessImages, uploadBusinessImages } from '@/lib/storage';
 import { resolvePhotos } from '@/lib/images';
+import { MENSAJE_PREMIUM, SUPPORT_WHATSAPP, whatsappLink } from '@/lib/whatsapp';
 import { supabase } from '@/lib/supabase';
 import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
@@ -191,7 +192,7 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               type="button"
               role="switch"
               aria-checked={b.featured === true}
-              aria-label={`Premium: ${b.name}`}
+              aria-label={`Destacado: ${b.name}`}
               title={b.featured === true ? 'Quitar Premium' : 'Marcar como Premium'}
               disabled={savingId === b.id}
               className={`button-ghost !text-sm ${
@@ -199,8 +200,17 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               } ${savingId === b.id ? 'opacity-60' : ''}`}
               onClick={() => toggleFeatured(b)}
             >
-              <Star size={14} fill={b.featured === true ? 'currentColor' : 'none'} /> Premium
+              <Star size={14} fill={b.featured === true ? 'currentColor' : 'none'} /> Destacar
             </button>
+            {/* Contratación del Plan Premium por WhatsApp con soporte. */}
+            <a
+              href={whatsappLink(SUPPORT_WHATSAPP, MENSAJE_PREMIUM)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="button-ghost !text-sm !font-bold !border-dorado !bg-dorado !text-azul-700 hover:!brightness-95"
+            >
+              <Star size={14} aria-hidden /> Hazte Premium
+            </a>
             <button
               className="button-ghost !text-sm !text-terracota-600 !border-terracota-500"
               onClick={wrap(async () => {

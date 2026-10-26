@@ -60,6 +60,10 @@ export interface Business {
   textos_adicionales?: string | null;
   descuentos?: string | null;
   pourquoi_traveler?: string | null;
+  /** Contacto del negocio: la BD puede llamarlo whatsapp, phone o teléfono. */
+  whatsapp?: string | null;
+  phone?: string | null;
+  telefono?: string | null;
   /** Promedio de reseñas, cuando la fuente lo expone (opcional). */
   rating?: number | null;
   review_count?: number | null;

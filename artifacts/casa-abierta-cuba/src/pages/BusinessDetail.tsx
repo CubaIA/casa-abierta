@@ -5,7 +5,6 @@ import {
   Bath,
   BedDouble,
   Bike,
-  CalendarCheck,
   Car,
   Check,
   ChevronDown,
@@ -16,6 +15,7 @@ import {
   ImageOff,
   Languages,
   MapPin,
+  MessageCircle,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -35,16 +35,19 @@ import { supabase } from '@/lib/supabase';
 
 import {
   createReport,
-  createRequest,
   getBusiness,
+  getBusinessWhatsapp,
   listFavoriteIds,
   listReviews,
   toggleFavorite,
   SERVICE_TYPES,
 } from '@/lib/marketplace';
-
-
-const RESERVA_ROSA = 'bg-[#FF385C] hover:bg-[#E31C5F]';
+import {
+  MENSAJE_NEGOCIO,
+  SUPPORT_WHATSAPP,
+  telefonoDeNegocio,
+  whatsappLink,
+} from '@/lib/whatsapp';
 
 /* Cada amenidad lleva su propio icono según lo que dice el texto: los idiomas
  * nunca deben heredar iconos de camas, baños o coches por el orden del array. */
@@ -99,7 +102,7 @@ export default function BusinessDetail() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
   const [, navigate] = useLocation();
-  const { userId, profile } = useAuth();
+  const { userId } = useAuth();
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -109,13 +112,8 @@ export default function BusinessDetail() {
   const [avatarLoadError, setAvatarLoadError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
-
-  const [requestOpen, setRequestOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [serviceRequested, setServiceRequested] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [requestError, setRequestError] = useState<string | null>(null);
+  /** WhatsApp leído aparte: la columna de contacto es privada en producción. */
+  const [whatsappPublicado, setWhatsappPublicado] = useState<string | null>(null);
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -138,6 +136,7 @@ export default function BusinessDetail() {
         return;
       }
       setBusiness(b);
+      setWhatsappPublicado(await getBusinessWhatsapp(id));
       const reviewsList = await listReviews(id);
       setReviews(reviewsList);
       if (userId && reviewsList.length > 0) {
@@ -215,46 +214,6 @@ export default function BusinessDetail() {
     }
   }
 
-  function onReservar() {
-    if (!userId) {
-      navigate('/entrar');
-      return;
-    }
-    setRequestOpen(true);
-    requestAnimationFrame(() => {
-      document.getElementById('solicitar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
-
-  async function onRequest(e: React.FormEvent) {
-    e.preventDefault();
-    if (!userId || !profile) {
-      navigate('/entrar');
-      return;
-    }
-    setRequestError(null);
-    if (message.trim().length < 10) {
-      setRequestError('Cuéntanos un poco más (mínimo 10 caracteres).');
-      return;
-    }
-    setSending(true);
-    try {
-      await createRequest({
-        requesterId: userId,
-        businessId: id,
-        message: message.trim(),
-        serviceRequested: serviceRequested || business?.service_type || '',
-        contactEmail: profile.email,
-      });
-      setSent(true);
-      setMessage('');
-    } catch (e) {
-      setRequestError(e instanceof Error ? e.message : 'No se pudo enviar la solicitud');
-    } finally {
-      setSending(false);
-    }
-  }
-
   async function onReport(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) {
@@ -298,6 +257,12 @@ export default function BusinessDetail() {
     SERVICE_TYPES.find((s) => s.value === business?.service_type)?.label ??
     (business?.service_type ?? '').charAt(0).toUpperCase() + (business?.service_type ?? '').slice(1);
   const precio = formatPrice(business) ?? 'Consultar';
+  /* Contacto directo: el WhatsApp del anuncio o, si la BD no lo expone al
+   * público, el de soporte para que nadie se quede sin poder escribir. */
+  const whatsappNegocio = telefonoDeNegocio(business) ?? whatsappPublicado;
+  const enlaceWhatsapp = whatsappNegocio
+    ? whatsappLink(whatsappNegocio, MENSAJE_NEGOCIO)
+    : whatsappLink(SUPPORT_WHATSAPP, `${MENSAJE_NEGOCIO} (${business.name || 'un negocio'})`);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
   const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
   const fotosValidas = resolvePhotos(business);
@@ -673,9 +638,7 @@ export default function BusinessDetail() {
           {reviews.length} reseña{reviews.length === 1 ? '' : 's'}
         </h2>
         {reviews.length === 0 ? (
-          <p className="mt-2 text-sm text-tinta/60">
-            Aún no hay reseñas. Las reseñas se escriben al completar una solicitud.
-          </p>
+          <p className="mt-2 text-sm text-tinta/60">Aún no hay reseñas para este negocio.</p>
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {reviews.map((r) => (
@@ -704,76 +667,31 @@ export default function BusinessDetail() {
       </section>
 
       {/* ---------------------------------------------------------- */}
-      {/* Reserva / solicitud                                         */}
+      {/* Contacto directo por WhatsApp                               */}
       {/* ---------------------------------------------------------- */}
-      <section id="solicitar" className="mt-8 scroll-mt-24 rounded-2xl border border-arena-2 bg-white p-5 sm:p-6">
+      <section id="contacto" className="mt-8 scroll-mt-24 rounded-2xl border border-arena-2 bg-white p-5 sm:p-6">
         <h2 className="inline-flex items-center gap-2 text-lg font-extrabold text-azul">
-          <CalendarCheck size={18} aria-hidden /> Solicita tu reserva
+          <MessageCircle size={18} aria-hidden /> Contacta directo con el anfitrión
         </h2>
         <p className="mt-1 text-sm text-tinta/65">
-          Envía tu consulta al anfitrión. Casa Abierta registra la solicitud y facilita la conexión; la coordinación
-          del pago se acuerda directamente con el anfitrión.
+          Sin formularios ni esperas: escríbele por WhatsApp y coordina fechas, precios y detalles del servicio. La
+          conversación y el pago se acuerdan directamente con el anfitrión.
         </p>
 
-        {!userId && (
-          <div className="mt-4">
-            <p className="text-sm text-tinta/70">Necesitas una cuenta para guardar favoritos y enviar solicitudes.</p>
-            <button className="button-primary mt-2 w-full justify-center sm:w-auto" onClick={() => navigate('/entrar')}>
-              Entrar o registrarme
-            </button>
-          </div>
-        )}
+        <a
+          href={enlaceWhatsapp}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1EBE5B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1EBE5B]"
+        >
+          <MessageCircle size={22} aria-hidden /> Contactar directo por WhatsApp
+        </a>
 
-        {userId && sent && (
-          <p className="form-success mt-4">
-            ¡Solicitud enviada! Sigue su estado en <strong>Mis solicitudes</strong>.
-          </p>
-        )}
-
-        {userId && !sent && !requestOpen && (
-          <button className="button-primary mt-4 w-full justify-center sm:w-auto" onClick={() => setRequestOpen(true)}>
-            Enviar solicitud
-          </button>
-        )}
-
-        {userId && !sent && requestOpen && (
-          <form onSubmit={onRequest} className="mt-4 space-y-3">
-            <div>
-              <label className="field-label" htmlFor="req-service">¿Qué necesitas?</label>
-              <select
-                id="req-service"
-                className="field-input"
-                value={serviceRequested}
-                onChange={(e) => setServiceRequested(e.target.value)}
-              >
-                <option value="">Selecciona un servicio</option>
-                {SERVICE_TYPES.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="field-label" htmlFor="req-message">Mensaje para el anfitrión</label>
-              <textarea
-                id="req-message"
-                className="field-input"
-                rows={4}
-                required
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Fechas, cantidad de personas, qué buscas…"
-              />
-              <p className="field-hint">
-                Tu correo ({profile?.email}) se guarda con la solicitud para que el equipo pueda gestionarla; no se
-                muestra públicamente.
-              </p>
-            </div>
-            {requestError && <p className="form-error" role="alert">{requestError}</p>}
-            <button className="button-primary w-full justify-center" disabled={sending} type="submit">
-              {sending ? 'Enviando…' : 'Enviar solicitud'}
-            </button>
-          </form>
-        )}
+        <p className="mt-2 text-xs text-tinta/55">
+          {whatsappNegocio
+            ? 'Se abre WhatsApp con un mensaje ya escrito. Puedes editarlo antes de enviarlo.'
+            : 'Este anuncio aún no publica su número: escríbenos y te conectamos con el anfitrión.'}
+        </p>
       </section>
 
       {/* Reportar */}
