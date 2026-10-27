@@ -114,8 +114,8 @@ export function BusinessCard({
           </span>
         )}
 
-        {/* Sello de calidad: siempre a la vista, sobre la esquina inferior de la foto. */}
-        <SelloVerificado className="absolute bottom-3 left-3 z-10" />
+        {/* Sello de calidad: solo si el administrador verificó el negocio. */}
+        <SelloVerificado verified={business.verified === true} className="absolute bottom-3 left-3 z-10" />
 
         {onToggleFavorite && (
           <button

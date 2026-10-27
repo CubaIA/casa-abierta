@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'wouter';
-import { Save, User } from 'lucide-react';
-import { updateProfile } from '@/lib/marketplace';
+import { BadgeCheck, Save, User } from 'lucide-react';
+import { listMyBusinesses, updateProfile } from '@/lib/marketplace';
 import { uploadProfileAvatar } from '@/lib/avatars';
 import { useAuth } from '@/lib/auth';
 import { normalizeRole } from '@/lib/roles';
+import type { Business } from '@/lib/types';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { AvisoError } from '@/components/AvisoError';
 
@@ -22,10 +23,33 @@ export default function Perfil() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Negocios del anfitrión: alimentan su Estado de Verificación. */
+  const [misNegocios, setMisNegocios] = useState<Business[] | null>(null);
+
+  const esAnfitrion = normalizeRole(profile?.role) === 'provider';
+  const verificado = misNegocios?.some((b) => b.verified === true) ?? false;
 
   useEffect(() => {
     document.title = 'Mi perfil | Casa Abierta Cuba';
   }, []);
+
+  useEffect(() => {
+    if (!esAnfitrion || !userId) {
+      setMisNegocios(null);
+      return;
+    }
+    let vivo = true;
+    listMyBusinesses(userId)
+      .then((bs) => {
+        if (vivo) setMisNegocios(bs);
+      })
+      .catch(() => {
+        if (vivo) setMisNegocios([]);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [esAnfitrion, userId]);
 
   useEffect(() => {
     if (profile) {
@@ -174,6 +198,30 @@ export default function Perfil() {
           <Save size={16} /> {busy ? 'Guardando…' : 'Guardar cambios'}
         </button>
       </form>
+
+      {esAnfitrion && (
+        <section className="panel mt-5">
+          <h2 className="inline-flex items-center gap-2 text-lg font-extrabold text-azul">
+            <BadgeCheck size={20} aria-hidden /> Estado de Verificación
+          </h2>
+          {misNegocios === null ? (
+            <p className="mt-2 text-sm text-tinta/60">Comprobando…</p>
+          ) : (
+            <>
+              <p className="mt-2">
+                <span className={`badge ${verificado ? 'badge-green' : 'badge-gold'}`}>
+                  {verificado ? 'Verificado' : 'Pendiente'}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-tinta/70">
+                {verificado
+                  ? 'Tu negocio pasó por nuestro proceso de revisión y muestra el sello «Verificado en Cuba por Casa Abierta» en el catálogo y en su ficha.'
+                  : 'Tu negocio todavía no tiene el sello. Cada ficha pasa por una revisión del equipo antes de otorgarlo: escríbenos si quieres que revisemos la tuya.'}
+              </p>
+            </>
+          )}
+        </section>
+      )}
     </div>
   );
 }

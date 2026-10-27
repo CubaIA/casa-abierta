@@ -4,18 +4,26 @@
  * Se usa igual en la tarjeta del catálogo (compacto, sobre la foto) y en la
  * ficha del negocio (grande, junto al título), para que el mensaje de
  * verificación sea siempre el mismo en toda la plataforma.
+ *
+ * Solo lo otorga el administrador desde el panel: el componente no pinta nada
+ * mientras la columna `verified` del negocio no sea true. Así el sello es un
+ * distintivo real y no una etiqueta decorativa.
  */
 
 /** Texto único del sello. */
 export const TEXTO_SELLO = 'Verificado en Cuba por Casa Abierta';
 
 interface SelloVerificadoProps {
+  /** Valor de `businesses.verified`: sin true, el sello no se renderiza. */
+  verified: boolean;
   /** compact = sobre la foto de la tarjeta; full = sello destacado de la ficha. */
   variant?: 'compact' | 'full';
   className?: string;
 }
 
-export function SelloVerificado({ variant = 'compact', className = '' }: SelloVerificadoProps) {
+export function SelloVerificado({ verified, variant = 'compact', className = '' }: SelloVerificadoProps) {
+  if (!verified) return null;
+
   if (variant === 'full') {
     return (
       <span

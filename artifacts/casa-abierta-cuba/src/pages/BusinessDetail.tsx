@@ -505,8 +505,8 @@ export default function BusinessDetail() {
         <p className="mt-1 text-tinta/70">{subtitulo}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
-          {/* Sello de calidad de la plataforma, a la vista junto al título. */}
-          <SelloVerificado variant="full" />
+          {/* Sello de calidad de la plataforma: solo si el admin verificó el negocio. */}
+          <SelloVerificado verified={business?.verified === true} variant="full" />
           <span className="inline-flex items-center gap-1 font-bold text-tinta">
             <Star size={14} className="fill-tinta" aria-hidden />
             {avg !== null ? avg.toFixed(2) : 'Nuevo'}

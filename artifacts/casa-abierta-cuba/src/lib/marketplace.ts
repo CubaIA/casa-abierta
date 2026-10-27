@@ -1013,6 +1013,35 @@ export async function adminSetBusinessFeatured(id: string, featured: boolean): P
   }
 }
 
+/**
+ * Marca o desmarca un negocio como Verificado (sello de calidad).
+ *
+ * Solo el administrador puede otorgarlo: el RPC comprueba el rol en la BD y
+ * hace el UPDATE con SECURITY DEFINER. Si el proyecto aún no aplicó la
+ * migración 007, se intenta un UPDATE directo a la columna `verified`.
+ */
+export async function adminSetBusinessVerified(id: string, verified: boolean): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_business_verified', {
+      target_business_id: id,
+      next_verified: verified,
+    });
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      const { error: updErr } = await supabase.from('businesses').update({ verified }).eq('id', id);
+      if (updErr) throw new Error(updErr.message);
+      return;
+    }
+    throw new Error(error.message);
+  }
+  const store = loadStore();
+  const b = store.businesses.find((x) => x.id === id);
+  if (b) {
+    b.verified = verified;
+    saveStore(store);
+  }
+}
+
 export async function adminDeleteBusiness(id: string): Promise<void> {
   if (supabase) {
     const { error } = await supabase.rpc('admin_delete_business', { target_business_id: id });

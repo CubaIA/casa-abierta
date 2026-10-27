@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { CheckCircle2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, Star, Users, XCircle } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, Star, Users, XCircle } from 'lucide-react';
 import {
   adminDeleteBusiness,
   adminEditBusiness,
@@ -12,6 +12,7 @@ import {
   adminListUsers,
   adminSetBusinessFeatured,
   adminSetBusinessStatus,
+  adminSetBusinessVerified,
   adminSetContactMessageStatus,
   adminSetReportStatus,
   adminSetRequestStatus,
@@ -136,6 +137,23 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
     }
   };
 
+  /** Otorga o retira el sello Verificado, de forma optimista y reversible. */
+  const toggleVerified = async (business: Business) => {
+    const next = business.verified !== true;
+    const previous = business.verified;
+    onError(null);
+    setSavingId(business.id);
+    patch((prev) => prev.map((b) => (b.id === business.id ? { ...b, verified: next } : b)));
+    try {
+      await adminSetBusinessVerified(business.id, next);
+    } catch (e) {
+      patch((prev) => prev.map((b) => (b.id === business.id ? { ...b, verified: previous } : b)));
+      onError(e instanceof Error ? e.message : 'No se pudo actualizar la verificación');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
@@ -202,6 +220,21 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               onClick={() => toggleFeatured(b)}
             >
               <Star size={14} fill={b.featured === true ? 'currentColor' : 'none'} /> Destacar
+            </button>
+            {/* Sello «Verificado en Cuba por Casa Abierta»: solo el admin lo otorga. */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={b.verified === true}
+              aria-label={`Verificar negocio: ${b.name}`}
+              title={b.verified === true ? 'Quitar el sello Verificado' : 'Otorgar el sello Verificado'}
+              disabled={savingId === b.id}
+              className={`button-ghost !text-sm ${
+                b.verified === true ? '!bg-verde-600 !border-verde-600 !text-white' : ''
+              } ${savingId === b.id ? 'opacity-60' : ''}`}
+              onClick={() => toggleVerified(b)}
+            >
+              <BadgeCheck size={14} /> Verificar Negocio
             </button>
             {/* Contratación del Plan Premium por WhatsApp con soporte. */}
             <a
