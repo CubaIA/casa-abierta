@@ -394,12 +394,15 @@ function BottomNav() {
   );
 }
 
-/* Texto de «Nuestra Historia»: se muestra literal, sin recortes. */
-const NUESTRA_HISTORIA =
-  'Nacimos en Cuba para conectar al mundo con nuestra isla. No somos una corporación fría. ' +
-  'Somos un equipo local que camina bajo el sol, verifica cada casa y conoce a cada anfitrión en persona. ' +
-  'No nos dejes caer los apagones, pero estamos aquí para darte la Cuba más auténtica y segura. ' +
-  'Creado por Yoanny Guillén Vargas.';
+/* Texto de «Una idea que nace en Cuba»: se muestra literal, sin recortes. */
+const NUESTRA_HISTORIA: string[] = [
+  'Casa Abierta Cuba nació de una idea personal: crear algo propio que también pudiera abrir nuevas oportunidades para las personas que ofrecen sus servicios en nuestra isla.',
+  'Yo soy Yoanny Guillén, creador de este proyecto. Estoy construyendo Casa Abierta paso a paso, aprendiendo en el camino y trabajando para conectar a quienes visitan Cuba con alojamientos, restaurantes, transportistas, guías y otros negocios locales.',
+  'Sé que detrás de cada servicio hay personas que se esfuerzan por sacar adelante su trabajo. Quiero que tengan una oportunidad más de darse a conocer y que los viajeros puedan encontrar opciones, comparar propuestas y contactar directamente con quienes ofrecen esos servicios.',
+  'Todavía queda mucho por hacer. Por eso, mi compromiso es seguir mejorando la plataforma, ofrecer información lo más clara y actualizada posible y construir relaciones basadas en la confianza y el respeto.',
+  'Casa Abierta Cuba es un proyecto independiente que crece con cada negocio que se suma y con cada persona que decide confiar en él.',
+  'Una puerta abierta al mundo.',
+];
 
 function Footer() {
   return (
@@ -423,14 +426,13 @@ function Footer() {
               className="mt-1 flex items-center gap-2 pl-2 text-2xl font-extrabold text-white sm:text-3xl"
             >
               <Heart size={22} aria-hidden className="fill-terracota-500 text-terracota-500" />
-              Quiénes Somos
+              Una idea que nace en Cuba
             </h2>
-            <p className="mt-3 max-w-3xl pl-2 text-sm leading-relaxed text-white/90 sm:text-base">
-              {NUESTRA_HISTORIA}
-            </p>
-            <p className="mt-4 pl-2 text-xs font-bold uppercase tracking-wide text-dorado">
-              Cuba auténtica, verificada casa por casa 🇨🇺
-            </p>
+            <div className="mt-3 max-w-3xl space-y-3 pl-2 text-sm leading-relaxed text-white/90 sm:text-base">
+              {NUESTRA_HISTORIA.map((parrafo) => (
+                <p key={parrafo}>{parrafo}</p>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -453,8 +455,9 @@ function Footer() {
             </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed">
-            Plataforma intermediaria digital de conexión turística con Cuba auténtica: alojamientos, gastronomía,
-            experiencias y servicios locales verificados.
+            Plataforma intermediaria de conexión turística con alojamientos, gastronomía, experiencias y servicios
+            locales. Consulta la información de cada proveedor y confirma las condiciones directamente antes de
+            contratar.
           </p>
         </div>
         <div>
