@@ -394,9 +394,47 @@ function BottomNav() {
   );
 }
 
+/* Texto de «Nuestra Historia»: se muestra literal, sin recortes. */
+const NUESTRA_HISTORIA =
+  'Nacimos en Cuba para conectar al mundo con nuestra isla. No somos una corporación fría. ' +
+  'Somos un equipo local que camina bajo el sol, verifica cada casa y conoce a cada anfitrión en persona. ' +
+  'No nos dejes caer los apagones, pero estamos aquí para darte la Cuba más auténtica y segura. ' +
+  'Creado por Yoanny Guillén Vargas.';
+
 function Footer() {
   return (
     <footer className="bg-azul-700 text-azul-200 mt-[-1px]">
+      {/* Nuestra Historia: banda cálida a ancho completo, antes de las columnas. */}
+      <section
+        aria-labelledby="nuestra-historia"
+        className="border-b border-azul bg-gradient-to-br from-arena/25 via-azul-700 to-azul-700"
+      >
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+          <div className="relative overflow-hidden rounded-3xl border border-dorado/50 bg-white/10 p-5 shadow-lg shadow-black/15 sm:p-7">
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-dorado via-terracota-500 to-verde-500"
+            />
+            <p className="pl-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-dorado">
+              Nuestra Historia
+            </p>
+            <h2
+              id="nuestra-historia"
+              className="mt-1 flex items-center gap-2 pl-2 text-2xl font-extrabold text-white sm:text-3xl"
+            >
+              <Heart size={22} aria-hidden className="fill-terracota-500 text-terracota-500" />
+              Quiénes Somos
+            </h2>
+            <p className="mt-3 max-w-3xl pl-2 text-sm leading-relaxed text-white/90 sm:text-base">
+              {NUESTRA_HISTORIA}
+            </p>
+            <p className="mt-4 pl-2 text-xs font-bold uppercase tracking-wide text-dorado">
+              Cuba auténtica, verificada casa por casa 🇨🇺
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <div className="flex items-center gap-2.5 font-extrabold text-white text-lg">

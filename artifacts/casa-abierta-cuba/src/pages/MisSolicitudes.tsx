@@ -4,6 +4,7 @@ import { MessageSquare, RefreshCw, Star } from 'lucide-react';
 import { createReview, listMyRequests, setRequestStatus } from '@/lib/marketplace';
 import type { BusinessRow, RequestStatus } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { AvisoError } from '@/components/AvisoError';
 
 const STATUS_LABEL: Record<RequestStatus, { label: string; badge: string }> = {
   new: { label: 'Enviada', badge: 'badge-blue' },
@@ -59,7 +60,7 @@ export default function MisSolicitudes() {
       <h1 className="text-3xl font-extrabold text-azul">Mis solicitudes</h1>
       <p className="mt-2 text-tinta/70">Seguimiento de las consultas que enviaste a anfitriones.</p>
 
-      {error && <p className="form-error mt-4" role="alert">{error}</p>}
+      <AvisoError mensaje={error} className="mt-4" />
 
       <div className="mt-6 space-y-4">
         {rows === null && <div className="empty-state">Cargando…</div>}
@@ -190,7 +191,7 @@ function ReviewDialog({
           placeholder="¿Cómo fue tu experiencia?"
         />
 
-        {error && <p className="form-error" role="alert">{error}</p>}
+        <AvisoError mensaje={error} />
 
         <div className="mt-4 flex gap-2 justify-end">
           <button type="button" className="button-ghost" onClick={onClose}>Cancelar</button>

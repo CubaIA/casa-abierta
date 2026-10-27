@@ -1,4 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { MessageCircle } from 'lucide-react';
+import { WHATSAPP_AYUDA } from './AvisoError';
 
 interface Props {
   children: ReactNode;
@@ -39,12 +41,21 @@ export class AppErrorBoundary extends Component<Props, State> {
     return (
       <div className="page-shell" role="alert">
         <div className="empty-state text-left">
-          <p className="font-semibold text-azul">No se pudo mostrar esta pantalla</p>
-          <p className="mt-1 text-sm">
-            La aplicación falló al dibujar el contenido. Recarga la página para volver a intentarlo.
-          </p>
-          <p className="mt-3 break-words rounded-lg bg-arena/60 p-2 text-xs text-tinta/70">
-            {error.message || 'Error desconocido'}
+          <p className="text-lg font-extrabold text-azul">No se pudo mostrar esta pantalla</p>
+          {/* El detalle técnico (error.message) queda en la consola: al usuario
+           *  se le da una salida humana y un canal directo para resolverlo. */}
+          <p className="mt-2 text-sm leading-relaxed">
+            ¡Ups! Parece que tuvimos un problema técnico (¡culpa de los apagones o del servidor!). No te
+            preocupes, escríbenos directo a nuestro WhatsApp{' '}
+            <a
+              href={WHATSAPP_AYUDA}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-extrabold text-azul underline decoration-dotted underline-offset-2"
+            >
+              haciendo clic aquí
+            </a>{' '}
+            y te ayudamos a reservar ahora mismo.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={() => window.location.reload()} className="button-primary">
@@ -53,6 +64,14 @@ export class AppErrorBoundary extends Component<Props, State> {
             <button type="button" onClick={this.reiniciar} className="button-secondary">
               Reintentar
             </button>
+            <a
+              href={WHATSAPP_AYUDA}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95"
+            >
+              <MessageCircle size={16} aria-hidden /> Escribir por WhatsApp
+            </a>
           </div>
         </div>
       </div>

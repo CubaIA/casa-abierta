@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth, demoMode } from '@/lib/auth';
+import { AvisoError, WHATSAPP_AYUDA } from '@/components/AvisoError';
 import { isHostRole, normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 
@@ -217,8 +218,20 @@ export default function Entrar() {
           </fieldset>
         )}
 
-        {error && <p className="form-error" role="alert">{error}</p>}
+        {error && <AvisoError mensaje={error} />}
 
+        <p className="text-center text-xs text-tinta/60">
+          ¿No puedes entrar?{' '}
+          <a
+            href={WHATSAPP_AYUDA}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-azul underline decoration-dotted underline-offset-2"
+          >
+            Escríbenos por WhatsApp
+          </a>{' '}
+          y te ayudamos ahora mismo.
+        </p>
         <button className="button-primary w-full justify-center" disabled={busy} type="submit">
           {busy ? 'Un momento…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
         </button>

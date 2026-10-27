@@ -2,6 +2,7 @@ import { Link } from 'wouter';
 import { ImageOff } from 'lucide-react';
 import type { Business } from '@/lib/types';
 import { BusinessCard } from './BusinessCard';
+import { AvisoError } from './AvisoError';
 
 interface BusinessGridProps {
   /** null mientras carga; array (posiblemente vacío) cuando ya hay datos. */
@@ -26,11 +27,7 @@ export function BusinessGrid({
 }: BusinessGridProps) {
   return (
     <>
-      {error && (
-        <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-          {error}
-        </p>
-      )}
+      <AvisoError mensaje={error} className="mb-4" />
 
       {items === null ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite">

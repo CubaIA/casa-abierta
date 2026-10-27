@@ -8,6 +8,7 @@ import {
   type CatalogFilterState,
 } from '@/lib/catalog';
 import { BusinessCarousel } from './BusinessCarousel';
+import { AvisoError } from './AvisoError';
 
 interface CatalogExplorerProps extends CatalogFilterState {
   businesses: Business[] | null;
@@ -37,11 +38,7 @@ export function CatalogExplorer({
 
   return (
     <>
-      {error && (
-        <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-          {error}
-        </p>
-      )}
+      <AvisoError mensaje={error} className="mb-4" />
 
       {businesses === null && (
         <div className="space-y-4" aria-live="polite">

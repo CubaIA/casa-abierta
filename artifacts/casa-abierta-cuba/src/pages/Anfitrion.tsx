@@ -15,6 +15,7 @@ import type { Business, BusinessRow, RequestStatus, SubmitBusinessInput } from '
 import { useAuth } from '@/lib/auth';
 import { normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
+import { AvisoError } from '@/components/AvisoError';
 
 const REQUEST_STATUS_LABEL: Record<RequestStatus, { label: string; badge: string }> = {
   new: { label: 'Nueva', badge: 'badge-blue' },
@@ -115,7 +116,7 @@ export default function Anfitrion() {
         </a>
       </div>
 
-      {error && <p className="form-error mt-4" role="alert">{error}</p>}
+      <AvisoError mensaje={error} className="mt-4" />
 
       {tab === 'businesses' && (
         <div className="mt-5 space-y-3">
@@ -457,7 +458,7 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
         Ofrecemos un entorno LGBT friendly (declaración de servicio, no es una certificación oficial)
       </label>
 
-      {error && <p className="form-error" role="alert">{error}</p>}
+      <AvisoError mensaje={error} />
       {success && <p className="form-success">¡Ficha enviada! La revisaremos y te avisaremos su estado.</p>}
 
       <button className="button-primary" disabled={busy} type="submit">

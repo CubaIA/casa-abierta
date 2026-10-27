@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react';
 import { listBusinesses, listFavoriteIds, toggleFavorite } from '@/lib/marketplace';
 import type { Business } from '@/lib/types';
 import { BusinessCard } from '@/components/BusinessCard';
+import { AvisoError } from '@/components/AvisoError';
 import { useAuth } from '@/lib/auth';
 
 export default function Favoritos() {
@@ -45,7 +46,7 @@ export default function Favoritos() {
       <h1 className="text-3xl font-extrabold text-azul">Mis favoritos</h1>
       <p className="mt-2 text-tinta/70">Los negocios que marcaste con el corazón.</p>
 
-      {error && <p className="form-error mt-4" role="alert">{error}</p>}
+      <AvisoError mensaje={error} className="mt-4" />
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {rows === null && <div className="empty-state">Cargando…</div>}

@@ -18,6 +18,7 @@ import {
   adminSetUserRole,
   adminSetUserStatus,
 } from '@/lib/marketplace';
+import { AvisoError } from '@/components/AvisoError';
 import { removeBusinessImages, uploadBusinessImages } from '@/lib/storage';
 import { resolvePhotos } from '@/lib/images';
 import { MENSAJE_PREMIUM, SUPPORT_WHATSAPP, whatsappLink } from '@/lib/whatsapp';
@@ -55,7 +56,7 @@ export default function Admin() {
 
   return (
     <AdminLayout items={ADMIN_TABS} active={tab} onSelect={(key) => setTab(key as Tab)}>
-      {error && <p className="form-error mb-4" role="alert">{error}</p>}
+      <AvisoError mensaje={error} className="mb-4" />
       {tab === 'businesses' && <BusinessesTab onError={setError} />}
       {tab === 'users' && <UsersTab onError={setError} />}
       {tab === 'requests' && <RequestsTab onError={setError} />}
@@ -140,7 +141,7 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
       <div className="flex justify-end">
         <button className="button-ghost" onClick={reload}><RefreshCw size={14} /> Actualizar</button>
       </div>
-      {err && <p className="form-error">{err}</p>}
+      <AvisoError mensaje={err} />
       {businesses === null && !err && <div className="empty-state">Cargando…</div>}
       {businesses?.length === 0 && <div className="empty-state">No hay negocios registrados.</div>}
       {businesses?.map((b) => (
@@ -437,7 +438,7 @@ function BusinessEditor({
         </p>
       </div>
 
-      {localErr && <p className="form-error" role="alert">{localErr}</p>}
+      <AvisoError mensaje={localErr} />
 
       <div className="flex flex-wrap gap-2">
         <button className="button-primary !py-1.5 !px-3 text-sm" type="submit" disabled={busy}>
@@ -459,7 +460,7 @@ function UsersTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      {err && <p className="form-error">{err}</p>}
+      <AvisoError mensaje={err} />
       {users === null && !err && <div className="empty-state">Cargando…</div>}
       {users?.map((u) => (
         <article key={u.id} className="panel !p-4 flex flex-wrap items-center justify-between gap-3">
@@ -518,7 +519,7 @@ function RequestsTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      {err && <p className="form-error">{err}</p>}
+      <AvisoError mensaje={err} />
       {requests === null && !err && <div className="empty-state">Cargando…</div>}
       {requests?.length === 0 && (
         <div className="empty-state"><Inbox size={24} className="mx-auto mb-2 opacity-50" />No hay solicitudes.</div>
@@ -596,7 +597,7 @@ function ReportsTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      {err && <p className="form-error">{err}</p>}
+      <AvisoError mensaje={err} />
       {reports === null && !err && <div className="empty-state">Cargando…</div>}
       {reports?.length === 0 && (
         <div className="empty-state"><Flag size={24} className="mx-auto mb-2 opacity-50" />No hay reportes.</div>
@@ -641,7 +642,7 @@ function MessagesTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      {err && <p className="form-error">{err}</p>}
+      <AvisoError mensaje={err} />
       {messages === null && !err && <div className="empty-state">Cargando…</div>}
       {messages?.length === 0 && (
         <div className="empty-state"><Inbox size={24} className="mx-auto mb-2 opacity-50" />No hay mensajes.</div>

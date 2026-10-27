@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
 import { firstPhoto } from '@/lib/images';
+import { SelloVerificado } from './SelloVerificado';
 
 /** Anti-caché: añade `?v=<timestamp>` a la URL de la foto para que el navegador
  *  descargue de nuevo la portada cuando cambia, en lugar de servir la anterior
@@ -112,6 +113,9 @@ export function BusinessCard({
             LGBTQ+ friendly
           </span>
         )}
+
+        {/* Sello de calidad: siempre a la vista, sobre la esquina inferior de la foto. */}
+        <SelloVerificado className="absolute bottom-3 left-3 z-10" />
 
         {onToggleFavorite && (
           <button

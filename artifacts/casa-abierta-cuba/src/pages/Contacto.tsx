@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 import { createContactMessage } from '@/lib/marketplace';
 import { useAuth } from '@/lib/auth';
+import { AvisoError } from '@/components/AvisoError';
 
 const INQUIRY_TYPES = [
   { value: 'general', label: 'Consulta general' },
@@ -108,7 +109,7 @@ export default function Contacto() {
           <textarea id="c-message" className="field-input" rows={5} required value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Cuéntanos en detalle…" />
         </div>
 
-        {error && <p className="form-error" role="alert">{error}</p>}
+        <AvisoError mensaje={error} />
         {sent && <p className="form-success">Mensaje enviado. Gracias por escribirnos.</p>}
 
         <button className="button-primary" disabled={busy} type="submit">

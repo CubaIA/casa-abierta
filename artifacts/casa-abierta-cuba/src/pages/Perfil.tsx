@@ -6,6 +6,7 @@ import { uploadProfileAvatar } from '@/lib/avatars';
 import { useAuth } from '@/lib/auth';
 import { normalizeRole } from '@/lib/roles';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { AvisoError } from '@/components/AvisoError';
 
 const TRIP_STYLES = ['Cultural', 'Aventura', 'Relajo', 'Gastronómico', 'Natural'];
 const BUDGET_BANDS = ['Económico', 'Moderado', 'Confort', 'Premium'];
@@ -166,7 +167,7 @@ export default function Perfil() {
           tu identificador de acceso.
         </p>
 
-        {error && <p className="form-error" role="alert">{error}</p>}
+        <AvisoError mensaje={error} />
         {saved && <p className="form-success">Perfil guardado.</p>}
 
         <button className="button-primary" disabled={busy} type="submit">
