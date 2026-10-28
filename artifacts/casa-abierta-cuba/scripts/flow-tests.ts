@@ -119,10 +119,10 @@ check('T18 solicitud pasa a completed', (await db.listMyRequests(travelerId))[0]
 
 // --- Reseñas ---
 await expectErr('T19 reseña con solicitud ajena es rechazada (autoría)', /solicitud completada/i, () =>
-  db.createReview({ authorId: fresh.user.id, requestId: myReq[0].id, businessId: catalog[0].id, rating: 5, comment: 'x' }),
+  db.createReview({ reviewerId: fresh.user.id, requestId: myReq[0].id, businessId: catalog[0].id, rating: 5, comment: 'x' }),
 );
 await db.createReview({
-  authorId: travelerId,
+  reviewerId: travelerId,
   requestId: myReq[0].id,
   businessId: catalog[0].id,
   rating: 5,
@@ -131,7 +131,7 @@ await db.createReview({
 const reviews = await db.listReviews(catalog[0].id);
 check('T20 reseña creada y visible', reviews.length === 1 && reviews[0].rating === 5);
 await expectErr('T21 segunda reseña del mismo request → rechazada (unique)', /Ya existe una reseña/i, () =>
-  db.createReview({ authorId: travelerId, requestId: myReq[0].id, businessId: catalog[0].id, rating: 4, comment: 'x' }),
+  db.createReview({ reviewerId: travelerId, requestId: myReq[0].id, businessId: catalog[0].id, rating: 4, comment: 'x' }),
 );
 
 // --- Reportes y contacto ---

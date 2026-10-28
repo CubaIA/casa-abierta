@@ -61,7 +61,7 @@ export default function Admin() {
 
   return (
     <AdminLayout items={ADMIN_TABS} active={tab} onSelect={(key) => setTab(key as Tab)}>
-      <AvisoError mensaje={error} className="mb-4" />
+      <AvisoError mensaje={error} className="mb-4" operador />
       {tab === 'businesses' && <BusinessesTab onError={setError} />}
       {tab === 'users' && <UsersTab onError={setError} />}
       {tab === 'requests' && <RequestsTab onError={setError} />}
@@ -163,7 +163,7 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
       <div className="flex justify-end">
         <button className="button-ghost" onClick={reload}><RefreshCw size={14} /> Actualizar</button>
       </div>
-      <AvisoError mensaje={err} />
+      <AvisoError mensaje={err} operador />
       {businesses === null && !err && <div className="empty-state">Cargando…</div>}
       {businesses?.length === 0 && <div className="empty-state">No hay negocios registrados.</div>}
       {businesses?.map((b) => (
@@ -380,7 +380,16 @@ function BusinessEditor({
     }
 
     setBusy(true);
+    // La auditoría legal va primero y solo por su RPC de administrador:
+    // `legal_validated` y `admin_legal_notes` no se conceden a `authenticated`,
+    // así que un UPDATE directo no las cambiaría (RLS, 0 filas) sin dar error.
+    let legalGuardado = false;
     try {
+      if (legalCargado && legalNotes.trim() !== (legal.admin_legal_notes ?? '').trim()) {
+        await adminSetBusinessLegal(business.id, legalValidated, legalNotes);
+        legalGuardado = true;
+        setLegal((prev) => ({ ...prev, admin_legal_notes: legalNotes.trim() || null }));
+      }
       let subidas: string[] = [];
       if (nuevas.length) {
         if (!supabase || !ownerId) {
@@ -395,14 +404,14 @@ function BusinessEditor({
       await adminEditBusiness(business.id, { description: desc, phone, images: finales });
       if (quitadas.length) void removeBusinessImages(quitadas);
       nuevas.forEach((n) => URL.revokeObjectURL(n.preview));
-      // Las notas de auditoría se guardan junto al resto si el admin las cambió.
-      if (legalCargado && legalNotes.trim() !== (legal.admin_legal_notes ?? '').trim()) {
-        await adminSetBusinessLegal(business.id, legalValidated, legalNotes);
-        setLegal((prev) => ({ ...prev, admin_legal_notes: legalNotes.trim() || null }));
-      }
       onSaved({ description: desc, images: finales, photos: finales, legal_validated: legalValidated });
     } catch (err) {
-      setLocalErr(err instanceof Error ? err.message : 'No se pudo guardar la edición');
+      const motivo = err instanceof Error ? err.message : 'No se pudo guardar la edición';
+      setLocalErr(
+        legalGuardado
+          ? `La auditoría legal sí se guardó, pero el resto de la ficha no: ${motivo}`
+          : motivo,
+      );
     } finally {
       setBusy(false);
     }
@@ -574,7 +583,7 @@ function BusinessEditor({
         </p>
       </div>
 
-      <AvisoError mensaje={localErr} />
+      <AvisoError mensaje={localErr} operador />
 
       <div className="flex flex-wrap gap-2">
         <button className="button-primary !py-1.5 !px-3 text-sm" type="submit" disabled={busy}>
@@ -596,7 +605,7 @@ function UsersTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      <AvisoError mensaje={err} />
+      <AvisoError mensaje={err} operador />
       {users === null && !err && <div className="empty-state">Cargando…</div>}
       {users?.map((u) => (
         <article key={u.id} className="panel !p-4 flex flex-wrap items-center justify-between gap-3">
@@ -655,7 +664,7 @@ function RequestsTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      <AvisoError mensaje={err} />
+      <AvisoError mensaje={err} operador />
       {requests === null && !err && <div className="empty-state">Cargando…</div>}
       {requests?.length === 0 && (
         <div className="empty-state"><Inbox size={24} className="mx-auto mb-2 opacity-50" />No hay solicitudes.</div>
@@ -733,7 +742,7 @@ function ReportsTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      <AvisoError mensaje={err} />
+      <AvisoError mensaje={err} operador />
       {reports === null && !err && <div className="empty-state">Cargando…</div>}
       {reports?.length === 0 && (
         <div className="empty-state"><Flag size={24} className="mx-auto mb-2 opacity-50" />No hay reportes.</div>
@@ -778,7 +787,7 @@ function MessagesTab({ onError }: { onError: (m: string | null) => void }) {
 
   return (
     <div className="space-y-3">
-      <AvisoError mensaje={err} />
+      <AvisoError mensaje={err} operador />
       {messages === null && !err && <div className="empty-state">Cargando…</div>}
       {messages?.length === 0 && (
         <div className="empty-state"><Inbox size={24} className="mx-auto mb-2 opacity-50" />No hay mensajes.</div>

@@ -72,11 +72,17 @@ grant execute on function public.provider_set_business_license(uuid, text) to au
 -- ============================================================================
 -- FUNCIÓN: admin_set_business_legal
 -- Valida o retira la validación de la documentación y guarda las notas.
+-- Parámetros: p_business_id, p_is_legal, p_notes (la app envía estos nombres).
+-- Postgres no permite renombrar parámetros con CREATE OR REPLACE, así que se
+-- elimina la versión anterior (misma firma) antes de crearla de nuevo. Esto
+-- hace la migración re-ejecutable sobre proyectos con la 008 ya aplicada.
 -- ============================================================================
+drop function if exists public.admin_set_business_legal(uuid, boolean, text);
+
 create or replace function public.admin_set_business_legal(
-  target_business_id uuid,
-  next_validated boolean,
-  next_notes text
+  p_business_id uuid,
+  p_is_legal boolean,
+  p_notes text
 )
 returns void
 language plpgsql
@@ -88,9 +94,9 @@ begin
     raise exception 'Administrator role required' using errcode = '42501';
   end if;
   update public.businesses
-     set legal_validated = coalesce(next_validated, false),
-         admin_legal_notes = nullif(trim(coalesce(next_notes, '')), '')
-   where id = target_business_id;
+     set legal_validated = coalesce(p_is_legal, false),
+         admin_legal_notes = nullif(trim(coalesce(p_notes, '')), '')
+   where id = p_business_id;
   if not found then
     raise exception 'Business not found' using errcode = 'P0002';
   end if;
@@ -103,8 +109,11 @@ grant execute on function public.admin_set_business_legal(uuid, boolean, text) t
 -- ============================================================================
 -- FUNCIÓN: admin_get_business_legal
 -- Lectura de los datos privados para el panel de administración.
+-- Igual que la anterior: DROP para fijar los nombres p_* de los parámetros.
 -- ============================================================================
-create or replace function public.admin_get_business_legal(target_business_id uuid)
+drop function if exists public.admin_get_business_legal(uuid);
+
+create or replace function public.admin_get_business_legal(p_business_id uuid)
 returns table (
   license_number text,
   legal_validated boolean,
@@ -121,7 +130,7 @@ begin
   return query
     select b.license_number, b.legal_validated, b.admin_legal_notes
       from public.businesses b
-     where b.id = target_business_id;
+     where b.id = p_business_id;
 end;
 $$;
 

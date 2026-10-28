@@ -1108,18 +1108,60 @@ export const LEGAL_VACIO: AdminBusinessLegal = {
   admin_legal_notes: null,
 };
 
+/** Formas de nombrar los argumentos de los RPC de auditoría legal según la
+ *  versión de la migración 008 aplicada en cada proyecto.
+ *
+ *  PostgREST resuelve las funciones por el NOMBRE de sus parámetros: si la BD
+ *  tiene p_business_id/p_is_legal/p_notes y la app envía target_business_id/
+ *  next_validated/next_notes, la respuesta es PGRST202 («Could not find the
+ *  function») aunque la función exista. Se prueban las dos formas para que el
+ *  panel funcione con cualquiera de las dos versiones. */
+const FORMAS_LEGAL = ['p', 'legacy'] as const;
+type FormaLegal = (typeof FORMAS_LEGAL)[number];
+
+function argsValidacionLegal(
+  forma: FormaLegal,
+  id: string,
+  validado: boolean,
+  notas: string,
+): Record<string, unknown> {
+  return forma === 'p'
+    ? { p_business_id: id, p_is_legal: validado, p_notes: notas }
+    : { target_business_id: id, next_validated: validado, next_notes: notas };
+}
+
+function argsLecturaLegal(forma: FormaLegal, id: string): Record<string, unknown> {
+  return forma === 'p' ? { p_business_id: id } : { target_business_id: id };
+}
+
+/** Mensaje accionable para un fallo real del RPC de auditoría legal. */
+function mensajeErrorLegal(detalle: string): string {
+  if (/Administrator role required|42501|row-level security|permission denied/i.test(detalle)) {
+    return (
+      'La base de datos no reconoce tu cuenta como administradora, así que no guardó la auditoría legal. ' +
+      'Comprueba que tu usuario tenga el rol admin en la tabla users y reintenta.'
+    );
+  }
+  if (/Business not found|P0002/i.test(detalle)) {
+    return 'Este negocio ya no existe en la base de datos: recarga el panel y reintenta.';
+  }
+  return `No se pudo guardar la auditoría legal: ${detalle}`;
+}
+
 export async function adminGetBusinessLegal(id: string): Promise<AdminBusinessLegal> {
   if (supabase) {
-    const { data, error } = await supabase.rpc('admin_get_business_legal', { target_business_id: id });
-    if (!error) {
-      const fila = (Array.isArray(data) ? data[0] : data) as Partial<AdminBusinessLegal> | null;
-      return {
-        license_number: fila?.license_number ?? null,
-        legal_validated: fila?.legal_validated === true,
-        admin_legal_notes: fila?.admin_legal_notes ?? null,
-      };
+    for (const forma of FORMAS_LEGAL) {
+      const { data, error } = await supabase.rpc('admin_get_business_legal', argsLecturaLegal(forma, id));
+      if (!error) {
+        const fila = (Array.isArray(data) ? data[0] : data) as Partial<AdminBusinessLegal> | null;
+        return {
+          license_number: fila?.license_number ?? null,
+          legal_validated: fila?.legal_validated === true,
+          admin_legal_notes: fila?.admin_legal_notes ?? null,
+        };
+      }
+      if (!isMissingRpc(error.message)) throw new Error(error.message);
     }
-    if (!isMissingRpc(error.message)) throw new Error(error.message);
     // Proyecto sin la migración 008: se intenta la lectura directa. Si los
     // permisos la bloquean se devuelve el estado vacío, nunca un error fatal.
     const { data: fila, error: readErr } = await supabase
@@ -1148,10 +1190,12 @@ export async function adminGetBusinessLegal(id: string): Promise<AdminBusinessLe
  * Valida (o retira la validación de) la documentación legal de un negocio y
  * guarda las notas privadas de auditoría.
  *
- * A propósito NO hay UPDATE directo de respaldo: si el RPC no existe se pide
- * aplicar la migración 008. La columna `legal_validated` no se concede a
- * `authenticated`, así que un anfitrión nunca puede auto-validarse, aunque las
- * políticas RLS le permitan editar su propia ficha.
+ * Toda la escritura va por el RPC `admin_set_business_legal` (SECURITY DEFINER
+ * + comprobación de rol): `legal_validated` y `admin_legal_notes` no se
+ * conceden a `authenticated`, y un UPDATE directo sobre ellas no cambiaría
+ * nada (RLS lo deja en 0 filas) sin devolver error. Por eso tampoco existe un
+ * respaldo por UPDATE: si el RPC falta, se pide aplicar la migración 008. Esto
+ * también impide que un anfitrión se auto-valide editando su propia ficha.
  */
 export async function adminSetBusinessLegal(
   id: string,
@@ -1160,19 +1204,20 @@ export async function adminSetBusinessLegal(
 ): Promise<void> {
   const notas = adminNotes.trim();
   if (supabase) {
-    const { error } = await supabase.rpc('admin_set_business_legal', {
-      target_business_id: id,
-      next_validated: legalValidated,
-      next_notes: notas,
-    });
-    if (!error) return;
-    if (isMissingRpc(error.message)) {
-      throw new Error(
-        'La validación legal requiere la migración 008: aplica ' +
-          'supabase/migrations/008_legal_audit.sql en Supabase → SQL Editor (una sola vez) y reintenta.',
+    for (const forma of FORMAS_LEGAL) {
+      const { error } = await supabase.rpc(
+        'admin_set_business_legal',
+        argsValidacionLegal(forma, id, legalValidated, notas),
       );
+      if (!error) return;
+      // PGRST202: esa forma de parámetros no existe en el proyecto; se prueba la otra.
+      if (isMissingRpc(error.message)) continue;
+      throw new Error(mensajeErrorLegal(error.message));
     }
-    throw new Error(error.message);
+    throw new Error(
+      'No se pudo guardar la auditoría legal: la función admin_set_business_legal no está en la base de datos. ' +
+        'Aplica una sola vez supabase/migrations/008_legal_audit.sql en el SQL Editor de Supabase y reintenta.',
+    );
   }
   const store = loadStore();
   const b = store.businesses.find((x) => x.id === id);

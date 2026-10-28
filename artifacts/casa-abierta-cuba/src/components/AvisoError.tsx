@@ -52,6 +52,13 @@ export function esMensajeTecnico(mensaje: string | null | undefined): boolean {
 interface AvisoErrorProps {
   mensaje: string | null | undefined;
   className?: string;
+  /** Panel de administración: muestra el mensaje tal cual.
+   *
+   * Los diagnósticos de configuración (RPC que falta, migración sin aplicar,
+   * permisos, RLS) solo le sirven a quien administra la plataforma. Sin este
+   * modo se sustituían por el aviso amable de WhatsApp y el admin se quedaba
+   * sin saber por qué no se guardó nada. */
+  operador?: boolean;
 }
 
 /**
@@ -59,10 +66,10 @@ interface AvisoErrorProps {
  *  - mensaje de validación claro → se muestra como siempre (`.form-error`);
  *  - fallo técnico → texto amable + botón de WhatsApp funcionando.
  */
-export function AvisoError({ mensaje, className = '' }: AvisoErrorProps) {
+export function AvisoError({ mensaje, className = '', operador = false }: AvisoErrorProps) {
   if (!mensaje) return null;
 
-  if (!esMensajeTecnico(mensaje)) {
+  if (operador || !esMensajeTecnico(mensaje)) {
     return (
       <p className={`form-error ${className}`} role="alert">
         {mensaje}
