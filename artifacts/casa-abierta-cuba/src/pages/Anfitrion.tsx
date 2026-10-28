@@ -257,6 +257,8 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
   const [success, setSuccess] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreview, setPhotoPreview] = useState<string[]>([]);
+  /** Declaración jurada de licencias y aceptación del tratamiento de datos. */
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   const [form, setForm] = useState<SubmitBusinessInput>({
     name: '',
@@ -274,6 +276,7 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
     lgbt_friendly: false,
     phone: profile?.phone ?? '',
     email: profile?.email ?? '',
+    license_number: '',
   });
 
   useEffect(() => {
@@ -296,6 +299,12 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
     if (!form.municipality.trim()) return setError('Indica el municipio.');
     if (form.phone.trim().length < 5) return setError('Indica un teléfono de contacto válido.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return setError('El correo de contacto no es válido.');
+    if (form.license_number.trim().length < 3) {
+      return setError('Indica tu número de licencia o la documentación legal con la que operas.');
+    }
+    if (!legalAccepted) {
+      return setError('Debes marcar la declaración jurada de licencias y la aceptación del tratamiento de datos.');
+    }
 
     if (!userId) return setError('Inicia sesión para publicar un negocio.');
     if (photos.length > 8) return setError('No puedes subir más de 8 fotos.');
@@ -362,6 +371,23 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
           <input id="b-email" type="email" className="field-input" required value={form.email} onChange={(e) => set('email', e.target.value)} />
           <p className="field-hint">No se muestra en el catálogo público.</p>
         </div>
+      </div>
+
+      {/* Documentación legal: obligatoria para publicar (Ley 149 de 2022). */}
+      <div className="rounded-xl border border-arena-2 bg-arena/40 p-3">
+        <label className="field-label" htmlFor="b-license">Número de Licencia / Documentación Legal *</label>
+        <input
+          id="b-license"
+          className="field-input"
+          required
+          value={form.license_number}
+          onChange={(e) => set('license_number', e.target.value)}
+          placeholder="Ej. Licencia de arrendamiento MINTUR 12345"
+        />
+        <p className="mt-2 text-xs leading-relaxed text-tinta/55">
+          Nota: Los documentos y datos aquí suministrados serán utilizados única y exclusivamente para validar su
+          estatus legal y profesional dentro de la plataforma. No serán compartidos con terceros (Ley 149 de 2022).
+        </p>
       </div>
 
       <div>
@@ -458,12 +484,35 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
         Ofrecemos un entorno LGBT friendly (declaración de servicio, no es una certificación oficial)
       </label>
 
+      <label className="flex items-start gap-2 rounded-xl border-2 border-verde-600/40 bg-verde/5 p-3 text-sm font-semibold text-tinta">
+        <input
+          type="checkbox"
+          required
+          className="mt-0.5"
+          checked={legalAccepted}
+          onChange={(e) => setLegalAccepted(e.target.checked)}
+        />
+        <span>
+          Declaro bajo juramento que cuento con las licencias y permisos legales vigentes para operar, y acepto la
+          política de tratamiento de datos personales.
+        </span>
+      </label>
+
       <AvisoError mensaje={error} />
       {success && <p className="form-success">¡Ficha enviada! La revisaremos y te avisaremos su estado.</p>}
 
-      <button className="button-primary" disabled={busy} type="submit">
+      <button
+        className="button-primary"
+        disabled={busy || !legalAccepted || form.license_number.trim().length < 3}
+        type="submit"
+      >
         {busy ? 'Enviando…' : 'Enviar a revisión'}
       </button>
+      {(!legalAccepted || form.license_number.trim().length < 3) && (
+        <p className="text-xs text-tinta/60">
+          Para enviar la ficha necesitas indicar tu licencia y marcar la declaración jurada.
+        </p>
+      )}
     </form>
   );
 }

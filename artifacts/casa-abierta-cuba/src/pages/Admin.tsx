@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { BadgeCheck, CheckCircle2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, Star, Users, XCircle } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, FileCheck2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, ShieldCheck, Star, Users, XCircle } from 'lucide-react';
 import {
   adminDeleteBusiness,
   adminEditBusiness,
+  adminGetBusinessLegal,
   adminGetRequestContact,
   adminListAllBusinesses,
   adminListAllRequests,
@@ -11,6 +12,7 @@ import {
   adminListReports,
   adminListUsers,
   adminSetBusinessFeatured,
+  adminSetBusinessLegal,
   adminSetBusinessStatus,
   adminSetBusinessVerified,
   adminSetContactMessageStatus,
@@ -18,6 +20,8 @@ import {
   adminSetRequestStatus,
   adminSetUserRole,
   adminSetUserStatus,
+  LEGAL_VACIO,
+  type AdminBusinessLegal,
 } from '@/lib/marketplace';
 import { AvisoError } from '@/components/AvisoError';
 import { removeBusinessImages, uploadBusinessImages } from '@/lib/storage';
@@ -169,9 +173,15 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               <h2 className="font-extrabold text-azul">{b.name}</h2>
               <p className="text-xs text-tinta/55">{b.municipality}, {b.province} · {b.service_type} · {b.status}</p>
             </div>
-            <span className={`badge ${b.status === 'approved' ? 'badge-green' : b.status === 'pending' ? 'badge-gold' : 'badge-red'}`}>
-              {b.status}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`badge ${b.status === 'approved' ? 'badge-green' : b.status === 'pending' ? 'badge-gold' : 'badge-red'}`}>
+                {b.status}
+              </span>
+              {/* Estado de la auditoría legal, visible solo en el panel admin. */}
+              <span className={`badge ${b.legal_validated === true ? 'badge-green' : 'badge-neutral'}`}>
+                {b.legal_validated === true ? 'Legal validado' : 'Legal pendiente'}
+              </span>
+            </div>
           </div>
           <p className="mt-2 text-sm text-tinta/75">{b.description}</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -303,6 +313,12 @@ function BusinessEditor({
   const [nuevas, setNuevas] = useState<FotoNueva[]>([]);
   const [localErr, setLocalErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /* Auditoría legal (Ley 149): privada, solo la lee y edita el administrador. */
+  const [legal, setLegal] = useState<AdminBusinessLegal>(LEGAL_VACIO);
+  const [legalNotes, setLegalNotes] = useState('');
+  const [legalValidated, setLegalValidated] = useState(false);
+  const [legalCargado, setLegalCargado] = useState(false);
+  const [savingLegal, setSavingLegal] = useState(false);
 
   // El teléfono no viene en la lista del admin (columna acotada): se intenta leer aparte.
   useEffect(() => {
@@ -322,6 +338,27 @@ function BusinessEditor({
         // Columna no legible en este proyecto: el admin puede escribirla a mano.
       }
     })();
+    return () => {
+      vivo = false;
+    };
+  }, [business.id]);
+
+  // Licencia declarada, notas y validación legal: solo vía RPC de administrador.
+  useEffect(() => {
+    let vivo = true;
+    adminGetBusinessLegal(business.id)
+      .then((v) => {
+        if (!vivo) return;
+        setLegal(v);
+        setLegalNotes(v.admin_legal_notes ?? '');
+        setLegalValidated(v.legal_validated);
+      })
+      .catch(() => {
+        // Sin permisos o sin migración 008: el admin puede escribir las notas igual.
+      })
+      .finally(() => {
+        if (vivo) setLegalCargado(true);
+      });
     return () => {
       vivo = false;
     };
@@ -358,11 +395,36 @@ function BusinessEditor({
       await adminEditBusiness(business.id, { description: desc, phone, images: finales });
       if (quitadas.length) void removeBusinessImages(quitadas);
       nuevas.forEach((n) => URL.revokeObjectURL(n.preview));
-      onSaved({ description: desc, images: finales, photos: finales });
+      // Las notas de auditoría se guardan junto al resto si el admin las cambió.
+      if (legalCargado && legalNotes.trim() !== (legal.admin_legal_notes ?? '').trim()) {
+        await adminSetBusinessLegal(business.id, legalValidated, legalNotes);
+        setLegal((prev) => ({ ...prev, admin_legal_notes: legalNotes.trim() || null }));
+      }
+      onSaved({ description: desc, images: finales, photos: finales, legal_validated: legalValidated });
     } catch (err) {
       setLocalErr(err instanceof Error ? err.message : 'No se pudo guardar la edición');
     } finally {
       setBusy(false);
+    }
+  }
+
+  /** Valida o retira la validación legal, guardando las notas actuales. */
+  async function toggleLegal() {
+    const next = !legalValidated;
+    setLocalErr(null);
+    onError(null);
+    setSavingLegal(true);
+    setLegalValidated(next);
+    try {
+      await adminSetBusinessLegal(business.id, next, legalNotes);
+      setLegal({ license_number: legal.license_number, legal_validated: next, admin_legal_notes: legalNotes.trim() || null });
+      setLegalCargado(true);
+      onSaved({ legal_validated: next });
+    } catch (e) {
+      setLegalValidated(!next);
+      setLocalErr(e instanceof Error ? e.message : 'No se pudo validar la documentación legal');
+    } finally {
+      setSavingLegal(false);
     }
   }
 
@@ -402,6 +464,47 @@ function BusinessEditor({
           placeholder="+53 5 555 9876"
         />
         <p className="field-hint">Déjalo vacío o igual para no modificarlo.</p>
+      </div>
+
+      {/* Auditoría legal: datos privados, nunca visibles en el catálogo ni en la ficha. */}
+      <div className="rounded-xl border border-arena-2 bg-white/70 p-3">
+        <p className="field-label !mb-1 inline-flex items-center gap-1.5">
+          <FileCheck2 size={14} aria-hidden /> Auditoría legal (Ley 149 de 2022)
+        </p>
+        <p className="text-xs text-tinta/70">
+          Licencia declarada por el anfitrión:{' '}
+          <span className="font-bold text-azul">
+            {legalCargado ? (legal.license_number?.trim() || 'sin declarar') : 'cargando…'}
+          </span>
+        </p>
+
+        <label className="field-label mt-3" htmlFor={`edit-legal-${business.id}`}>Notas de Auditoría Legal</label>
+        <textarea
+          id={`edit-legal-${business.id}`}
+          className="field-input"
+          rows={2}
+          value={legalNotes}
+          onChange={(e) => setLegalNotes(e.target.value)}
+          placeholder="Ej. Licencia MINTUR 12345 comprobada el 12/10/2026; falta carnet de guía."
+        />
+        <p className="field-hint">
+          Campo privado: solo lo ve el administrador. No se muestra en el catálogo ni en la ficha pública.
+        </p>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={legalValidated}
+          aria-label={`Validar documentación legal: ${business.name}`}
+          title={legalValidated ? 'Retirar la validación legal' : 'Validar la documentación legal'}
+          disabled={savingLegal}
+          className={`button-ghost !text-sm mt-2 ${
+            legalValidated ? '!bg-verde-600 !border-verde-600 !text-white' : ''
+          } ${savingLegal ? 'opacity-60' : ''}`}
+          onClick={() => void toggleLegal()}
+        >
+          <ShieldCheck size={14} /> {legalValidated ? 'Documentación legal validada' : 'Validar Documentación Legal'}
+        </button>
       </div>
 
       <div>

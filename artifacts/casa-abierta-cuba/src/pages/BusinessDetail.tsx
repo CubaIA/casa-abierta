@@ -507,6 +507,12 @@ export default function BusinessDetail() {
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
           {/* Sello de calidad de la plataforma: solo si el admin verificó el negocio. */}
           <SelloVerificado verified={business?.verified === true} variant="full" />
+          {/* Solo con sello Y documentación legal validada por el admin. */}
+          {business?.verified === true && business?.legal_validated === true && (
+            <p className="w-full text-xs font-semibold text-verde-700">
+              ✓ Documentación legal y permisos revisados por el equipo de Casa Abierta Cuba
+            </p>
+          )}
           <span className="inline-flex items-center gap-1 font-bold text-tinta">
             <Star size={14} className="fill-tinta" aria-hidden />
             {avg !== null ? avg.toFixed(2) : 'Nuevo'}

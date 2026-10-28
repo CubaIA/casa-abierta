@@ -168,6 +168,7 @@ const newBizId = await db.submitBusiness(providerId, {
   lgbt_friendly: true,
   phone: '+5352223344',
   email: 'rosa@casa.cu',
+  license_number: 'Licencia MINTUR 99881',
 });
 check('T28 proveedor envía alta de negocio', typeof newBizId === 'string');
 const myBusinesses = await db.listMyBusinesses(providerId);

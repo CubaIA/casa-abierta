@@ -57,7 +57,7 @@ export const isDemo = !isSupabaseConfigured;
 const LIVE_BUSINESS_COLS =
   'id, title, description, category, subcategory, province, municipality, ' +
   'languages, status, created_at, images, amenities, tags, ' +
-  'price_amount, price_currency, verified, featured, schedule, capacity';
+  'price_amount, price_currency, verified, legal_validated, featured, schedule, capacity';
 
 const LIVE_BUSINESS_AUTH_COLS = LIVE_BUSINESS_COLS + ', owner_id';
 
@@ -127,6 +127,18 @@ function joinBusinessName(business: unknown): { name: string; province: string }
 
 function mapBusinessForCards(row: Record<string, unknown>): Business {
   return mapBusinessRow(row);
+}
+
+/** Vista pública de un negocio.
+ *
+ * En producción la migración 008 no concede `license_number` ni
+ * `admin_legal_notes` a `anon`/`authenticated`, así que el catálogo y la ficha
+ * nunca los reciben. La demo local sí tiene el objeto completo en memoria: se
+ * recortan aquí para que el comportamiento sea el mismo y ningún dato legal
+ * privado se cuele en el HTML público. */
+function comoPublico(b: Business): Business {
+  const { license_number: _licencia, admin_legal_notes: _notas, ...resto } = b;
+  return resto;
 }
 
 /* ------------------------------------------------------------------ */
@@ -380,7 +392,7 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
       [b.name, b.municipality, b.province, b.description].some((v) => v?.toLowerCase().includes(q)),
     );
   }
-  return rows;
+  return rows.map(comoPublico);
 }
 
 export async function getBusiness(id: string): Promise<Business | null> {
@@ -393,7 +405,8 @@ export async function getBusiness(id: string): Promise<Business | null> {
     if (error) throw new Error(error.message);
     return data ? mapBusinessRow(data as unknown as Record<string, unknown>) : null;
   }
-  return loadStore().businesses.find((b) => b.id === id) ?? null;
+  const b = loadStore().businesses.find((x) => x.id === id);
+  return b ? comoPublico(b) : null;
 }
 
 /**
@@ -707,6 +720,33 @@ function isMissingRpc(message: string): boolean {
   return /Could not find the function|PGRST202/.test(message);
 }
 
+/** Guarda la licencia declarada por el anfitrión (dato privado, Ley 149).
+ *
+ * Va por un RPC SECURITY DEFINER que comprueba que quien escribe es el dueño
+ * del negocio: la columna no se expone a `authenticated` para que nadie pueda
+ * leer ni alterar la documentación legal de un negocio ajeno.
+ */
+async function guardarLicenciaNegocio(id: string, license: string | null | undefined): Promise<void> {
+  const limpio = (license ?? '').trim();
+  if (!limpio || !supabase) return;
+  const { error } = await supabase.rpc('provider_set_business_license', {
+    target_business_id: id,
+    next_license: limpio,
+  });
+  if (!error) return;
+  if (isMissingRpc(error.message)) {
+    const { error: updErr } = await supabase.from('businesses').update({ license_number: limpio }).eq('id', id);
+    if (updErr) {
+      throw new Error(
+        'La ficha se creó, pero no se pudo guardar el número de licencia. Aplica ' +
+          'supabase/migrations/008_legal_audit.sql en Supabase → SQL Editor (una sola vez) y edítala.',
+      );
+    }
+    return;
+  }
+  throw new Error(error.message);
+}
+
 export async function submitBusiness(providerId: string, input: SubmitBusinessInput): Promise<string> {
   if (supabase) {
     const { data, error } = await supabase.rpc('provider_submit_business', {
@@ -726,7 +766,11 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
       p_phone: input.phone,
       p_email: input.email,
     });
-    if (!error) return data as string;
+    if (!error) {
+      const id = data as string;
+      await guardarLicenciaNegocio(id, input.license_number);
+      return id;
+    }
     if (!isMissingRpc(error.message)) throw new Error(error.message);
     // Fallback: inserción directa con las columnas reales de la BD.
     // owner_id se resuelve de la sesión actual cuando providerId no es suficiente.
@@ -753,6 +797,7 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
       status: 'pending',
     });
     if (insErr) throw new Error(insErr.message);
+    await guardarLicenciaNegocio(id, input.license_number);
     return id;
   }
   const slug = generateSlug(input.name);
@@ -783,6 +828,9 @@ export async function submitBusiness(providerId: string, input: SubmitBusinessIn
     experience_details: input.experience_details,
     recommended_for: input.recommended_for,
     lgbt_friendly: input.lgbt_friendly,
+    license_number: input.license_number?.trim() ?? '',
+    legal_validated: false,
+    admin_legal_notes: null,
     status: 'pending',
     created_at: new Date().toISOString(),
   });
@@ -1040,6 +1088,98 @@ export async function adminSetBusinessVerified(id: string, verified: boolean): P
     b.verified = verified;
     saveStore(store);
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Auditoría legal (Ley 149 de 2022)                                   */
+/* ------------------------------------------------------------------ */
+
+/** Datos legales privados de un negocio: solo el administrador los lee. */
+export interface AdminBusinessLegal {
+  license_number: string | null;
+  legal_validated: boolean;
+  admin_legal_notes: string | null;
+}
+
+/** Estado inicial usado mientras se cargan los datos legales de una ficha. */
+export const LEGAL_VACIO: AdminBusinessLegal = {
+  license_number: null,
+  legal_validated: false,
+  admin_legal_notes: null,
+};
+
+export async function adminGetBusinessLegal(id: string): Promise<AdminBusinessLegal> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('admin_get_business_legal', { target_business_id: id });
+    if (!error) {
+      const fila = (Array.isArray(data) ? data[0] : data) as Partial<AdminBusinessLegal> | null;
+      return {
+        license_number: fila?.license_number ?? null,
+        legal_validated: fila?.legal_validated === true,
+        admin_legal_notes: fila?.admin_legal_notes ?? null,
+      };
+    }
+    if (!isMissingRpc(error.message)) throw new Error(error.message);
+    // Proyecto sin la migración 008: se intenta la lectura directa. Si los
+    // permisos la bloquean se devuelve el estado vacío, nunca un error fatal.
+    const { data: fila, error: readErr } = await supabase
+      .from('businesses')
+      .select('license_number, legal_validated, admin_legal_notes')
+      .eq('id', id)
+      .maybeSingle();
+    if (readErr || !fila) return LEGAL_VACIO;
+    const f = fila as unknown as Partial<AdminBusinessLegal>;
+    return {
+      license_number: f.license_number ?? null,
+      legal_validated: f.legal_validated === true,
+      admin_legal_notes: f.admin_legal_notes ?? null,
+    };
+  }
+  const b = loadStore().businesses.find((x) => x.id === id);
+  if (!b) return LEGAL_VACIO;
+  return {
+    license_number: b.license_number ?? null,
+    legal_validated: b.legal_validated === true,
+    admin_legal_notes: b.admin_legal_notes ?? null,
+  };
+}
+
+/**
+ * Valida (o retira la validación de) la documentación legal de un negocio y
+ * guarda las notas privadas de auditoría.
+ *
+ * A propósito NO hay UPDATE directo de respaldo: si el RPC no existe se pide
+ * aplicar la migración 008. La columna `legal_validated` no se concede a
+ * `authenticated`, así que un anfitrión nunca puede auto-validarse, aunque las
+ * políticas RLS le permitan editar su propia ficha.
+ */
+export async function adminSetBusinessLegal(
+  id: string,
+  legalValidated: boolean,
+  adminNotes: string,
+): Promise<void> {
+  const notas = adminNotes.trim();
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_business_legal', {
+      target_business_id: id,
+      next_validated: legalValidated,
+      next_notes: notas,
+    });
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      throw new Error(
+        'La validación legal requiere la migración 008: aplica ' +
+          'supabase/migrations/008_legal_audit.sql en Supabase → SQL Editor (una sola vez) y reintenta.',
+      );
+    }
+    throw new Error(error.message);
+  }
+  const store = loadStore();
+  const b = store.businesses.find((x) => x.id === id);
+  if (!b) throw new Error('Negocio no encontrado');
+  b.legal_validated = legalValidated;
+  b.admin_legal_notes = notas || null;
+  saveStore(store);
 }
 
 export async function adminDeleteBusiness(id: string): Promise<void> {

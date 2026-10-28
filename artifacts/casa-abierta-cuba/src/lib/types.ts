@@ -50,6 +50,12 @@ export interface Business {
   /** Negocios destacados: se muestran primero y con sello Premium. */
   featured?: boolean | null;
   verified?: boolean;
+  /** Declaración privada del anfitrión (licencia / MINTUR). No se publica. */
+  license_number?: string | null;
+  /** Documentación legal revisada y validada por el administrador. */
+  legal_validated?: boolean;
+  /** Notas privadas de auditoría legal: solo las lee el administrador. */
+  admin_legal_notes?: string | null;
   sustainability_badge?: string | null;
   is_experience?: boolean;
   status: BusinessStatus;
@@ -138,4 +144,6 @@ export interface SubmitBusinessInput {
   lgbt_friendly: boolean;
   phone: string;
   email: string;
+  /** Licencia o documentación legal declarada bajo juramento (Ley 149 de 2022). */
+  license_number: string;
 }
