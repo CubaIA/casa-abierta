@@ -1254,10 +1254,15 @@ export interface AdminEditBusinessInput {
   phone?: string | null;
   /** Lista completa de fotos; el elemento 0 es la portada del catálogo. */
   images: string[];
+  /** «Conoce a tu anfitrión». `undefined` = no modificarlo. */
+  host_story?: string;
+  /** «Detalles de la experiencia». `undefined` = no modificarlo. */
+  experience_details?: string;
 }
 
 /**
- * Edita descripción, WhatsApp y fotos de cualquier negocio desde el panel admin.
+ * Edita descripción, WhatsApp, fotos y los dos textos de la ficha (historia del
+ * anfitrión y detalles de la experiencia) desde el panel admin.
  *
  * El UPDATE directo sobre `businesses` depende de los privilegios/RLS de cada
  * proyecto, y la columna de fotos se llama `images` en la BD de producción pero
@@ -1267,6 +1272,15 @@ export interface AdminEditBusinessInput {
  * Último recurso: la RPC `admin_edit_business` (migración 005, SECURITY DEFINER).
  */
 export async function adminEditBusiness(id: string, input: AdminEditBusinessInput): Promise<void> {
+  await guardarFichaBase(id, input);
+  // Los textos narrativos van en un UPDATE aparte: si la BD no permite
+  // escribirlos, descripción, WhatsApp y fotos ya quedaron guardados y el
+  // error dice exactamente qué falta en lugar de perder toda la edición.
+  await guardarFichaNarrativa(id, input);
+}
+
+/** Descripción, WhatsApp y fotos: el guardado histórico del panel admin. */
+async function guardarFichaBase(id: string, input: AdminEditBusinessInput): Promise<void> {
   const description = input.description.trim();
   const images = input.images;
   const phone = input.phone?.trim() || null;
@@ -1344,6 +1358,121 @@ async function guardarTelefono(id: string, phone: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.from('businesses').update({ phone }).eq('id', id);
   if (error) console.warn('No se pudo guardar el WhatsApp del negocio:', error.message);
+}
+
+/* ---------------- Textos narrativos de la ficha ---------------- */
+
+/** Columnas de «Conoce a tu anfitrión» y «Detalles de la experiencia» con sus
+ *  alias conocidos: la migración 001 usa host_story/experience_details y la BD
+ *  de producción puede tener host_bio/amenities (text[]). */
+const FICHA_NARRATIVA: Array<{
+  campo: 'host_story' | 'experience_details';
+  cols: Array<{ col: string; array: boolean }>;
+}> = [
+  {
+    campo: 'host_story',
+    cols: [
+      { col: 'host_story', array: false },
+      { col: 'host_bio', array: false },
+    ],
+  },
+  {
+    campo: 'experience_details',
+    cols: [
+      { col: 'experience_details', array: false },
+      { col: 'amenities', array: true },
+    ],
+  },
+];
+
+const ETIQUETA_FICHA: Record<'host_story' | 'experience_details', string> = {
+  host_story: '«Conoce a tu anfitrión»',
+  experience_details: '«Detalles de la experiencia»',
+};
+
+/** PostgREST devuelve PGRST204 (schema cache) o 42703 cuando la columna no existe. */
+function esColumnaAusente(mensaje: string): boolean {
+  return /42703|PGRST204|column .* does not exist|Could not find the .* column/i.test(mensaje);
+}
+
+/**
+ * Guarda «Conoce a tu anfitrión» y «Detalles de la experiencia».
+ *
+ * Se intenta primero el UPDATE directo (con el nombre canónico y, si la columna
+ * no existe, con el alias de la BD real) porque las columnas no están
+ * restringidas a nivel de tabla; si RLS/grants lo silencian o lo bloquean, se
+ * usa el RPC `admin_edit_business` de 6 argumentos (migración 009).
+ */
+async function guardarFichaNarrativa(id: string, input: AdminEditBusinessInput): Promise<void> {
+  const valores: Array<{ campo: 'host_story' | 'experience_details'; texto: string }> = [];
+  if (input.host_story !== undefined) valores.push({ campo: 'host_story', texto: input.host_story.trim() });
+  if (input.experience_details !== undefined) {
+    valores.push({ campo: 'experience_details', texto: input.experience_details.trim() });
+  }
+  if (valores.length === 0) return;
+
+  if (!supabase) {
+    const store = loadStore();
+    const b = store.businesses.find((x) => x.id === id);
+    if (!b) throw new Error('Negocio no encontrado');
+    for (const v of valores) b[v.campo] = v.texto;
+    saveStore(store);
+    return;
+  }
+
+  const pendientes: string[] = [];
+  for (const valor of valores) {
+    const candidatas = FICHA_NARRATIVA.find((f) => f.campo === valor.campo)?.cols ?? [];
+    let guardado = false;
+    for (const { col, array } of candidatas) {
+      const payload: Record<string, unknown> = {
+        [col]: array ? (valor.texto ? [valor.texto] : []) : valor.texto,
+      };
+      const { error } = await supabase.from('businesses').update(payload).eq('id', id);
+      if (error) {
+        if (esColumnaAusente(error.message)) continue; // otro nombre de columna
+        break; // permiso o valor rechazado: se intenta el RPC
+      }
+      const persistido = await textoPersistido(id, col, valor.texto);
+      if (persistido === false) break; // 0 filas afectadas por RLS
+      guardado = true;
+      break;
+    }
+    if (!guardado) pendientes.push(ETIQUETA_FICHA[valor.campo]);
+  }
+  if (pendientes.length === 0) return;
+
+  // Los textos de la firma son posicionales/nombrados: se envían ambos para no
+  // depender de si el RPC tiene la firma de 006 argumentos o la heredada.
+  const { error: rpcErr } = await supabase.rpc('admin_edit_business', {
+    target_business_id: id,
+    next_description: input.description.trim(),
+    next_phone: input.phone?.trim() ?? '',
+    next_images: input.images,
+    next_host_story: input.host_story?.trim() ?? null,
+    next_experience_details: input.experience_details?.trim() ?? null,
+  });
+  if (!rpcErr) return;
+  if (!isMissingRpc(rpcErr.message)) throw new Error(rpcErr.message);
+
+  throw new Error(
+    `Se guardaron descripción, WhatsApp y fotos, pero no ${pendientes.join(' ni ')}: la base de datos no ` +
+      'permite escribir esas columnas. Aplica una sola vez ' +
+      'supabase/migrations/009_admin_edit_narrative.sql en Supabase → SQL Editor y reintenta.',
+  );
+}
+
+/** Confirma que el UPDATE de un texto narrativo no fue silenciado por RLS.
+ *  `null` = no se pudo comprobar (se confía en que el UPDATE no dio error). */
+async function textoPersistido(id: string, col: string, esperado: string): Promise<boolean | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from('businesses').select(col).eq('id', id).maybeSingle();
+  if (error || !data) return null;
+  const bruto = (data as unknown as Record<string, unknown>)[col];
+  const texto = Array.isArray(bruto)
+    ? bruto.filter((x): x is string => typeof x === 'string').join(' · ')
+    : String(bruto ?? '');
+  return texto.trim() === esperado.trim();
 }
 
 export async function adminListUsers(): Promise<Profile[]> {

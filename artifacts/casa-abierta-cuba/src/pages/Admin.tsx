@@ -305,6 +305,8 @@ function BusinessEditor({
   onSaved: (next: Partial<Business>) => void;
 }) {
   const [description, setDescription] = useState(business.description ?? '');
+  const [hostStory, setHostStory] = useState(business.host_story ?? '');
+  const [experienceDetails, setExperienceDetails] = useState(business.experience_details ?? '');
   const [phone, setPhone] = useState(
     String((business as Business & { phone?: string | null }).phone ?? ''),
   );
@@ -374,6 +376,13 @@ function BusinessEditor({
       setLocalErr('La descripción debe tener al menos 10 caracteres.');
       return;
     }
+    // Misma regla que el formulario público: 20 caracteres si se escribe algo.
+    const historia = hostStory.trim();
+    if (historia.length > 0 && historia.length < 20) {
+      setLocalErr('«Conoce a tu anfitrión» necesita al menos 20 caracteres (o déjalo vacío).');
+      return;
+    }
+    const detalles = experienceDetails.trim();
     if (fotos.length === 0 && nuevas.length === 0) {
       setLocalErr('El negocio necesita al menos una foto.');
       return;
@@ -401,10 +410,23 @@ function BusinessEditor({
         }
       }
       const finales = [...fotos, ...subidas];
-      await adminEditBusiness(business.id, { description: desc, phone, images: finales });
+      await adminEditBusiness(business.id, {
+        description: desc,
+        phone,
+        images: finales,
+        host_story: historia,
+        experience_details: detalles,
+      });
       if (quitadas.length) void removeBusinessImages(quitadas);
       nuevas.forEach((n) => URL.revokeObjectURL(n.preview));
-      onSaved({ description: desc, images: finales, photos: finales, legal_validated: legalValidated });
+      onSaved({
+        description: desc,
+        images: finales,
+        photos: finales,
+        host_story: historia,
+        experience_details: detalles,
+        legal_validated: legalValidated,
+      });
     } catch (err) {
       const motivo = err instanceof Error ? err.message : 'No se pudo guardar la edición';
       setLocalErr(
@@ -457,10 +479,37 @@ function BusinessEditor({
           className="field-input"
           rows={3}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="20 a 1200 caracteres: qué ofreces, qué incluye, ambiente…"
+          onChange={(e) => setDescription(e.target.value)}            placeholder="20 a 1200 caracteres: qué ofreces, qué incluye, ambiente…"
         />
         <p className="field-hint">{description.trim().length}/1200 caracteres</p>
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor={`edit-story-${business.id}`}>Conoce a tu anfitrión</label>
+        <textarea
+          id={`edit-story-${business.id}`}
+          className="field-input"
+          rows={4}
+          value={hostStory}
+          onChange={(e) => setHostStory(e.target.value)}
+          placeholder="Tu historia, tu casa, tu barrio…"
+        />
+        <p className="field-hint">
+          {hostStory.trim().length}/1200 caracteres (mínimo 20). Es el bloque «Conoce a tu anfitrión» de la ficha pública.
+        </p>
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor={`edit-exp-${business.id}`}>Detalles de la experiencia</label>
+        <textarea
+          id={`edit-exp-${business.id}`}
+          className="field-input"
+          rows={3}
+          value={experienceDetails}
+          onChange={(e) => setExperienceDetails(e.target.value)}
+          placeholder="Actividades, idiomas, qué incluye…"
+        />
+        <p className="field-hint">Se muestra debajo de la historia del anfitrión en la ficha pública.</p>
       </div>
 
       <div>

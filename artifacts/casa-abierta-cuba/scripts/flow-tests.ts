@@ -192,9 +192,24 @@ check('T35 admin elimina negocio', !(await db.getBusiness(newBizId)));
 const reqContact = await db.adminGetRequestContact(myReq[0].id);
 check('T36 admin lee el contacto de la solicitud', reqContact === 'viajero@casa.cu');
 
+// --- Edición admin: textos narrativos de la ficha ---
+const editable = (await db.listBusinesses())[0];
+await db.adminEditBusiness(editable.id, {
+  description: editable.description,
+  images: editable.images ?? [],
+  host_story: 'Historia editada por el administrador para la prueba de regresión.',
+  experience_details: 'Detalles editados: desayuno, wifi y traslado incluidos.',
+});
+const editado = await db.getBusiness(editable.id);
+check(
+  'T37 admin guarda «Conoce a tu anfitrión» y «Detalles de la experiencia»',
+  (editado?.host_story ?? '').startsWith('Historia editada') &&
+    (editado?.experience_details ?? '').includes('desayuno'),
+);
+
 // --- Reset demo ---
 db.resetDemoData();
-check('T37 reset de datos demo', (await db.listBusinesses()).length === 3);
+check('T38 reset de datos demo', (await db.listBusinesses()).length === 3);
 
 console.log(`\n== RESULTADO: ${pass} PASS / ${fail} FAIL ==`);
 process.exit(fail > 0 ? 1 : 0);
