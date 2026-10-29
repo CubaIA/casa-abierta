@@ -207,9 +207,22 @@ check(
     (editado?.experience_details ?? '').includes('desayuno'),
 );
 
+// --- Credenciales MINTUR (solo admin) ---
+const minturId = (await db.listBusinesses())[0].id;
+await db.adminSetBusinessMintur(minturId, {
+  formatur_credential: 'FMT-2026-0001',
+  transport_license: '',
+  agency_registry: '',
+});
+const minturLeido = await db.adminGetBusinessMintur(minturId);
+check(
+  'T38 admin guarda la credencial MINTUR del negocio',
+  minturLeido.formatur_credential === 'FMT-2026-0001' && minturLeido.agency_registry === '',
+);
+
 // --- Reset demo ---
 db.resetDemoData();
-check('T38 reset de datos demo', (await db.listBusinesses()).length === 3);
+check('T39 reset de datos demo', (await db.listBusinesses()).length === 3);
 
 console.log(`\n== RESULTADO: ${pass} PASS / ${fail} FAIL ==`);
 process.exit(fail > 0 ? 1 : 0);

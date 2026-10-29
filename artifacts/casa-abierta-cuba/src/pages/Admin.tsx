@@ -5,6 +5,7 @@ import {
   adminDeleteBusiness,
   adminEditBusiness,
   adminGetBusinessLegal,
+  adminGetBusinessMintur,
   adminGetRequestContact,
   adminListAllBusinesses,
   adminListAllRequests,
@@ -13,6 +14,7 @@ import {
   adminListUsers,
   adminSetBusinessFeatured,
   adminSetBusinessLegal,
+  adminSetBusinessMintur,
   adminSetBusinessStatus,
   adminSetBusinessVerified,
   adminSetContactMessageStatus,
@@ -21,7 +23,9 @@ import {
   adminSetUserRole,
   adminSetUserStatus,
   LEGAL_VACIO,
+  MINTUR_VACIO,
   type AdminBusinessLegal,
+  type AdminBusinessMintur,
 } from '@/lib/marketplace';
 import { AvisoError } from '@/components/AvisoError';
 import { removeBusinessImages, uploadBusinessImages } from '@/lib/storage';
@@ -284,6 +288,40 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
 
 /* ---------------- Edición de un negocio ---------------- */
 
+/** Credencial MINTUR que toca según la actividad, con su etiqueta y ayuda. */
+const CAMPOS_MINTUR: Record<
+  'formatur' | 'transporte' |
+    'agencia',
+  { col: keyof AdminBusinessMintur; label: string; ayuda: string }
+> = {
+  formatur: { col: 'formatur_credential', label: 'Credencial Formatur', ayuda: 'Ej. FMT-2026-0001' },
+  transporte: {
+    col: 'transport_license',
+    label: 'Licencia de Transporte Turístico',
+    ayuda: 'Ej. Licencia municipal de taxi turístico',
+  },
+  agencia: {
+    col: 'agency_registry',
+    label: 'Registro Turístico Nacional',
+    ayuda: 'Ej. RTN 12345 de la agencia',
+  },
+};
+
+/**
+ * Elige la credencial MINTUR según la actividad del negocio: guía local →
+ * FORMATUR, transporte → licencia de transporte turístico, agencia → registro
+ * turístico nacional. El catálogo no tiene una categoría «agencia» propia, así
+ * que además de service_type/tourism_category se miran la categoría ancha y el
+ * nombre; sin coincidencia no se muestra ningún campo.
+ */
+function detectarCampoMintur(b: Business): 'formatur' | 'transporte' | 'agencia' | null {
+  const texto = `${b.service_type ?? ''} ${b.tourism_category ?? ''} ${b.category ?? ''} ${b.name ?? ''}`.toLowerCase();
+  if (/agencia|agency|operador|tour operator/.test(texto)) return 'agencia';
+  if (/gu[ií]a|guide/.test(texto)) return 'formatur';
+  if (/transport|taxi|traslado|chofer/.test(texto)) return 'transporte';
+  return null;
+}
+
 /** Fotos nuevas seleccionadas por el admin, con su preview local. */
 interface FotoNueva {
   file: File;
@@ -307,6 +345,10 @@ function BusinessEditor({
   const [description, setDescription] = useState(business.description ?? '');
   const [hostStory, setHostStory] = useState(business.host_story ?? '');
   const [experienceDetails, setExperienceDetails] = useState(business.experience_details ?? '');
+  /* Credenciales MINTUR (guías, taxis, agencias): privadas, solo las administra el admin. */
+  const [mintur, setMintur] = useState<AdminBusinessMintur>(MINTUR_VACIO);
+  const [minturBase, setMinturBase] = useState<AdminBusinessMintur>(MINTUR_VACIO);
+  const [minturCargado, setMinturCargado] = useState(false);
   const [phone, setPhone] = useState(
     String((business as Business & { phone?: string | null }).phone ?? ''),
   );
@@ -366,6 +408,26 @@ function BusinessEditor({
     };
   }, [business.id]);
 
+  // Credenciales MINTUR: se leen aparte para que un fallo suyo no bloquee el resto.
+  useEffect(() => {
+    let vivo = true;
+    adminGetBusinessMintur(business.id)
+      .then((v) => {
+        if (!vivo) return;
+        setMintur(v);
+        setMinturBase(v);
+      })
+      .catch(() => {
+        // Sin permisos o sin migración 010: se editan en vacío y el guardado avisa.
+      })
+      .finally(() => {
+        if (vivo) setMinturCargado(true);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [business.id]);
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setLocalErr(null);
@@ -392,12 +454,18 @@ function BusinessEditor({
     // La auditoría legal va primero y solo por su RPC de administrador:
     // `legal_validated` y `admin_legal_notes` no se conceden a `authenticated`,
     // así que un UPDATE directo no las cambiaría (RLS, 0 filas) sin dar error.
-    let legalGuardado = false;
+    let auditoriaGuardado = false;
     try {
       if (legalCargado && legalNotes.trim() !== (legal.admin_legal_notes ?? '').trim()) {
         await adminSetBusinessLegal(business.id, legalValidated, legalNotes);
-        legalGuardado = true;
+        auditoriaGuardado = true;
         setLegal((prev) => ({ ...prev, admin_legal_notes: legalNotes.trim() || null }));
+      }
+      // Credenciales MINTUR: solo si el admin tocó algún valor, y por su RPC.
+      if (minturCargado && JSON.stringify(mintur) !== JSON.stringify(minturBase)) {
+        await adminSetBusinessMintur(business.id, mintur);
+        auditoriaGuardado = true;
+        setMinturBase(mintur);
       }
       let subidas: string[] = [];
       if (nuevas.length) {
@@ -430,7 +498,7 @@ function BusinessEditor({
     } catch (err) {
       const motivo = err instanceof Error ? err.message : 'No se pudo guardar la edición';
       setLocalErr(
-        legalGuardado
+        auditoriaGuardado
           ? `La auditoría legal sí se guardó, pero el resto de la ficha no: ${motivo}`
           : motivo,
       );
@@ -458,6 +526,15 @@ function BusinessEditor({
       setSavingLegal(false);
     }
   }
+
+  /** Credencial MINTUR que corresponde a este negocio y su valor actual. */
+  const tipoMintur = detectarCampoMintur(business);
+  const minturValor = tipoMintur ? mintur[CAMPOS_MINTUR[tipoMintur].col] : '';
+  const cambiarMintur = (valor: string) => {
+    if (tipoMintur === 'formatur') setMintur((p) => ({ ...p, formatur_credential: valor }));
+    else if (tipoMintur === 'transporte') setMintur((p) => ({ ...p, transport_license: valor }));
+    else if (tipoMintur === 'agencia') setMintur((p) => ({ ...p, agency_registry: valor }));
+  };
 
   const quitarFoto = (i: number) => {
     const url = fotos[i];
@@ -535,6 +612,29 @@ function BusinessEditor({
             {legalCargado ? (legal.license_number?.trim() || 'sin declarar') : 'cargando…'}
           </span>
         </p>
+
+        {/* Credencial MINTUR que corresponde a la actividad del negocio. */}
+        {tipoMintur ? (
+          <div className="mt-3">
+            <label className="field-label" htmlFor={`edit-mintur-${business.id}`}>
+              {CAMPOS_MINTUR[tipoMintur].label}
+            </label>
+            <input
+              id={`edit-mintur-${business.id}`}
+              className="field-input"
+              value={minturValor}
+              onChange={(e) => cambiarMintur(e.target.value)}
+              placeholder={CAMPOS_MINTUR[tipoMintur].ayuda}
+            />
+            <p className="field-hint">
+              Campo privado (MINTUR): solo lo ve el administrador; no se muestra en el catálogo ni en la ficha.
+            </p>
+          </div>
+        ) : (
+          <p className="mt-3 text-xs text-tinta/60">
+            Esta categoría no tiene una credencial MINTUR específica: registra el permiso en «Notas de Auditoría Legal».
+          </p>
+        )}
 
         <label className="field-label mt-3" htmlFor={`edit-legal-${business.id}`}>Notas de Auditoría Legal</label>
         <textarea

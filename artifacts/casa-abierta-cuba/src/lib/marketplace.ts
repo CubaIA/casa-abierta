@@ -1134,18 +1134,18 @@ function argsLecturaLegal(forma: FormaLegal, id: string): Record<string, unknown
   return forma === 'p' ? { p_business_id: id } : { target_business_id: id };
 }
 
-/** Mensaje accionable para un fallo real del RPC de auditoría legal. */
-function mensajeErrorLegal(detalle: string): string {
+/** Mensaje accionable para un fallo real de los RPC de auditoría. */
+function mensajeErrorLegal(detalle: string, asunto = 'la auditoría legal'): string {
   if (/Administrator role required|42501|row-level security|permission denied/i.test(detalle)) {
     return (
-      'La base de datos no reconoce tu cuenta como administradora, así que no guardó la auditoría legal. ' +
+      `La base de datos no reconoce tu cuenta como administradora, así que no guardó ${asunto}. ` +
       'Comprueba que tu usuario tenga el rol admin en la tabla users y reintenta.'
     );
   }
   if (/Business not found|P0002/i.test(detalle)) {
     return 'Este negocio ya no existe en la base de datos: recarga el panel y reintenta.';
   }
-  return `No se pudo guardar la auditoría legal: ${detalle}`;
+  return `No se pudo guardar ${asunto}: ${detalle}`;
 }
 
 export async function adminGetBusinessLegal(id: string): Promise<AdminBusinessLegal> {
@@ -1224,6 +1224,99 @@ export async function adminSetBusinessLegal(
   if (!b) throw new Error('Negocio no encontrado');
   b.legal_validated = legalValidated;
   b.admin_legal_notes = notas || null;
+  saveStore(store);
+}
+
+/* ------------------------------------------------------------------ */
+/* Credenciales MINTUR (migración 010)                                */
+/* ------------------------------------------------------------------ */
+
+/** Credenciales privadas según la actividad del negocio: guías (FORMATUR),
+ *  taxis (licencia de transporte turístico) y agencias (registro turístico). */
+export interface AdminBusinessMintur {
+  formatur_credential: string;
+  transport_license: string;
+  agency_registry: string;
+}
+
+/** Estado inicial mientras se leen las credenciales de una ficha. */
+export const MINTUR_VACIO: AdminBusinessMintur = {
+  formatur_credential: '',
+  transport_license: '',
+  agency_registry: '',
+};
+
+const COLS_MINTUR = 'formatur_credential, transport_license, agency_registry';
+
+function filaMintur(fila: unknown): AdminBusinessMintur {
+  const f = (fila ?? {}) as Partial<Record<keyof AdminBusinessMintur, string | null>>;
+  return {
+    formatur_credential: f.formatur_credential ?? '',
+    transport_license: f.transport_license ?? '',
+    agency_registry: f.agency_registry ?? '',
+  };
+}
+
+/** Lee las credenciales MINTUR de un negocio. Son privadas: si el RPC falta o
+ *  los permisos bloquean la lectura, se devuelve el estado vacío (igual que la
+ *  auditoría legal) en vez de romper la carga del panel. */
+export async function adminGetBusinessMintur(id: string): Promise<AdminBusinessMintur> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('admin_get_business_mintur', { p_business_id: id });
+    if (!error) return filaMintur(Array.isArray(data) ? data[0] : data);
+    if (isMissingRpc(error.message)) {
+      const { data: fila, error: readErr } = await supabase
+        .from('businesses')
+        .select(COLS_MINTUR)
+        .eq('id', id)
+        .maybeSingle();
+      if (!readErr && fila) return filaMintur(fila);
+    }
+    return MINTUR_VACIO;
+  }
+  const b = loadStore().businesses.find((x) => x.id === id);
+  if (!b) return MINTUR_VACIO;
+  return {
+    formatur_credential: b.formatur_credential ?? '',
+    transport_license: b.transport_license ?? '',
+    agency_registry: b.agency_registry ?? '',
+  };
+}
+
+/**
+ * Guarda las credenciales MINTUR del negocio desde el panel admin.
+ *
+ * Toda la escritura va por el RPC `admin_set_business_mintur` (SECURITY
+ * DEFINER + comprobación de rol): las tres columnas NO se conceden a
+ * `authenticated`, así que ni el dueño ni ningún visitante pueden escribirlas
+ * con un UPDATE directo. Por eso tampoco existe respaldo por UPDATE: si el RPC
+ * falta, se pide aplicar la migración 010.
+ */
+export async function adminSetBusinessMintur(id: string, valor: AdminBusinessMintur): Promise<void> {
+  const args = {
+    p_business_id: id,
+    p_formatur: valor.formatur_credential.trim() || null,
+    p_transport: valor.transport_license.trim() || null,
+    p_agency: valor.agency_registry.trim() || null,
+  };
+  if (supabase) {
+    const { error } = await supabase.rpc('admin_set_business_mintur', args);
+    if (!error) return;
+    if (isMissingRpc(error.message)) {
+      throw new Error(
+        'No se pudieron guardar las credenciales MINTUR: la función admin_set_business_mintur no está en la ' +
+          'base de datos. Aplica una sola vez supabase/migrations/010_mintur_credentials.sql en el SQL Editor ' +
+          'de Supabase y reintenta.',
+      );
+    }
+    throw new Error(mensajeErrorLegal(error.message, 'las credenciales MINTUR'));
+  }
+  const store = loadStore();
+  const b = store.businesses.find((x) => x.id === id);
+  if (!b) throw new Error('Negocio no encontrado');
+  b.formatur_credential = valor.formatur_credential.trim() || null;
+  b.transport_license = valor.transport_license.trim() || null;
+  b.agency_registry = valor.agency_registry.trim() || null;
   saveStore(store);
 }
 

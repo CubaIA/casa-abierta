@@ -56,6 +56,10 @@ export interface Business {
   legal_validated?: boolean;
   /** Notas privadas de auditoría legal: solo las lee el administrador. */
   admin_legal_notes?: string | null;
+  /** Credenciales MINTUR privadas según la actividad (solo el administrador). */
+  formatur_credential?: string | null;
+  transport_license?: string | null;
+  agency_registry?: string | null;
   sustainability_badge?: string | null;
   is_experience?: boolean;
   status: BusinessStatus;
