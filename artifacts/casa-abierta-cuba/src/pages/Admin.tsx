@@ -32,6 +32,7 @@ import { removeBusinessImages, uploadBusinessImages } from '@/lib/storage';
 import { resolvePhotos } from '@/lib/images';
 import { MENSAJE_PREMIUM, SUPPORT_WHATSAPP, whatsappLink } from '@/lib/whatsapp';
 import { supabase } from '@/lib/supabase';
+import { adminCountContactLeads, type AdminContactLeads } from '@/lib/admin-contact-leads';
 import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
@@ -128,6 +129,33 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
 
+  /** Contador de contactos silenciosos por negocio (analítica, migración 011). */
+  const [contactLeads, setContactLeads] = useState<Record<string, AdminContactLeads>>({});
+
+  useEffect(() => {
+    if (!supabase || businesses === null) return;
+    let vivo = true;
+    // Lectura por lote: una función por negocio, pero en paralelo y sin bloquear la UI.
+    const pedidos = businesses.map((b) =>
+      adminCountContactLeads(b.id).catch(() => ({ business_id: b.id, count: 0 })),
+    );
+    Promise.all(pedidos)
+      .then((lotes) => {
+        if (!vivo) return;
+        const acumulado: Record<string, AdminContactLeads> = {};
+        for (const lote of lotes) {
+          if (lote && typeof lote === 'object') acumulado[lote.business_id] = lote;
+        }
+        setContactLeads(acumulado);
+      })
+      .catch(() => {
+        /* lectura fallida por todo el lote: panel sin contador, no con error */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [businesses, supabase]);
+
   /** Alterna Premium de forma optimista y revierte si Supabase falla. */
   const toggleFeatured = async (business: Business) => {
     const next = business.featured !== true;
@@ -184,6 +212,10 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               {/* Estado de la auditoría legal, visible solo en el panel admin. */}
               <span className={`badge ${b.legal_validated === true ? 'badge-green' : 'badge-neutral'}`}>
                 {b.legal_validated === true ? 'Legal validado' : 'Legal pendiente'}
+              </span>
+              {/* Contadores de contacto silencioso (si la migración 011 está aplicada). */}
+              <span className="text-xs text-tinta/60">
+                Contactos generados: {contactLeads[b.id]?.count ?? '0'}
               </span>
             </div>
           </div>

@@ -115,6 +115,11 @@ export interface Report {
   resolved_at: string | null;
 }
 
+export interface ContactLead {
+  business_id: string;
+  created_at: string;
+}
+
 export interface ContactMessage {
   id: string;
   /** Columnas reales de la BD en producción (antes sender_id/inquiry_type). */
