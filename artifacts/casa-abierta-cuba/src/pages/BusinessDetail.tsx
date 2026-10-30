@@ -287,7 +287,11 @@ export default function BusinessDetail() {
 
   /* Datos de Supabase blindados: cualquier campo puede venir null/vacío.
    * Todos los split/join trabajan sobre strings o arrays ya validados. */
-  const nombreCompuesto = String(business?.host_name ?? business?.name ?? '');
+  /* El anfitrión es el dueño del negocio, nunca la persona con sesión: si el
+   * anuncio no publica `host_name` se usa un texto genérico. */
+  const nombreAnfitrion = String(business?.host_name ?? '').trim();
+  const historiaAnfitrion = String(business?.host_story ?? '').trim();
+  const nombreCompuesto = nombreAnfitrion || String(business?.name ?? '');
   const iniciales = nombreCompuesto
     .split(' ')
     .filter(Boolean)
@@ -565,7 +569,9 @@ export default function BusinessDetail() {
           {iniciales || 'CA'}
         </div>
         <div className="min-w-0">
-          <p className="font-bold text-azul">Anfitrión: {business.host_name || 'Equipo Casa Abierta'}</p>
+          <p className="font-bold text-azul">
+            Anfitrión: {nombreAnfitrion || 'Anfitrión de Casa Abierta'}
+          </p>
           <p className="text-sm text-tinta/70">
             {(business?.verified ?? false) || favoritoEntreHuespedes ? 'SuperAnfitrión' : 'Anfitrión local'} · Casa Abierta Cuba
           </p>
@@ -601,9 +607,21 @@ export default function BusinessDetail() {
       {/* ---------------------------------------------------------- */}
       <div className="mt-8 divide-y divide-arena-2 border-y border-arena-2">
         <Desplegable titulo="Conoce al anfitrión" abierto>
-          <p className="leading-relaxed text-tinta/85">{business.host_story || ''}</p>
-          {business.experience_details && (
-            <p className="mt-3 leading-relaxed text-tinta/75">{business.experience_details}</p>
+          {/* La biografía sale de `host_story` (o su alias `host_bio`), nunca de
+              `description` ni de las amenidades: mezclar ambas era el cruce que
+              mostraba la descripción de la habitación como historia. */}
+          {historiaAnfitrion ? (
+            <p className="leading-relaxed text-tinta/85">{historiaAnfitrion}</p>
+          ) : (
+            <p className="text-tinta/60">Este anfitrión todavía no ha escrito su historia.</p>
+          )}
+          {detalles && (
+            <>
+              <p className="mt-4 text-xs font-extrabold uppercase tracking-wide text-azul/70">
+                Detalles de la experiencia
+              </p>
+              <p className="mt-1 leading-relaxed text-tinta/75">{detalles}</p>
+            </>
           )}
           <p className="mt-3 text-sm text-tinta/60">
             <Languages size={14} aria-hidden className="mr-1 inline" />

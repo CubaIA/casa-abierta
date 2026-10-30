@@ -49,17 +49,56 @@ export const isDemo = !isSupabaseConfigured;
 /*                                                                     */
 /* La BD en producción usa: title (no name), images (no photos),       */
 /* category/subcategory (no service_type/tourism_category),            */
-/* amenities, tags. No tiene host_name/host_story/experience_details/  */
-/* recommended_for/lgbt_friendly. El mapeador central abajo traduce    */
-/* las filas reales al tipo Business que usan las páginas.             */
+/* amenities, tags. Las columnas de anfitrión (host_name/host_story, o */
+/* el alias host_bio) se resuelven una sola vez al arrancar: PostgREST */
+/* rechaza el select entero si se pide una columna que no existe.      */
+/* El mapeador central abajo traduce las filas reales al tipo Business */
+/* que usan las páginas.                                               */
 /* ------------------------------------------------------------------ */
 
-const LIVE_BUSINESS_COLS =
+const LIVE_BUSINESS_COLS_BASE =
   'id, title, description, category, subcategory, province, municipality, ' +
   'languages, status, created_at, images, amenities, tags, ' +
   'price_amount, price_currency, verified, legal_validated, featured, schedule, capacity';
 
-const LIVE_BUSINESS_AUTH_COLS = LIVE_BUSINESS_COLS + ', owner_id';
+/** Columnas de anfitrión que existen en este proyecto.
+ *
+ * La migración 001 crea `host_name` y `host_story`; otras instalaciones usan
+ * el alias `host_bio`. Como un `select` con una columna inexistente devuelve
+ * error y tumbaba la ficha entera, se prueban las combinaciones posibles una
+ * sola vez y se cachea el resultado. */
+let columnasAnfitrion: Promise<string[]> | null = null;
+
+function resolverColumnasAnfitrion(): Promise<string[]> {
+  if (!supabase) return Promise.resolve([]);
+  if (!columnasAnfitrion) {
+    const client = supabase;
+    columnasAnfitrion = (async () => {
+      const combinaciones = [
+        'host_name, host_story',
+        'host_name, host_bio',
+        'host_name',
+        'host_story',
+        'host_bio',
+      ];
+      for (const cols of combinaciones) {
+        const { error } = await client.from('businesses').select(cols).limit(1);
+        if (!error || !esColumnaAusente(error.message)) {
+          return cols.split(',').map((c) => c.trim());
+        }
+      }
+      return [];
+    })();
+  }
+  return columnasAnfitrion;
+}
+
+/** Lista de columnas a pedir en cada lectura de `businesses`. */
+async function columnasDeNegocio(conDueno: boolean): Promise<string> {
+  const propias = await resolverColumnasAnfitrion();
+  const cols = [LIVE_BUSINESS_COLS_BASE, ...propias].join(', ');
+  return conDueno ? `${cols}, owner_id` : cols;
+}
 
 /** Los negocios con featured = true van primero, preservando el resto del orden. */
 function featuredFirst(a: Business, b: Business): number {
@@ -92,6 +131,13 @@ function asTextoPlano(v: unknown): string | null {
   return null;
 }
 
+/** Texto limpio desde una columna que puede llegar null, array o número. */
+function textoColumna(valor: unknown): string {
+  if (typeof valor === 'string') return valor.trim();
+  if (typeof valor === 'number') return String(valor);
+  return '';
+}
+
 /** Traduce una fila real de `businesses` al tipo Business que esperan las páginas. */
 function mapBusinessRow(row: Record<string, unknown>): Business {
   const r = row as Record<string, unknown> & Partial<Business> & {
@@ -106,7 +152,10 @@ function mapBusinessRow(row: Record<string, unknown>): Business {
     ...r,
     name: r.title ?? '',
     title: r.title ?? '',
-    host_story: r.host_story ?? '',
+    // El nombre y la historia son del negocio, no de quien mira la ficha:
+    // `host_bio` es el alias que usan algunas instalaciones de la BD.
+    host_name: textoColumna(r.host_name),
+    host_story: textoColumna(r.host_story ?? r.host_bio),
     service_type: r.service_type ?? r.category ?? 'servicios',
     tourism_category: r.tourism_category ?? r.subcategory ?? r.category ?? '',
     images: r.images ?? r.photos ?? [],
@@ -368,9 +417,10 @@ export interface CatalogFilters {
 
 export async function listBusinesses(filters: CatalogFilters = {}): Promise<Business[]> {
   if (supabase) {
+    const columnas = await columnasDeNegocio(false);
     let query = supabase
       .from('businesses')
-      .select(LIVE_BUSINESS_COLS)
+      .select(columnas)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
     if (filters.province) query = query.eq('province', filters.province);
@@ -397,9 +447,10 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
 
 export async function getBusiness(id: string): Promise<Business | null> {
   if (supabase) {
+    const columnas = await columnasDeNegocio(false);
     const { data, error } = await supabase
       .from('businesses')
-      .select(LIVE_BUSINESS_COLS)
+      .select(columnas)
       .eq('id', id)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -842,7 +893,7 @@ export async function listMyBusinesses(ownerId: string): Promise<Business[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('businesses')
-      .select(LIVE_BUSINESS_AUTH_COLS)
+      .select(await columnasDeNegocio(true))
       .eq('owner_id', ownerId)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
@@ -1007,7 +1058,7 @@ export async function adminListAllBusinesses(): Promise<Business[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('businesses')
-      .select(LIVE_BUSINESS_AUTH_COLS)
+      .select(await columnasDeNegocio(true))
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
     return ((data ?? []) as unknown as Array<Record<string, unknown>>).map(mapBusinessRow);
