@@ -16,6 +16,7 @@ const Admin = lazy(() => import('@/pages/Admin'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
 const ChatIA = lazy(() => import('@/pages/ChatIA'));
 const Perfil = lazy(() => import('@/pages/Perfil'));
+const UpdatePassword = lazy(() => import('@/pages/UpdatePassword'));
 const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
 const Alojamientos = lazy(() => import('@/pages/sections/Alojamientos'));
@@ -41,6 +42,24 @@ function useSessionReady() {
   return !loading;
 }
 
+/**
+ * Lleva al formulario de contraseña cuando la URL trae un enlace de
+ * recuperación de Supabase (`#access_token=…&type=recovery`).
+ *
+ * Sin esto el hash se ignoraba y el usuario aterrizaba en la portada ya con
+ * sesión, sin ninguna forma de elegir su contraseña.
+ */
+function RecoveryRedirect() {
+  const { passwordRecovery } = useAuth();
+  const [location, navigate] = useLocation();
+  useEffect(() => {
+    if (passwordRecovery && location !== '/update-password') {
+      navigate('/update-password', { replace: true });
+    }
+  }, [passwordRecovery, location, navigate]);
+  return null;
+}
+
 export default function App() {
   const ready = useSessionReady();
   const [location] = useLocation();
@@ -48,6 +67,7 @@ export default function App() {
   return (
     <Layout>
       <ScrollToTop />
+      <RecoveryRedirect />
       {!ready ? (
         <div className="page-shell">
           <div className="empty-state">Cargando Casa Abierta…</div>
@@ -68,6 +88,7 @@ export default function App() {
               <Route path="/negocio/:id" component={BusinessDetail} />
               <Route path="/entrar" component={Entrar} />
               <Route path="/perfil" component={Perfil} />
+              <Route path="/update-password" component={UpdatePassword} />
               <Route path="/solicitudes" component={MisSolicitudes} />
               <Route path="/favoritos" component={Favoritos} />
               <Route path="/anfitrion" component={Anfitrion} />

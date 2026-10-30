@@ -173,7 +173,10 @@ export default function Entrar() {
               }
               if (supabase) {
                 try {
-                  await supabase.auth.resetPasswordForEmail(mail);
+                  // redirectTo absoluto: en Vercel el origen es el del despliegue.
+                  await supabase.auth.resetPasswordForEmail(mail, {
+                    redirectTo: `${window.location.origin}/update-password`,
+                  });
                   setError('Revisa tu bandeja de entrada para cambiar tu contraseña.');
         } catch (err) {
           setError('No se pudo enviar el correo. Intenta más tarde.');
