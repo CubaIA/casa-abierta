@@ -354,13 +354,40 @@ function detectarCampoMintur(b: Business): 'formatur' | 'transporte' | 'agencia'
   return null;
 }
 
+/** Horario guardado: JSON con check_in/check_out, o texto libre antiguo. */
+function leerHorario(valor: unknown): { check_in: string; check_out: string } {
+  const vacio = { check_in: '', check_out: '' };
+  if (typeof valor !== 'string' || !valor.trim()) return vacio;
+  try {
+    const parsed: unknown = JSON.parse(valor);
+    if (parsed && typeof parsed === 'object') {
+      const h = parsed as Record<string, unknown>;
+      return {
+        check_in: typeof h.check_in === 'string' ? h.check_in : '',
+        check_out: typeof h.check_out === 'string' ? h.check_out : '',
+      };
+    }
+  } catch {
+    // Texto libre (formato anterior): no hay horas que precargar.
+  }
+  return vacio;
+}
+
+/** Lista de etiquetas escrita a mano; acepta comas y puntos. */
+function separarEtiquetas(raw: string): string[] {
+  return raw
+    .split(/[,.]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 /** Fotos nuevas seleccionadas por el admin, con su preview local. */
 interface FotoNueva {
   file: File;
   preview: string;
 }
 
-/** Editor inline de descripción, WhatsApp y fotos de un negocio. */
+/** Editor inline de todos los datos de un negocio: solo lo ve el administrador. */
 function BusinessEditor({
   business,
   ownerId,
@@ -377,6 +404,20 @@ function BusinessEditor({
   const [description, setDescription] = useState(business.description ?? '');
   const [hostStory, setHostStory] = useState(business.host_story ?? '');
   const [experienceDetails, setExperienceDetails] = useState(business.experience_details ?? '');
+  /* Control total de la ficha: el admin puede corregir cualquier dato. */
+  const [hostName, setHostName] = useState(business.host_name ?? '');
+  const [province, setProvince] = useState(business.province ?? '');
+  const [municipality, setMunicipality] = useState(business.municipality ?? '');
+  const [category, setCategory] = useState(business.category ?? '');
+  const [serviceType, setServiceType] = useState(business.service_type ?? '');
+  const [idiomas, setIdiomas] = useState((business.languages ?? []).join(', '));
+  const [precio, setPrecio] = useState(
+    business.price_amount === null || business.price_amount === undefined ? '' : String(business.price_amount),
+  );
+  const [moneda, setMoneda] = useState(business.price_currency ?? '');
+  const horarioInicial = leerHorario(business.schedule);
+  const [checkIn, setCheckIn] = useState(horarioInicial.check_in);
+  const [checkOut, setCheckOut] = useState(horarioInicial.check_out);
   /* Credenciales MINTUR (guías, taxis, agencias): privadas, solo las administra el admin. */
   const [mintur, setMintur] = useState<AdminBusinessMintur>(MINTUR_VACIO);
   const [minturBase, setMinturBase] = useState<AdminBusinessMintur>(MINTUR_VACIO);
@@ -392,6 +433,9 @@ function BusinessEditor({
   /* Auditoría legal (Ley 149): privada, solo la lee y edita el administrador. */
   const [legal, setLegal] = useState<AdminBusinessLegal>(LEGAL_VACIO);
   const [legalNotes, setLegalNotes] = useState('');
+  /* Licencia declarada: privada, la registra el admin tras recibir el documento. */
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [licenseBase, setLicenseBase] = useState('');
   const [legalValidated, setLegalValidated] = useState(false);
   const [legalCargado, setLegalCargado] = useState(false);
   const [savingLegal, setSavingLegal] = useState(false);
@@ -428,6 +472,8 @@ function BusinessEditor({
         setLegal(v);
         setLegalNotes(v.admin_legal_notes ?? '');
         setLegalValidated(v.legal_validated);
+        setLicenseNumber(v.license_number ?? '');
+        setLicenseBase((v.license_number ?? '').trim());
       })
       .catch(() => {
         // Sin permisos o sin migración 008: el admin puede escribir las notas igual.
@@ -477,6 +523,18 @@ function BusinessEditor({
       return;
     }
     const detalles = experienceDetails.trim();
+    if (!hostName.trim() || !province.trim() || !municipality.trim() || !category.trim() || !serviceType.trim()) {
+      setLocalErr('Nombre del anfitrión, provincia, municipio, categoría y tipo de servicio no pueden quedar vacíos.');
+      return;
+    }
+    const precioNum = precio.trim() ? Number(precio.replace(',', '.')) : null;
+    if (precioNum !== null && (!Number.isFinite(precioNum) || precioNum < 0)) {
+      setLocalErr('El precio debe ser un número igual o mayor que cero (o déjalo vacío).');
+      return;
+    }
+    const horarioCambiado = checkIn !== horarioInicial.check_in || checkOut !== horarioInicial.check_out;
+    const horario = horarioCambiado ? JSON.stringify({ check_in: checkIn, check_out: checkOut }) : undefined;
+    const licenciaCambiada = licenseNumber.trim() !== licenseBase.trim();
     if (fotos.length === 0 && nuevas.length === 0) {
       setLocalErr('El negocio necesita al menos una foto.');
       return;
@@ -516,6 +574,16 @@ function BusinessEditor({
         images: finales,
         host_story: historia,
         experience_details: detalles,
+        host_name: hostName.trim(),
+        province: province.trim(),
+        municipality: municipality.trim(),
+        category: category.trim(),
+        service_type: serviceType.trim(),
+        languages: separarEtiquetas(idiomas),
+        price_amount: precioNum,
+        price_currency: moneda.trim().toUpperCase(),
+        ...(horario !== undefined ? { schedule: horario } : {}),
+        ...(licenciaCambiada ? { license_number: licenseNumber.trim() } : {}),
       });
       if (quitadas.length) void removeBusinessImages(quitadas);
       nuevas.forEach((n) => URL.revokeObjectURL(n.preview));
@@ -526,6 +594,16 @@ function BusinessEditor({
         host_story: historia,
         experience_details: detalles,
         legal_validated: legalValidated,
+        host_name: hostName.trim(),
+        province: province.trim(),
+        municipality: municipality.trim(),
+        category: category.trim(),
+        service_type: serviceType.trim(),
+        languages: separarEtiquetas(idiomas),
+        price_amount: precioNum,
+        price_currency: moneda.trim().toUpperCase(),
+        ...(horario !== undefined ? { schedule: horario } : {}),
+        ...(licenciaCambiada ? { license_number: licenseNumber.trim() } : {}),
       });
     } catch (err) {
       const motivo = err instanceof Error ? err.message : 'No se pudo guardar la edición';
@@ -621,6 +699,122 @@ function BusinessEditor({
         <p className="field-hint">Se muestra debajo de la historia del anfitrión en la ficha pública.</p>
       </div>
 
+      {/* Datos generales de la ficha: editables por el administrador. */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="field-label" htmlFor={`edit-host-${business.id}`}>Nombre del anfitrión</label>
+          <input
+            id={`edit-host-${business.id}`}
+            className="field-input"
+            value={hostName}
+            onChange={(e) => setHostName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-prov-${business.id}`}>Provincia</label>
+          <input
+            id={`edit-prov-${business.id}`}
+            className="field-input"
+            value={province}
+            onChange={(e) => setProvince(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-muni-${business.id}`}>Municipio</label>
+          <input
+            id={`edit-muni-${business.id}`}
+            className="field-input"
+            value={municipality}
+            onChange={(e) => setMunicipality(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-cat-${business.id}`}>Categoría</label>
+          <input
+            id={`edit-cat-${business.id}`}
+            className="field-input"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Ej. alojamiento, servicios"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-service-${business.id}`}>Tipo de servicio</label>
+          <input
+            id={`edit-service-${business.id}`}
+            className="field-input"
+            value={serviceType}
+            onChange={(e) => setServiceType(e.target.value)}
+            placeholder="Ej. alojamiento, gastronomia"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-langs-${business.id}`}>Idiomas</label>
+          <input
+            id={`edit-langs-${business.id}`}
+            className="field-input"
+            value={idiomas}
+            onChange={(e) => setIdiomas(e.target.value)}
+            placeholder="ej. español, inglés"
+          />
+          <p className="field-hint">Sepáralos con comas.</p>
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-price-${business.id}`}>Precio</label>
+          <input
+            id={`edit-price-${business.id}`}
+            className="field-input"
+            inputMode="decimal"
+            value={precio}
+            onChange={(e) => setPrecio(e.target.value)}
+            placeholder="Ej. 25"
+          />
+          <p className="field-hint">Déjalo vacío para quitar el precio.</p>
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-currency-${business.id}`}>Moneda</label>
+          <input
+            id={`edit-currency-${business.id}`}
+            className="field-input"
+            maxLength={3}
+            value={moneda}
+            onChange={(e) => setMoneda(e.target.value)}
+            placeholder="Ej. USD, EUR, CUP"
+          />
+        </div>
+      </div>
+
+      {/* Horario en JSON: check-in y check-out. */}
+      <div className="rounded-xl border border-arena-2 bg-white/70 p-3">
+        <p className="field-label !mb-1">Horario (check-in / check-out)</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="field-label" htmlFor={`edit-checkin-${business.id}`}>Check-in</label>
+            <input
+              id={`edit-checkin-${business.id}`}
+              type="time"
+              className="field-input"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label" htmlFor={`edit-checkout-${business.id}`}>Check-out</label>
+            <input
+              id={`edit-checkout-${business.id}`}
+              type="time"
+              className="field-input"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+            />
+          </div>
+        </div>
+        <p className="field-hint">
+          Se guarda como JSON <code>{'{"check_in":"15:00","check_out":"11:00"}'}</code>. Horario actual:{' '}
+          {business.schedule?.trim() || 'sin definir'}.
+        </p>
+      </div>
+
       <div>
         <label className="field-label" htmlFor={`edit-phone-${business.id}`}>WhatsApp / teléfono de contacto</label>
         <input
@@ -638,11 +832,19 @@ function BusinessEditor({
         <p className="field-label !mb-1 inline-flex items-center gap-1.5">
           <FileCheck2 size={14} aria-hidden /> Auditoría legal (Ley 149 de 2022)
         </p>
-        <p className="text-xs text-tinta/70">
-          Licencia declarada por el anfitrión:{' '}
-          <span className="font-bold text-azul">
-            {legalCargado ? (legal.license_number?.trim() || 'sin declarar') : 'cargando…'}
-          </span>
+        <label className="field-label mt-3" htmlFor={`edit-license-${business.id}`}>
+          Número de Licencia Declarada
+        </label>
+        <input
+          id={`edit-license-${business.id}`}
+          className="field-input"
+          value={licenseNumber}
+          onChange={(e) => setLicenseNumber(e.target.value)}
+          placeholder="Ej. Licencia MINTUR 12345"
+        />
+        <p className="field-hint">
+          Campo privado: editable solo por el administrador. No se muestra en la ficha pública ni en el formulario del
+          anfitrión.
         </p>
 
         {/* Credencial MINTUR que corresponde a la actividad del negocio. */}

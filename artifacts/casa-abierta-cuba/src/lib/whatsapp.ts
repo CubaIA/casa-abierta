@@ -15,6 +15,24 @@ export const MENSAJE_PREMIUM =
   'Hola, quiero activar el Plan Premium para mi negocio en Casa Abierta Cuba y pagar con QvaPay';
 export const MENSAJE_SOPORTE = 'Hola, necesito ayuda con Casa Abierta Cuba';
 
+/** WhatsApp del administrador: recibe el aviso de cada alta enviada a revisión. */
+export const ADMIN_WHATSAPP = '5356289645';
+
+/**
+ * Mensaje que el anfitrión manda al administrador cuando su ficha ya quedó
+ * guardada como `pending`. Si no hay licencia declarada se dice expresamente,
+ * para que el admin sepa que debe pedir el documento por WhatsApp.
+ */
+export function mensajeRevisionNegocio(negocio: string, licencia?: string | null): string {
+  const nombre = negocio.trim() || 'mi negocio';
+  const declarada = (licencia ?? '').trim();
+  const estado = declarada ? `Licencia declarada: ${declarada}` : 'Sin licencia especificada';
+  return (
+    `Hola Yoanny, he enviado mi perfil de ${nombre} a revisión. ` +
+    `Estado de la licencia: ${estado}. Por favor, revísalo en el panel de admin.`
+  );
+}
+
 /**
  * Deja el número en dígitos internacionales (sin +, espacios ni guiones).
  * Los móviles cubanos se guardan a veces con 8 dígitos: se les antepone 53.

@@ -1402,6 +1402,20 @@ export interface AdminEditBusinessInput {
   host_story?: string;
   /** «Detalles de la experiencia». `undefined` = no modificarlo. */
   experience_details?: string;
+  /* Control total de la ficha (solo administrador). `undefined` = no tocar. */
+  host_name?: string;
+  province?: string;
+  municipality?: string;
+  category?: string;
+  service_type?: string;
+  /** Horario como texto JSON (`{"check_in":"15:00","check_out":"11:00"}`). */
+  schedule?: string;
+  languages?: string[];
+  /** `null` = borrar el precio; `undefined` = no modificarlo. */
+  price_amount?: number | null;
+  price_currency?: string;
+  /** Licencia declarada: privada, solo la escribe el administrador. */
+  license_number?: string;
 }
 
 /**
@@ -1417,6 +1431,9 @@ export interface AdminEditBusinessInput {
  */
 export async function adminEditBusiness(id: string, input: AdminEditBusinessInput): Promise<void> {
   await guardarFichaBase(id, input);
+  // Datos generales y licencia: van al final para que un fallo suyo no oculte
+  // el error de descripción/fotos, y al revés.
+  await guardarFichaCompleta(id, input);
   // Los textos narrativos van en un UPDATE aparte: si la BD no permite
   // escribirlos, descripción, WhatsApp y fotos ya quedaron guardados y el
   // error dice exactamente qué falta en lugar de perder toda la edición.
@@ -1617,6 +1634,128 @@ async function textoPersistido(id: string, col: string, esperado: string): Promi
     ? bruto.filter((x): x is string => typeof x === 'string').join(' · ')
     : String(bruto ?? '');
   return texto.trim() === esperado.trim();
+}
+
+/* ---------------- Control total de la ficha (admin) ---------------- */
+
+/**
+ * Guarda nombre del anfitrión, ubicación, categoría, horario, idiomas, precio y
+ * la licencia declarada desde el panel admin.
+ *
+ * `license_number` no está concedida a `authenticated` (migración 008), así que
+ * el único camino es el RPC `admin_edit_business_full` (migración 012), que
+ * comprueba el rol con `casa_abierta_is_admin` y es SECURITY DEFINER. Si la
+ * migración no está aplicada se intenta el UPDATE directo de las columnas
+ * públicas y se informa exactamente de lo que quedó sin guardar.
+ */
+async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): Promise<void> {
+  const payload: Record<string, unknown> = {};
+  if (input.host_name !== undefined) payload.host_name = input.host_name.trim();
+  if (input.province !== undefined) payload.province = input.province.trim();
+  if (input.municipality !== undefined) payload.municipality = input.municipality.trim();
+  if (input.category !== undefined) payload.category = input.category.trim();
+  if (input.service_type !== undefined) payload.service_type = input.service_type.trim();
+  if (input.schedule !== undefined) payload.schedule = input.schedule;
+  if (input.languages !== undefined) payload.languages = input.languages;
+  if (input.price_amount !== undefined) payload.price_amount = input.price_amount;
+  if (input.price_currency !== undefined) payload.price_currency = input.price_currency.trim().toUpperCase();
+
+  const licencia = input.license_number?.trim() ?? '';
+  if (Object.keys(payload).length === 0 && !licencia) return;
+
+  if (!supabase) {
+    const store = loadStore();
+    const b = store.businesses.find((x) => x.id === id);
+    if (!b) throw new Error('Negocio no encontrado');
+    Object.assign(b, payload);
+    if (licencia) b.license_number = licencia;
+    saveStore(store);
+    return;
+  }
+
+  const { data, error } = await supabase.rpc('admin_edit_business_full', {
+    target_business_id: id,
+    next_host_name: input.host_name !== undefined ? input.host_name.trim() : null,
+    next_province: input.province !== undefined ? input.province.trim() : null,
+    next_municipality: input.municipality !== undefined ? input.municipality.trim() : null,
+    next_category: input.category !== undefined ? input.category.trim() : null,
+    next_service_type: input.service_type !== undefined ? input.service_type.trim() : null,
+    next_schedule: input.schedule !== undefined ? input.schedule : null,
+    next_languages: input.languages !== undefined ? input.languages : null,
+    next_price_amount:
+      input.price_amount === undefined ? null : input.price_amount === null ? '' : String(input.price_amount),
+    next_price_currency:
+      input.price_currency !== undefined ? input.price_currency.trim().toUpperCase() : null,
+    next_license_number: licencia || null,
+  });
+  if (!error) {
+    // El RPC devuelve las columnas que este proyecto no tiene (esquemas
+    // antiguos): se avisa sin fingir que todo se guardó.
+    const omitidos = Array.isArray(data) ? (data as string[]) : [];
+    if (omitidos.length > 0) {
+      throw new Error(
+        `Se guardó el resto de la ficha, pero la base de datos no tiene estas columnas: ${omitidos.join(', ')}.`,
+      );
+    }
+    return;
+  }
+  if (!isMissingRpc(error.message)) throw new Error(error.message);
+
+  const fallidos: string[] = [];
+  if (Object.keys(payload).length > 0) {
+    const { error: updErr } = await supabase.from('businesses').update(payload).eq('id', id);
+    fallidos.push(
+      ...(updErr ? await guardarCampoACampo(id, payload) : await fichaCompletaPersistida(id, payload)),
+    );
+  }
+  // La licencia nunca se puede escribir por UPDATE directo: es privada.
+  if (licencia) fallidos.push('license_number');
+  if (fallidos.length > 0) {
+    throw new Error(
+      `No se pudieron guardar: ${fallidos.join(', ')}. Aplica una sola vez ` +
+        'supabase/migrations/012_admin_edit_full.sql en Supabase → SQL Editor y reintenta.',
+    );
+  }
+}
+
+/** Reintenta el UPDATE columna a columna y devuelve las que fallaron. */
+async function guardarCampoACampo(id: string, payload: Record<string, unknown>): Promise<string[]> {
+  if (!supabase) return [];
+  const fallidos: string[] = [];
+  for (const [col, valor] of Object.entries(payload)) {
+    const { error } = await supabase.from('businesses').update({ [col]: valor }).eq('id', id);
+    if (error) fallidos.push(col);
+  }
+  return fallidos;
+}
+
+/** Lee la fila y devuelve los campos que no quedaron como se pidió. */
+async function fichaCompletaPersistida(
+  id: string,
+  payload: Record<string, unknown>,
+): Promise<string[]> {
+  if (!supabase) return [];
+  const cols = Object.keys(payload);
+  const { data, error } = await supabase
+    .from('businesses')
+    .select(cols.join(', '))
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !data) return []; // no verificable: no se inventa un fallo
+  const fila = data as unknown as Record<string, unknown>;
+  return cols.filter((col) => {
+    const esperado = payload[col];
+    const real = fila[col];
+    if (Array.isArray(esperado)) {
+      return (
+        !Array.isArray(real) ||
+        real.length !== esperado.length ||
+        esperado.some((v, i) => String(v) !== String(real[i]))
+      );
+    }
+    if (esperado === null) return real !== null && real !== '';
+    return String(real ?? '').trim() !== String(esperado).trim();
+  });
 }
 
 export async function adminListUsers(): Promise<Profile[]> {

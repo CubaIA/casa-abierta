@@ -16,6 +16,12 @@ import { useAuth } from '@/lib/auth';
 import { normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { AvisoError } from '@/components/AvisoError';
+import {
+  ADMIN_WHATSAPP,
+  SUPPORT_WHATSAPP,
+  mensajeRevisionNegocio,
+  whatsappLink,
+} from '@/lib/whatsapp';
 
 const REQUEST_STATUS_LABEL: Record<RequestStatus, { label: string; badge: string }> = {
   new: { label: 'Nueva', badge: 'badge-blue' },
@@ -276,6 +282,8 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
     lgbt_friendly: false,
     phone: profile?.phone ?? '',
     email: profile?.email ?? '',
+    // La licencia ya no se pide en el formulario: la registra el administrador
+    // cuando el anfitrión envía la foto por WhatsApp. El tipo se mantiene.
     license_number: '',
   });
 
@@ -299,9 +307,6 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
     if (!form.municipality.trim()) return setError('Indica el municipio.');
     if (form.phone.trim().length < 5) return setError('Indica un teléfono de contacto válido.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return setError('El correo de contacto no es válido.');
-    if (form.license_number.trim().length < 3) {
-      return setError('Indica tu número de licencia o la documentación legal con la que operas.');
-    }
     if (!legalAccepted) {
       return setError('Debes marcar la declaración jurada de licencias y la aceptación del tratamiento de datos.');
     }
@@ -317,6 +322,13 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
         municipality: form.municipality.trim(),
         photos: photoUrls.length ? photoUrls : form.photos,
       });
+      // La ficha ya está guardada como «pending»: se abre el chat del
+      // administrador con el aviso de revisión y el estado de la licencia.
+      window.open(
+        whatsappLink(ADMIN_WHATSAPP, mensajeRevisionNegocio(form.name, form.license_number)),
+        '_blank',
+        'noopener,noreferrer',
+      );
       setSuccess(true);
       setTimeout(onDone, 1400);
     } catch (e) {
@@ -373,21 +385,27 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
         </div>
       </div>
 
-      {/* Documentación legal: obligatoria para publicar (Ley 149 de 2022). */}
+      {/* Documentación legal: opcional. La licencia no se pide en el formulario
+          (es un dato privado que solo registra el administrador); el anfitrión
+          la envía por WhatsApp si quiere optar al sello «Verificado». */}
       <div className="rounded-xl border border-arena-2 bg-arena/40 p-3">
-        <label className="field-label" htmlFor="b-license">Número de Licencia / Documentación Legal *</label>
-        <input
-          id="b-license"
-          className="field-input"
-          required
-          value={form.license_number}
-          onChange={(e) => set('license_number', e.target.value)}
-          placeholder="Ej. Licencia de arrendamiento MINTUR 12345"
-        />
-        <p className="mt-2 text-xs leading-relaxed text-tinta/55">
-          Nota: Los documentos y datos aquí suministrados serán utilizados única y exclusivamente para validar su
-          estatus legal y profesional dentro de la plataforma. No serán compartidos con terceros (Ley 149 de 2022).
+        <p className="field-label !mb-1">Documentación legal (opcional)</p>
+        <p className="text-sm leading-relaxed text-tinta/75">
+          Para obtener el sello de 'Verificado', debe enviar una foto de su licencia legal directamente a nuestro
+          WhatsApp de soporte (+53 5 6289645). Este documento es de uso estrictamente confidencial y solo se utiliza
+          para comprobar que su negocio opera según dicta la ley.
         </p>
+        <a
+          href={whatsappLink(
+            SUPPORT_WHATSAPP,
+            'Hola, quiero enviar la foto de mi licencia legal para obtener el sello de Verificado en Casa Abierta Cuba',
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-verde px-4 py-2 text-sm font-bold text-white hover:brightness-95"
+        >
+          <MessageCircle size={15} aria-hidden /> Enviar mi licencia por WhatsApp
+        </a>
       </div>
 
       <div>
@@ -501,16 +519,12 @@ function BusinessForm({ onDone }: { onDone: () => void }) {
       <AvisoError mensaje={error} />
       {success && <p className="form-success">¡Ficha enviada! La revisaremos y te avisaremos su estado.</p>}
 
-      <button
-        className="button-primary"
-        disabled={busy || !legalAccepted || form.license_number.trim().length < 3}
-        type="submit"
-      >
+      <button className="button-primary" disabled={busy || !legalAccepted} type="submit">
         {busy ? 'Enviando…' : 'Enviar a revisión'}
       </button>
-      {(!legalAccepted || form.license_number.trim().length < 3) && (
+      {!legalAccepted && (
         <p className="text-xs text-tinta/60">
-          Para enviar la ficha necesitas indicar tu licencia y marcar la declaración jurada.
+          Para enviar la ficha necesitas aceptar la declaración jurada y el tratamiento de datos.
         </p>
       )}
     </form>
