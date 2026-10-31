@@ -1731,7 +1731,9 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
   // target_business_id, next_host_name, next_province, next_municipality,
   // next_category, next_service_type, next_schedule, next_languages (text[]),
   // next_price_amount, next_price_currency, next_license_number.
-  const { data, error } = await supabase.rpc('admin_edit_business_full', {
+  // Argumentos exactos del RPC: las llaves deben coincidir con los parámetros
+  // de `public.admin_edit_business_full` (migración 013).
+  const args = {
     target_business_id: id,
     next_host_name: input.host_name !== undefined ? input.host_name.trim() : null,
     next_province: input.province !== undefined ? input.province.trim() : null,
@@ -1739,13 +1741,17 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
     next_category: input.category !== undefined ? input.category.trim() : null,
     next_service_type: input.service_type !== undefined ? input.service_type.trim() : null,
     next_schedule: horario,
+    // Siempre `string[]` o null: nunca un string con comas (PostgREST lo
+    // convertiría a literal de array y fallaría con `malformed array literal`).
     next_languages: idiomas.length > 0 ? idiomas : null,
     next_price_amount:
       input.price_amount === undefined ? null : input.price_amount === null ? '' : String(input.price_amount),
     next_price_currency:
       input.price_currency !== undefined ? input.price_currency.trim().toUpperCase() : null,
     next_license_number: licencia || null,
-  });
+  };
+
+  const { data, error } = await supabase.rpc('admin_edit_business_full', args);
   if (!error) {
     // El RPC devuelve las columnas que este proyecto no tiene (esquemas
     // antiguos): se avisa sin fingir que todo se guardó.
@@ -1757,6 +1763,34 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
     }
     return;
   }
+
+  // Blindaje: si la función instalada todavía falla al resolver el horario
+  // (`malformed array literal: "schedule"`), se reintenta sin `next_schedule`
+  // —así esa rama del SQL ni se evalúa— y el horario se escribe aparte. Esto
+  // deja guardar el resto de la ficha aunque la base de datos no tenga aún la
+  // migración 013, sin bloquear la edición completa.
+  if (horario !== null && /malformed array literal/i.test(error.message)) {
+    const reintento = await supabase.rpc('admin_edit_business_full', { ...args, next_schedule: null });
+    if (!reintento.error) {
+      const omitidosReintento = Array.isArray(reintento.data) ? (reintento.data as string[]) : [];
+      if (omitidosReintento.includes('schedule')) {
+        throw new Error('La base de datos no tiene la columna del horario: no se pudo guardar.');
+      }
+      const { error: errHorario } = await supabase
+        .from('businesses')
+        .update({ schedule: horario })
+        .eq('id', id);
+      // Se comprueba que el UPDATE no lo haya silenciado RLS (0 filas).
+      const sinGuardar = errHorario ? ['schedule'] : await fichaCompletaPersistida(id, { schedule: horario });
+      if (sinGuardar.length === 0) return;
+      throw new Error(
+        'Se guardó el resto de la ficha, pero no el horario: la base de datos rechazó el valor de ' +
+          '`schedule`. Aplica una sola vez supabase/migrations/013_admin_edit_full_fix.sql en el ' +
+          'SQL Editor del proyecto de Supabase que usa la app y reintenta.',
+      );
+    }
+  }
+
   if (!isMissingRpc(error.message)) throw new Error(error.message);
 
   const fallidos: string[] = [];
@@ -1771,7 +1805,8 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
   if (fallidos.length > 0) {
     throw new Error(
       `No se pudieron guardar: ${fallidos.join(', ')}. Aplica una sola vez ` +
-        'supabase/migrations/012_admin_edit_full.sql en Supabase → SQL Editor y reintenta.',
+        'supabase/migrations/013_admin_edit_full_fix.sql en el SQL Editor del proyecto de Supabase ' +
+        'que usa la app y reintenta.',
     );
   }
 }
