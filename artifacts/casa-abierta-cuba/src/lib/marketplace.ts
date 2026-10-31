@@ -131,6 +131,20 @@ function asTextoPlano(v: unknown): string | null {
   return null;
 }
 
+/** `schedule` admite texto libre, texto con JSON o jsonb (que llega como
+ *  objeto). Los objetos se serializan para conservar check_in/check_out: el
+ *  editor del admin parsea el JSON y, sin esto, un jsonb se veía como vacío. */
+function asHorario(v: unknown): string | null {
+  if (v && typeof v === 'object' && !Array.isArray(v)) {
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return null;
+    }
+  }
+  return asTextoPlano(v);
+}
+
 /** Texto limpio desde una columna que puede llegar null, array o número. */
 function textoColumna(valor: unknown): string {
   if (typeof valor === 'string') return valor.trim();
@@ -161,7 +175,7 @@ function mapBusinessRow(row: Record<string, unknown>): Business {
     images: r.images ?? r.photos ?? [],
     languages: asArray(r.languages),
     experience_details: r.experience_details ?? amenities,
-    schedule: asTextoPlano(r.schedule),
+    schedule: asHorario(r.schedule),
     recommended_for: asArray(r.recommended_for ?? r.tags),
     lgbt_friendly: r.lgbt_friendly ?? false,
   } as Business;

@@ -265,6 +265,9 @@
   font-weight: 700;
   font-size: 0.88rem;
   margin-bottom: 0.35rem;
+  /* Color explícito: sin esto la etiqueta hereda el blanco del contenedor
+     (p. ej. el editor del panel admin) y se vuelve invisible sobre el beige. */
+  color: var(--color-azul-700);
 }
 .field-input {
   width: 100%;

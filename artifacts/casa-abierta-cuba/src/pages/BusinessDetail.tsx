@@ -302,7 +302,23 @@ export default function BusinessDetail() {
   const detalles = String(business?.experience_details ?? '');
   const idiomas = Array.isArray(business?.languages) ? business.languages : [];
   const recomendados = Array.isArray(business?.recommended_for) ? business.recommended_for : [];
-  const schedule = typeof business?.schedule === 'string' ? business.schedule.trim() : '';
+  /* El horario puede ser texto libre o JSON ({check_in, check_out}). */
+  const schedule = (() => {
+    const bruto = typeof business?.schedule === 'string' ? business.schedule.trim() : '';
+    if (!bruto.startsWith('{')) return bruto;
+    try {
+      const h = JSON.parse(bruto) as { check_in?: unknown; check_out?: unknown };
+      const hora = (v: unknown) => (typeof v === 'string' ? v.slice(0, 5) : '');
+      const entrada = hora(h.check_in);
+      const salida = hora(h.check_out);
+      if (entrada && salida) return `Check-in ${entrada} · Check-out ${salida}`;
+      if (entrada) return `Check-in ${entrada}`;
+      if (salida) return `Check-out ${salida}`;
+      return '';
+    } catch {
+      return bruto;
+    }
+  })();
 
   /* Idiomas sin duplicados («Español» y «español» son el mismo idioma). */
   const idiomasUnicos = (() => {

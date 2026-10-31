@@ -354,19 +354,24 @@ function detectarCampoMintur(b: Business): 'formatur' | 'transporte' | 'agencia'
   return null;
 }
 
-/** Horario guardado: JSON con check_in/check_out, o texto libre antiguo. */
+/** Horas dentro de un objeto de horario; admite "15:00" y "15:00:00". */
+function leerObjetoHorario(valor: unknown): { check_in: string; check_out: string } {
+  const h = (valor ?? {}) as Record<string, unknown>;
+  const hora = (v: unknown) => (typeof v === 'string' ? v.slice(0, 5) : '');
+  return { check_in: hora(h.check_in), check_out: hora(h.check_out) };
+}
+
+/** Horario guardado: JSON con check_in/check_out (text o jsonb), o texto libre. */
 function leerHorario(valor: unknown): { check_in: string; check_out: string } {
   const vacio = { check_in: '', check_out: '' };
+  // jsonb desde PostgREST: ya llega como objeto.
+  if (valor && typeof valor === 'object' && !Array.isArray(valor)) return leerObjetoHorario(valor);
   if (typeof valor !== 'string' || !valor.trim()) return vacio;
   try {
-    const parsed: unknown = JSON.parse(valor);
-    if (parsed && typeof parsed === 'object') {
-      const h = parsed as Record<string, unknown>;
-      return {
-        check_in: typeof h.check_in === 'string' ? h.check_in : '',
-        check_out: typeof h.check_out === 'string' ? h.check_out : '',
-      };
-    }
+    let parsed: unknown = JSON.parse(valor);
+    // jsonb escrito por error como texto: llega doblemente codificado.
+    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+    if (parsed && typeof parsed === 'object') return leerObjetoHorario(parsed);
   } catch {
     // Texto libre (formato anterior): no hay horas que precargar.
   }
@@ -810,8 +815,12 @@ function BusinessEditor({
           </div>
         </div>
         <p className="field-hint">
-          Se guarda como JSON <code>{'{"check_in":"15:00","check_out":"11:00"}'}</code>. Horario actual:{' '}
-          {business.schedule?.trim() || 'sin definir'}.
+          Se guardará como JSON:{' '}
+          <code>{JSON.stringify({ check_in: checkIn, check_out: checkOut })}</code>
+          <br />
+          {business.schedule?.trim()
+            ? `Guardado actualmente: ${business.schedule.trim()}`
+            : 'Sin horario guardado todavía.'}
         </p>
       </div>
 
