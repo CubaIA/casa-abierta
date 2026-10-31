@@ -1662,15 +1662,54 @@ async function textoPersistido(id: string, col: string, esperado: string): Promi
  * migración no está aplicada se intenta el UPDATE directo de las columnas
  * públicas y se informa exactamente de lo que quedó sin guardar.
  */
+/** Normaliza idiomas a `string[]`: el RPC los declara como `next_languages text[]`.
+ *
+ * Un string enviado a un parámetro `text[]` hace que PostgREST intente
+ * interpretarlo como literal de array y falle con
+ * `malformed array literal: "..."`. Aquí se acepta texto separado por comas o
+ * punto y coma (y el literal `{español,inglés}` de una columna Postgres) y se
+ * devuelve siempre un array limpio y sin duplicados. */
+function normalizarIdiomas(valor: unknown): string[] {
+  const crudo: unknown[] = Array.isArray(valor)
+    ? valor
+    : typeof valor === 'string'
+      ? valor.replace(/^\s*\{|\}\s*$/g, '').split(/[,;]/)
+      : [];
+  const vistos = new Set<string>();
+  const lista: string[] = [];
+  for (const item of crudo) {
+    const limpio = String(item ?? '')
+      .replace(/^["']|["']$/g, '')
+      .trim();
+    if (!limpio) continue;
+    const clave = limpio.toLowerCase();
+    if (vistos.has(clave)) continue;
+    vistos.add(clave);
+    lista.push(limpio);
+  }
+  return lista;
+}
+
+/** Horario como texto JSON: el RPC lo recibe en `next_schedule text`. */
+function normalizarHorario(valor: unknown): string | null {
+  if (valor === undefined || valor === null) return null;
+  if (typeof valor === 'string') return valor.trim() || null;
+  if (typeof valor === 'object') return JSON.stringify(valor);
+  return String(valor);
+}
+
 async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): Promise<void> {
   const payload: Record<string, unknown> = {};
+  // Normalizado una sola vez: el payload y los argumentos del RPC usan el mismo valor.
+  const idiomas = normalizarIdiomas(input.languages);
+  const horario = normalizarHorario(input.schedule);
   if (input.host_name !== undefined) payload.host_name = input.host_name.trim();
   if (input.province !== undefined) payload.province = input.province.trim();
   if (input.municipality !== undefined) payload.municipality = input.municipality.trim();
   if (input.category !== undefined) payload.category = input.category.trim();
   if (input.service_type !== undefined) payload.service_type = input.service_type.trim();
-  if (input.schedule !== undefined) payload.schedule = input.schedule;
-  if (input.languages !== undefined) payload.languages = input.languages;
+  if (input.schedule !== undefined) payload.schedule = horario;
+  if (input.languages !== undefined) payload.languages = idiomas;
   if (input.price_amount !== undefined) payload.price_amount = input.price_amount;
   if (input.price_currency !== undefined) payload.price_currency = input.price_currency.trim().toUpperCase();
 
@@ -1687,6 +1726,11 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
     return;
   }
 
+  // Las llaves deben coincidir exactamente con los parámetros de
+  // `public.admin_edit_business_full` (migración 013):
+  // target_business_id, next_host_name, next_province, next_municipality,
+  // next_category, next_service_type, next_schedule, next_languages (text[]),
+  // next_price_amount, next_price_currency, next_license_number.
   const { data, error } = await supabase.rpc('admin_edit_business_full', {
     target_business_id: id,
     next_host_name: input.host_name !== undefined ? input.host_name.trim() : null,
@@ -1694,8 +1738,8 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
     next_municipality: input.municipality !== undefined ? input.municipality.trim() : null,
     next_category: input.category !== undefined ? input.category.trim() : null,
     next_service_type: input.service_type !== undefined ? input.service_type.trim() : null,
-    next_schedule: input.schedule !== undefined ? input.schedule : null,
-    next_languages: input.languages !== undefined ? input.languages : null,
+    next_schedule: horario,
+    next_languages: idiomas.length > 0 ? idiomas : null,
     next_price_amount:
       input.price_amount === undefined ? null : input.price_amount === null ? '' : String(input.price_amount),
     next_price_currency:
