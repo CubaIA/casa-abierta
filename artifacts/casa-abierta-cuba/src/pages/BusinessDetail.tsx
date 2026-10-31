@@ -31,6 +31,7 @@ import { firstPhoto, resolvePhotos } from '@/lib/images';
 import { formatPrice } from '@/components/BusinessCard';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { AvisoError } from '@/components/AvisoError';
+import { FormularioResena } from '@/components/FormularioResena';
 import { SelloVerificado } from '@/components/SelloVerificado';
 import { adminGetUserAvatarUrl } from '@/lib/avatars';
 import { supabase } from '@/lib/supabase';
@@ -156,7 +157,9 @@ export default function BusinessDetail() {
       const reviewsList = await listReviews(id);
       setReviews(reviewsList);
       if (userId && reviewsList.length > 0) {
-        const owners = new Set<string>(reviewsList.map((r) => r.reviewer_id));
+        const owners = new Set<string>(
+          reviewsList.map((r) => r.reviewer_id ?? r.user_id ?? '').filter(Boolean),
+        );
         const fetched: Record<string, string | null> = {};
         if (supabase) {
           for (const ownerId of owners) {
@@ -185,6 +188,15 @@ export default function BusinessDetail() {
     if (!id) return;
     void load();
   }, [id, load]);
+
+  /** Recarga solo las reseñas tras publicar una: evita el parpadeo de `load`. */
+  const recargarResenas = useCallback(async () => {
+    try {
+      setReviews(await listReviews(id));
+    } catch (e) {
+      setErrorMessage(e instanceof Error ? e.message : 'No se pudieron recargar las reseñas');
+    }
+  }, [id]);
 
   useEffect(() => {
     if (!business?.name) return;
@@ -699,12 +711,14 @@ export default function BusinessDetail() {
           <p className="mt-2 text-sm text-tinta/60">Aún no hay reseñas para este negocio.</p>
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {reviews.map((r) => (
+            {reviews.map((r) => {
+              const autorId = r.reviewer_id ?? r.user_id ?? '';
+              return (
               <li key={r.id} className="rounded-2xl border border-arena-2 bg-white p-4">
                 <div className="flex items-center gap-3">
                   <ProfileAvatar
-                    avatarUrl={reviewerAvatars[r.reviewer_id] ?? null}
-                    userId={r.reviewer_id}
+                    avatarUrl={autorId ? reviewerAvatars[autorId] ?? null : null}
+                    userId={autorId}
                     size={36}
                     upload={false}
                   />
@@ -719,9 +733,12 @@ export default function BusinessDetail() {
                   </div>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
+
+        <FormularioResena businessId={id} userId={userId} onEnviada={recargarResenas} />
       </section>
 
       {/* ---------------------------------------------------------- */}

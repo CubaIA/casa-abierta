@@ -776,6 +776,65 @@ export async function createReview(input: {
   saveStore(store);
 }
 
+/**
+ * Reseña libre desde la ficha pública (no exige una solicitud completada).
+ *
+ * Inserta `business_id`, `user_id` (el autor), `rating` y `comment` en
+ * `public.reviews`. La migración 014 añade `user_id`, deja `request_id`
+ * opcional y permite INSERT al usuario logueado; en bases que aún guardan el
+ * autor en `reviewer_id` se reintenta con esa columna.
+ */
+export async function crearResenaDirecta(input: {
+  businessId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+}): Promise<void> {
+  const rating = Math.min(5, Math.max(1, Math.round(input.rating)));
+  const comment = input.comment.trim();
+
+  if (supabase) {
+    const base = { business_id: input.businessId, rating, comment };
+    const { error } = await supabase.from('reviews').insert({ ...base, user_id: input.userId });
+    if (!error) return;
+
+    // Bases sin la migración 014: el autor sigue en `reviewer_id`.
+    if (esColumnaAusente(error.message)) {
+      const { error: reintento } = await supabase
+        .from('reviews')
+        .insert({ ...base, reviewer_id: input.userId });
+      if (!reintento) return;
+      throw new Error(mensajeDeResena(reintento.message));
+    }
+    throw new Error(mensajeDeResena(error.message));
+  }
+
+  // Modo demo: mismo resultado sin solicitud previa.
+  const store = loadStore();
+  store.reviews.unshift({
+    id: crypto.randomUUID(),
+    request_id: null,
+    business_id: input.businessId,
+    reviewer_id: input.userId,
+    user_id: input.userId,
+    rating,
+    comment,
+    created_at: new Date().toISOString(),
+  });
+  saveStore(store);
+}
+
+/** Traduce los rechazos esperados de `reviews` a algo accionable. */
+function mensajeDeResena(mensaje: string): string {
+  if (/row-level security|42501/i.test(mensaje)) {
+    return 'La base de datos todavía no permite reseñas libres: aplica supabase/migrations/014_resenas_directas.sql en el proyecto de Supabase y reintenta.';
+  }
+  if (/request_id/i.test(mensaje) && /null value|23502/i.test(mensaje)) {
+    return 'La tabla de reseñas todavía exige una solicitud: aplica supabase/migrations/014_resenas_directas.sql en el proyecto de Supabase y reintenta.';
+  }
+  return mensaje;
+}
+
 /* ------------------------------------------------------------------ */
 /* Alta de negocio (proveedor)                                         */
 /* ------------------------------------------------------------------ */

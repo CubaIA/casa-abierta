@@ -96,10 +96,13 @@ export interface BusinessRow {
 
 export interface Review {
   id: string;
-  request_id: string;
+  /** Nulo en las reseñas libres de la ficha pública (migración 014). */
+  request_id?: string | null;
   business_id: string;
   /** Columna real de la BD en producción (antes author_id). */
-  reviewer_id: string;
+  reviewer_id?: string | null;
+  /** Autor de las reseñas escritas desde la ficha pública. */
+  user_id?: string | null;
   rating: number;
   comment: string;
   created_at: string;
