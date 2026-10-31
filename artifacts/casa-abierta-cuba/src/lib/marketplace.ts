@@ -1731,8 +1731,6 @@ async function guardarFichaCompleta(id: string, input: AdminEditBusinessInput): 
   // target_business_id, next_host_name, next_province, next_municipality,
   // next_category, next_service_type, next_schedule, next_languages (text[]),
   // next_price_amount, next_price_currency, next_license_number.
-  // Argumentos exactos del RPC: las llaves deben coincidir con los parámetros
-  // de `public.admin_edit_business_full` (migración 013).
   const args = {
     target_business_id: id,
     next_host_name: input.host_name !== undefined ? input.host_name.trim() : null,
