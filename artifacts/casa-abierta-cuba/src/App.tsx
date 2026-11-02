@@ -108,7 +108,8 @@ export default function App() {
           </AppErrorBoundary>
         </Suspense>
       )}
-      <Analytics />
+      {/* Proxy propio (/va/* → Vercel) para que los adblockers no bloqueen el script. */}
+      <Analytics scriptSrc="/va/script.js" viewEndpoint="/va/view" eventEndpoint="/va/event" />
     </Layout>
   );
 }

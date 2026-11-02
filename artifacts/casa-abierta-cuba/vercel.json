@@ -1,5 +1,18 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {
+      "source": "/va/script.js",
+      "destination": "https://va.vercel-scripts.com/v1/script.js"
+    },
+    {
+      "source": "/va/view",
+      "destination": "https://vitals.vercel-insights.com/v1/view"
+    },
+    {
+      "source": "/va/event",
+      "destination": "https://vitals.vercel-insights.com/v1/event"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
