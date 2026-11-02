@@ -1,5 +1,6 @@
 import { Route, Switch, useLocation } from 'wouter';
 import { lazy, Suspense, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Layout } from '@/components/Layout';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { useAuth } from '@/lib/auth';
@@ -107,6 +108,7 @@ export default function App() {
           </AppErrorBoundary>
         </Suspense>
       )}
+      <Analytics />
     </Layout>
   );
 }
