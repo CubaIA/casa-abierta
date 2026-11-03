@@ -35,6 +35,7 @@ import { supabase } from '@/lib/supabase';
 import { adminCountContactLeads, type AdminContactLeads } from '@/lib/admin-contact-leads';
 import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { BusinessForm } from './Anfitrion';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
 
 type Tab = 'businesses' | 'users' | 'requests' | 'reports' | 'messages';
@@ -125,6 +126,7 @@ function wrap(fn: () => Promise<void>, onError: (m: string | null) => void, relo
 
 function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
   const { userId } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { rows: businesses, err, reload, patch } = useAdminData<Business[]>(adminListAllBusinesses);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -198,6 +200,15 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
       <AvisoError mensaje={err} operador />
       {businesses === null && !err && <div className="empty-state">Cargando…</div>}
       {businesses?.length === 0 && <div className="empty-state">No hay negocios registrados.</div>}
+      <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded mb-4">+ Añadir Nuevo Negocio</button>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setIsModalOpen(false)} className="float-right text-red-500 font-bold mb-4">Cerrar</button>
+            <BusinessForm onDone={() => { setIsModalOpen(false); window.location.reload(); }} />
+          </div>
+        </div>
+      )}
       {businesses?.map((b) => (
         <article key={b.id} className="panel">
           <div className="flex flex-wrap items-center justify-between gap-2">

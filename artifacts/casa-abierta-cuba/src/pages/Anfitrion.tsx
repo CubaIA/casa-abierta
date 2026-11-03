@@ -255,7 +255,7 @@ const PROVINCES = [
   'Santiago de Cuba', 'Guantánamo', 'Isla de la Juventud',
 ];
 
-function BusinessForm({ onDone }: { onDone: () => void }) {
+export function BusinessForm({ onDone }: { onDone: () => void }) {
   const { userId, profile } = useAuth();
   const [categories, setCategories] = useState(DEMO_CATEGORIES);
   const [error, setError] = useState<string | null>(null);
