@@ -150,7 +150,7 @@ export function BusinessCard({
             ·
           </span>
           <Star size={12} className="shrink-0 fill-tinta/80" aria-hidden />
-          <span className="font-semibold text-tinta">{rating !== null ? rating.toFixed(2) : 'Nuevo'}</span>
+          <span className="font-semibold text-tinta">{rating !== null ? rating.toFixed(2) : ''}</span>
         </p>
       </Link>
     </article>
