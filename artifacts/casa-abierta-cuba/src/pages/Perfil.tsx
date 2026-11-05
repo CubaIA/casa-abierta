@@ -215,7 +215,7 @@ export default function Perfil() {
               </p>
               <p className="mt-2 text-sm text-tinta/70">
                 {verificado
-                  ? 'Tu negocio pasó por nuestro proceso de revisión y muestra el sello «Verificado en Cuba por Casa Abierta» en el catálogo y en su ficha.'
+                  ? 'Tu negocio pasó por nuestra revisión y muestra el sello «Revisión básica CA · Identidad y contacto comprobados» en el catálogo y en su ficha.'
                   : 'Tu negocio todavía no tiene el sello. Cada ficha pasa por una revisión del equipo antes de otorgarlo: escríbenos si quieres que revisemos la tuya.'}
               </p>
             </>

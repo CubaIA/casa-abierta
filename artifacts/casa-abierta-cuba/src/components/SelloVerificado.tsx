@@ -1,5 +1,5 @@
 /**
- * Sello de calidad «Verificado en Cuba por Casa Abierta».
+ * Sello de revisión básica: «Revisión básica CA · Identidad y contacto comprobados».
  *
  * Se usa igual en la tarjeta del catálogo (compacto, sobre la foto) y en la
  * ficha del negocio (grande, junto al título), para que el mensaje de
@@ -11,7 +11,7 @@
  */
 
 /** Texto único del sello. */
-export const TEXTO_SELLO = 'Verificado en Cuba por Casa Abierta';
+export const TEXTO_SELLO = 'Revisión básica CA · Identidad y contacto comprobados';
 
 interface SelloVerificadoProps {
   /** Valor de `businesses.verified`: sin true, el sello no se renderiza. */

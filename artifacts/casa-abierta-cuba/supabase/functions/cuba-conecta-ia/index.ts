@@ -18,6 +18,13 @@ const MODEL = 'openai/gpt-oss-20b';
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 2000;
 
+/** Reglas estrictas de veracidad: la IA nunca inventa negocios ni datos. */
+const REGLAS_CATALOGO = [
+  'Bajo ninguna circunstancia inventes nombres de alojamientos, restaurantes, guías o taxis.',
+  'Solo puedes recomendar los negocios que existan en tu contexto real.',
+  "Si no tienes el dato, responde: 'No tengo ese lugar en el catálogo actual, pero puedo contactar a un anfitrión para ayudarte'.",
+].join(' ');
+
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -89,8 +96,8 @@ Deno.serve(async (req: Request) => {
   const systemMsg: ChatMessage = {
     role: 'system',
     content: targetLangStr
-      ? `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. Si en el mensaje aparecen descripciones de servicios (casas, alojamientos, carros, traslados, tours, experiencias), tradúcelas automáticamente al ${targetLangStr} manteniendo nombres propios, números y ubicación. Responde en el mismo idioma cuando corresponda.`
-      : `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. El creador de Casa Abierta Cuba es Yoanny Guillén Vargas, Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios. Bajo ninguna circunstancia inventes datos, fundadores, precios o atracciones turísticas. Si no tienes la información exacta en tu contexto, debes responder: 'No tengo esa información exacta en la plataforma, pero puedes contactar directamente con el anfitrión'.' Responde en el mismo idioma cuando corresponda.`}
+      ? `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. Si en el mensaje aparecen descripciones de servicios (casas, alojamientos, carros, traslados, tours, experiencias), tradúcelas automáticamente al ${targetLangStr} manteniendo nombres propios, números y ubicación. Responde en el mismo idioma cuando corresponda. ${REGLAS_CATALOGO}`
+      : `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. El creador de Casa Abierta Cuba es Yoanny Guillén Vargas, Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios. Bajo ninguna circunstancia inventes datos, fundadores, precios o atracciones turísticas. ${REGLAS_CATALOGO} Responde en el mismo idioma cuando corresponda.`}
   };
   const msgsForModel = [systemMsg, ...clean.filter((m) => m.role !== 'system')];
 
