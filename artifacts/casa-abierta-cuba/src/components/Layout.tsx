@@ -491,7 +491,7 @@ function Footer() {
         <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Redes</h3>
           <ul className="space-y-2 text-sm">
-            <li className="text-white font-semibold">CEO y Creador: Yoanny Guillén Vargas</li>
+            <li className="text-white font-semibold">Fundador y responsable: Yoanny Guillén Vargas</li>
             <li>Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios.</li>
           </ul>
           <p className="mt-3 text-xs text-azul-200 flex flex-wrap gap-1 items-center">
@@ -506,7 +506,7 @@ function Footer() {
         <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Créditos</h3>
           <ul className="space-y-2 text-sm">
-            <li className="text-white font-semibold">CEO y Creador: Yoanny Guillén Vargas</li>
+            <li className="text-white font-semibold">Fundador y responsable: Yoanny Guillén Vargas</li>
             <li>Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios.</li>
           </ul>
         </div>
