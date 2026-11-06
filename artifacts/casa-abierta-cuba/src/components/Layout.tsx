@@ -467,6 +467,8 @@ function Footer() {
             <li><Link href="/providers" className="hover:text-white">Normas para proveedores</Link></li>
             <li><Link href="/anfitrion" className="hover:text-white">Publicar mi negocio</Link></li>
             <li><Link href="/contacto" className="hover:text-white">Contacto</Link></li>
+            <li><Link href="/status" className="hover:text-white">Estado de la Plataforma</Link></li>
+            <li><Link href="/blog" className="hover:text-white">Blog de Viajes</Link></li>
             <li>
               <a
                 href={whatsappLink(SUPPORT_WHATSAPP, MENSAJE_SOPORTE)}

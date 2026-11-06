@@ -2,6 +2,8 @@ import { Route, Switch, useLocation } from 'wouter';
 import { lazy, Suspense, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Layout } from '@/components/Layout';
+import { StatusPage } from '@/pages/Status';
+import { BlogPage } from '@/pages/Blog';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { useAuth } from '@/lib/auth';
 import NotFound from '@/pages/not-found';
@@ -95,6 +97,8 @@ export default function App() {
               <Route path="/anfitrion" component={Anfitrion} />
               <Route path="/admin" component={Admin} />
               <Route path="/contacto" component={Contacto} />
+              <Route path="/status" component={StatusPage} />
+              <Route path="/blog" component={BlogPage} />
               <Route path="/chat" component={ChatIA} />
               <Route path="/payment/success" component={PaymentSuccess} />
               <Route path="/payment/cancel" component={PaymentCancel} />
