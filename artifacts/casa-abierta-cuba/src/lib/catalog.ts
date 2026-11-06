@@ -95,7 +95,10 @@ export interface CatalogFilterState {
 /** Aplica búsqueda por texto y filtros de categoría / LGBTQ+ sobre el catálogo. */
 export function filterBusinesses(lista: Business[], { q, cat, inclusivo }: CatalogFilterState): Business[] {
   let rows = lista;
-  if (cat !== CATALOG_ALL) rows = rows.filter((b) => b.service_type === cat);
+  // Solo «Alojamientos» devuelve casas/habitaciones: service_type === 'alojamiento'.
+  // Los guías locales tienen service_type === 'guia_local' (y categoría 'guias_locales')
+  // y no deben aparecer en la fila de alojamientos.
+  if (cat === 'alojamiento') rows = rows.filter((b) => b.service_type === 'alojamiento');
   if (inclusivo) rows = rows.filter((b) => b.lgbt_friendly);
   const term = q.trim().toLowerCase();
   if (term) {
