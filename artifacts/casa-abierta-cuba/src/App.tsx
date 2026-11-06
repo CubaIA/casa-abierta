@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { Layout } from '@/components/Layout';
 import { StatusPage } from '@/pages/Status';
 import { BlogPage } from '@/pages/Blog';
+import { BlogPost } from '@/pages/BlogPost';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { useAuth } from '@/lib/auth';
 import NotFound from '@/pages/not-found';
@@ -99,6 +100,7 @@ export default function App() {
               <Route path="/contacto" component={Contacto} />
               <Route path="/status" component={StatusPage} />
               <Route path="/blog" component={BlogPage} />
+              <Route path="/blog/:slug" component={BlogPost} />
               <Route path="/chat" component={ChatIA} />
               <Route path="/payment/success" component={PaymentSuccess} />
               <Route path="/payment/cancel" component={PaymentCancel} />

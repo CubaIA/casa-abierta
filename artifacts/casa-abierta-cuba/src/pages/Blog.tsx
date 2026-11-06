@@ -3,15 +3,15 @@ import { Link } from 'wouter';
 const ARTICULOS = [
   {
     titulo: 'Las 5 mejores casas coloniales para hospedarse en Trinidad, Cuba',
-    slug: '/blog/5-casas-coloniales-en-trinidad',
+    slug: 'trinidad',
   },
   {
     titulo: 'Cómo planificar un viaje a Cuba en 2026 de forma segura y legal',
-    slug: '/blog/planificar-viaje-cuba-2026',
+    slug: 'viaje-seguro',
   },
   {
     titulo: 'Qué hacer en Varadero: Playas, gastronomía y cultura local',
-    slug: '/blog/que-hacer-en-varadero',
+    slug: 'varadero',
   },
 ];
 
@@ -26,7 +26,7 @@ export function BlogPage() {
         {ARTICULOS.map((articulo) => (
           <li key={articulo.slug}>
             <Link
-              href={articulo.slug}
+              href={`/blog/${articulo.slug}`}
               className="block rounded-2xl border border-azul/20 bg-white p-6 shadow-sm transition hover:shadow-md hover:border-azul/40"
             >
               <span className="text-sm font-semibold text-azul">Artículo</span>
