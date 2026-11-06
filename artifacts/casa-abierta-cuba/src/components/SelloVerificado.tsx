@@ -1,17 +1,20 @@
 /**
  * Sello de revisión básica: «Revisión básica CA · Identidad y contacto comprobados».
  *
- * Se usa igual en la tarjeta del catálogo (compacto, sobre la foto) y en la
- * ficha del negocio (grande, junto al título), para que el mensaje de
- * verificación sea siempre el mismo en toda la plataforma.
+ * En la tarjeta del catálogo (compacto, sobre la foto) usa el texto corto
+ * «Verificado CA»; en la ficha del negocio (grande, junto al título) muestra
+ * el texto completo. El diseño es idéntico en ambas variantes.
  *
  * Solo lo otorga el administrador desde el panel: el componente no pinta nada
  * mientras la columna `verified` del negocio no sea true. Así el sello es un
  * distintivo real y no una etiqueta decorativa.
  */
 
-/** Texto único del sello. */
+/** Texto completo del sello (ficha del negocio). */
 export const TEXTO_SELLO = 'Revisión básica CA · Identidad y contacto comprobados';
+
+/** Texto corto del sello para la tarjeta del catálogo, donde no cabe el completo. */
+export const TEXTO_SELLO_CORTO = 'Verificado CA';
 
 interface SelloVerificadoProps {
   /** Valor de `businesses.verified`: sin true, el sello no se renderiza. */
@@ -44,7 +47,7 @@ export function SelloVerificado({ verified, variant = 'compact', className = '' 
       <span aria-hidden className="text-dorado">
         ✓
       </span>
-      <span className="truncate">{TEXTO_SELLO}</span>
+      <span className="truncate">{TEXTO_SELLO_CORTO}</span>
     </span>
   );
 }
