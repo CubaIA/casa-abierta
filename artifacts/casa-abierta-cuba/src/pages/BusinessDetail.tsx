@@ -284,7 +284,7 @@ export default function BusinessDetail() {
   const tipoLabel =
     SERVICE_TYPES.find((s) => s.value === business?.service_type)?.label ??
     (business?.service_type ?? '').charAt(0).toUpperCase() + (business?.service_type ?? '').slice(1);
-  const precio = formatPrice(business) ?? 'Consultar';
+  const precio = formatPrice(business) ?? 'Precio a confirmar con el anfitrión';
   /* Contacto directo: el WhatsApp del anuncio o, si la BD no lo expone al
    * público, el de soporte para que nadie se quede sin poder escribir. */
   const whatsappNegocio = telefonoDeNegocio(business) ?? whatsappPublicado;

@@ -144,7 +144,7 @@ export function BusinessCard({
               {unit ? <span>{unit}</span> : null}
             </>
           ) : (
-            <span>Consultar precio</span>
+            <span>Precio a confirmar con el anfitrión</span>
           )}
           <span aria-hidden className="text-tinta/40">
             ·

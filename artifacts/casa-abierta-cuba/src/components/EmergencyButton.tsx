@@ -1,8 +1,8 @@
 export function EmergencyButton() {
   const numbers = [
-    { name: 'Emergencias', tel: '106' },
     { name: 'Policía', tel: '106' },
     { name: 'Ambulancia', tel: '104' },
+    { name: 'Bomberos', tel: '105' },
   ];
   return (
     <details className="fixed bottom-32 right-4 z-50 md:bottom-6">
@@ -10,19 +10,24 @@ export function EmergencyButton() {
         Emergencia
       </summary>
       <div className="mt-2 w-60 rounded-lg border border-red-200 bg-white p-3 text-sm shadow-xl">
-        <p className="font-semibold text-red-700">Ayuda de emergencia (Cuba)</p>
+        <p className="font-semibold text-red-700">Emergencias en Cuba:</p>
         <ul className="mt-2 space-y-1">
           {numbers.map((n) => (
             <li key={n.name} className="flex items-center justify-between">
-              <span>{n.name}</span>
+              <span>{n.name}:</span>
               <a className="text-blue-700 underline" href={`tel:${n.tel}`}>
                 {n.tel}
               </a>
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-gray-500">
-          Para viajeros internacionales, consulta tu embajada/consulado. Este botón es orientativo.
+        <p className="mt-3 font-semibold text-red-700">Soporte Casa Abierta:</p>
+        <p className="mt-1">
+          WhatsApp:{' '}
+          <a className="text-blue-700 underline" href="https://wa.me/5356289645" target="_blank" rel="noopener noreferrer">
+            +53 56289645
+          </a>{' '}
+          <span className="text-xs text-gray-500">(Horario 8am - 8pm)</span>
         </p>
       </div>
     </details>
