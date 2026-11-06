@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
+import { BusinessGrid } from '@/components/BusinessGrid';
 import { Heart, Menu, Search, Sparkles } from 'lucide-react';
 import { CATALOG_IMAGES, FILTROS } from '@/lib/catalog';
 import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
-import { CatalogExplorer } from '@/components/CatalogExplorer';
 
 /**
  * Portada minimalista tipo wallpaper.
@@ -186,17 +186,15 @@ export default function Home() {
         className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pb-44 md:pb-24"
       >
         {mostrarResultados && (
-          <div className="pt-10">
-            <CatalogExplorer
-              businesses={businesses}
-              error={error}
-              q={q}
-              cat={cat}
-              inclusivo={inclusivo}
-              favoritos={favoritos}
-              onToggleFavorite={onToggleFavorite}
-            />
-          </div>
+          <BusinessGrid
+            items={businesses}
+            favoritos={favoritos}
+            onToggleFavorite={onToggleFavorite}
+            error={error}
+            emptyTitle="Aún no hay alojamientos publicados"
+            emptyBody="Las propuestas nuevas pasan por revisión antes de aparecer aquí. Vuelve pronto o explora el catálogo completo."
+            emptyCta={{ href: '/alojamientos', label: 'Ver todo el catálogo' }}
+          />
         )}
       </section>
     </div>
