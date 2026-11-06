@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
+import { Trash2, MinusCircle } from 'lucide-react';
 import { Building2, Inbox, MessageCircle, PlusCircle, RefreshCw } from 'lucide-react';
 import {
   DEMO_CATEGORIES,
@@ -261,6 +262,8 @@ export function BusinessForm({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [precioNoche, setPrecioNoche] = useState('');
+  const [moneda, setMoneda] = useState('USD');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreview, setPhotoPreview] = useState<string[]>([]);
   /** Declaración jurada de licencias y aceptación del tratamiento de datos. */
@@ -291,12 +294,15 @@ export function BusinessForm({ onDone }: { onDone: () => void }) {
     listCategories()
       .then((cats) => setCategories(cats.filter((c) => c.active)))
       .catch(() => setCategories(DEMO_CATEGORIES));
-  }, []);
-
-  const set = <K extends keyof SubmitBusinessInput>(key: K, value: SubmitBusinessInput[K]) =>
+  }, []);    const set = <K extends keyof SubmitBusinessInput>(key: K, value: SubmitBusinessInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   async function onSubmit(e: React.FormEvent) {
+    const precioNocheNum = precioNoche.trim() ? Number(precioNoche.replace(',', '.')) : null;
+    if (precioNocheNum !== null && (!Number.isFinite(precioNocheNum) || precioNocheNum < 0)) {
+      return setError('El precio por noche debe ser un número igual o mayor que cero.');
+    }
+    const monedaStr = moneda.trim().toUpperCase() || 'USD';
     e.preventDefault();
     if (!userId) return;
     setError(null);
@@ -320,6 +326,8 @@ export function BusinessForm({ onDone }: { onDone: () => void }) {
         ...form,
         name: form.name.trim(),
         municipality: form.municipality.trim(),
+        price_amount: precioNocheNum,
+        price_currency: monedaStr,
         photos: photoUrls.length ? photoUrls : form.photos,
       });
       // La ficha ya está guardada como «pending»: se abre el chat del
@@ -383,6 +391,32 @@ export function BusinessForm({ onDone }: { onDone: () => void }) {
           <input id="b-email" type="email" className="field-input" required value={form.email} onChange={(e) => set('email', e.target.value)} />
           <p className="field-hint">No se muestra en el catálogo público.</p>
         </div>
+      </div>
+
+      {/* Precio del negocio: cantidad numérica (USD) y moneda. */}
+      <div>
+        <label className="field-label" htmlFor="b-precio">Precio por noche (USD)</label>
+        <input
+          id="b-precio"
+          className="field-input"
+          type="number"
+          min="0"
+          step="0.01"
+          value={precioNoche}
+          onChange={(e) => setPrecioNoche(e.target.value)}
+          placeholder="0.00"
+        />
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor="b-moneda">Moneda</label>
+        <input
+          id="b-moneda"
+          className="field-input"
+          value={moneda}
+          onChange={(e) => setMoneda(e.target.value)}
+          placeholder="USD"
+        />
       </div>
 
       {/* Documentación legal: opcional. La licencia no se pide en el formulario
@@ -472,7 +506,53 @@ export function BusinessForm({ onDone }: { onDone: () => void }) {
         <textarea id="b-exp" className="field-input" rows={2} value={form.experience_details} onChange={(e) => set('experience_details', e.target.value)} placeholder="Actividades, idiomas, qué incluye…" />
       </div>
 
+      <div>
+        <label className="field-label" htmlFor="b-langs">Idiomas</label>
+        <input
+          id="b-langs"
+          className="field-input"
+          value={form.languages.join(', ')}
+          onChange={(e) => set('languages', parseTagList(e.target.value))}
+          placeholder="ej. español, inglés, francés"
+        />
+        <p className="field-hint">Separa con comas o puntos; el formulario acepta ambos al guardar.</p>
+      </div>
+      <div>
+        <label className="field-label" htmlFor="b-rec">Recomendado para</label>
+        <input
+          id="b-rec"
+          className="field-input"
+          value={form.recommended_for.join(', ')}
+          onChange={(e) => set('recommended_for', parseTagList(e.target.value))}
+          placeholder="ej. parejas, familias, grupos"
+        />
+        <p className="field-hint">Separa con comas o puntos; el formulario acepta ambos al guardar.</p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label className="field-label" htmlFor="b-precio">Precio por noche (USD)</label>
+        <input
+          id="b-precio"
+          className="field-input"
+          type="number"
+          min="0"
+          step="0.01"
+          value={precioNoche}
+          onChange={(e) => setPrecioNoche(e.target.value)}
+          placeholder="0.00"
+        />
+      </div>
+      <div>
+        <label className="field-label" htmlFor="b-moneda">Moneda</label>
+        <input
+          id="b-moneda"
+          className="field-input"
+          value={moneda}
+          onChange={(e) => setMoneda(e.target.value)}
+          placeholder="USD"
+        />
+      </div>
       <div>
         <label className="field-label" htmlFor="b-langs">Idiomas</label>
         <input

@@ -430,7 +430,11 @@ function BusinessEditor({
   const [precio, setPrecio] = useState(
     business.price_amount === null || business.price_amount === undefined ? '' : String(business.price_amount),
   );
-  const [moneda, setMoneda] = useState(business.price_currency ?? '');
+  const [moneda, setMoneda] = useState(business.price_currency ?? 'USD');
+  const [precioNoche, setPrecioNoche] = useState(
+    business.price_amount === null || business.price_amount === undefined ? '' : String(business.price_amount),
+  );
+  const [monedaNoche, setMonedaNoche] = useState(business.price_currency ?? 'USD');
   const horarioInicial = leerHorario(business.schedule);
   const [checkIn, setCheckIn] = useState(horarioInicial.check_in);
   const [checkOut, setCheckOut] = useState(horarioInicial.check_out);
@@ -762,6 +766,29 @@ function BusinessEditor({
             value={serviceType}
             onChange={(e) => setServiceType(e.target.value)}
             placeholder="Ej. alojamiento, gastronomia"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-precio-${business.id}`}>Precio por noche (USD)</label>
+          <input
+            id={`edit-precio-${business.id}`}
+            className="field-input"
+            type="number"
+            min="0"
+            step="0.01"
+            value={precioNoche}
+            onChange={(e) => setPrecioNoche(e.target.value)}
+            placeholder="0.00"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor={`edit-moneda-${business.id}`}>Moneda</label>
+          <input
+            id={`edit-moneda-${business.id}`}
+            className="field-input"
+            value={monedaNoche}
+            onChange={(e) => setMonedaNoche(e.target.value)}
+            placeholder="USD"
           />
         </div>
         <div>
