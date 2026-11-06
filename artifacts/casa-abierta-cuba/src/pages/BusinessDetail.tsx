@@ -713,6 +713,7 @@ export default function BusinessDetail() {
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {reviews.map((r) => {
               const autorId = r.reviewer_id ?? r.user_id ?? '';
+              const nombre = (r.profiles as { full_name?: string | null } | undefined)?.full_name?.trim();
               return (
               <li key={r.id} className="rounded-2xl border border-arena-2 bg-white p-4">
                 <div className="flex items-center gap-3">
@@ -723,7 +724,7 @@ export default function BusinessDetail() {
                     upload={false}
                   />
                   <div>
-                    <p className="text-sm font-semibold text-azul">{r.comment ? 'Anónimo' : 'Viajero'}</p>
+                    <p className="text-sm font-semibold text-azul">{r.comment && nombre ? nombre : 'Turista Verificado'}</p>
                     <div className="flex items-center gap-0.5 text-dorado" aria-label={`${r.rating} de 5`}>
                       {Array.from({ length: 5 }, (_, i) => (
                         <Star key={i} size={13} className={i < r.rating ? 'fill-dorado' : 'opacity-25'} />

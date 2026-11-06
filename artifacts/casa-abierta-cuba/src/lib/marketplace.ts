@@ -721,7 +721,7 @@ export async function listReviews(businessId: string): Promise<Review[]> {
   if (supabase) {
     const { data, error } = await supabase
       .from('reviews')
-      .select('*')
+      .select('*, profiles(full_name)')
       .eq('business_id', businessId)
       .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);

@@ -126,7 +126,9 @@ export function groupCatalog(lista: Business[]): CatalogGroups {
   return {
     alojamientos: lista.filter((b) => b.service_type === 'alojamiento'),
     gastronomia: lista.filter((b) => b.service_type === 'gastronomia'),
-    servicios: lista.filter((b) => SERVICIOS_Y_EXPERIENCIAS.has(b.service_type)),
+    // «Servicios y experiencias»: transporte y demás (guías, tours, actividades).
+    // Los guías locales (guia_local) pasan aquí, no en alojamientos.
+    servicios: lista.filter((b) => b.service_type !== 'alojamiento' && b.service_type !== 'gastronomia'),
     inclusivos: lista.filter((b) => b.lgbt_friendly),
   };
 }
