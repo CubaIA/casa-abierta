@@ -95,10 +95,18 @@ export interface CatalogFilterState {
 /** Aplica búsqueda por texto y filtros de categoría / LGBTQ+ sobre el catálogo. */
 export function filterBusinesses(lista: Business[], { q, cat, inclusivo }: CatalogFilterState): Business[] {
   let rows = lista;
-  // Solo «Alojamientos» devuelve casas/habitaciones: service_type === 'alojamiento'.
-  // Los guías locales tienen service_type === 'guia_local' (y categoría 'guias_locales')
-  // y no deben aparecer en la fila de alojamientos.
-  if (cat === 'alojamiento') rows = rows.filter((b) => b.service_type === 'alojamiento');
+  // Cada pestaña devuelve sólo su categoría: Premium nunca mezcla tipos de servicio.
+  //   alojamiento → service_type === 'alojamiento' (las guías locales no entran)
+  //   gastronomia → service_type === 'gastronomia'
+  //   transporte  → service_type === 'transporte'
+  //   experiencias → experiencias, guías, naturaleza y demás servicios
+  if (cat !== CATALOG_ALL) {
+    if (cat === 'experiencias') {
+      rows = rows.filter((b) => SERVICIOS_Y_EXPERIENCIAS.has(b.service_type));
+    } else {
+      rows = rows.filter((b) => b.service_type === cat);
+    }
+  }
   if (inclusivo) rows = rows.filter((b) => b.lgbt_friendly);
   const term = q.trim().toLowerCase();
   if (term) {
@@ -107,6 +115,11 @@ export function filterBusinesses(lista: Business[], { q, cat, inclusivo }: Catal
     );
   }
   return rows;
+}
+
+/** Ordena Premium (featured) primero DENTRO de la lista ya filtrada por categoría. */
+export function ordenarPorPremium(lista: Business[]): Business[] {
+  return [...lista].sort((a, b) => Number(b.featured === true) - Number(a.featured === true));
 }
 
 /** ¿Hay algún filtro activo que deba sustituir las filas por los resultados? */

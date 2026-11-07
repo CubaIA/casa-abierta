@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { BusinessGrid } from '@/components/BusinessGrid';
 import { Heart, Menu, Search, Sparkles } from 'lucide-react';
-import { CATALOG_IMAGES, FILTROS } from '@/lib/catalog';
+import { CATALOG_IMAGES, FILTROS, filterBusinesses, ordenarPorPremium, resultsTitle } from '@/lib/catalog';
 import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
+
+/** Muestra de la portada: 8 lugares en «Todo» y 12 dentro de cada categoría. */
+const LIMITE_INICIO = 8;
+const LIMITE_CATEGORIA = 12;
 
 /**
  * Portada minimalista tipo wallpaper.
@@ -14,26 +18,41 @@ import { useFavorites } from '@/hooks/useFavorites';
  * crema de la página, y encima flotan el mensaje de marca, el buscador (con
  * sus filtros) y el acceso a la IA.
  *
- * El catálogo sigue cargado y disponible: sus filas, tarjetas, favoritos y
- * fichas no se han tocado y viven además en las secciones del menú
- * (/alojamientos, /gastronomia, /guias, /taxis, /lgbtq).
- * Aquí los resultados se pintan sólo cuando hay una búsqueda o un filtro
- * activo, para que la portada no muestre carruseles de entrada.
+ * Debajo del buscador la portada enseña una muestra corta del catálogo: 8
+ * lugares en «Todo» y 12 por categoría, siempre filtrados de forma estricta y
+ * con Premium sólo como criterio de orden dentro de la categoría elegida.
  */
+
 export default function Home() {
   const { businesses, error: catalogError } = useCatalog();
   const { favoritos, error: favoritesError, toggle: onToggleFavorite } = useFavorites();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('todo');
   const [inclusivo, setInclusivo] = useState(false);
+  /** En Inicio la portada muestra 8 lugares; "Ver todo el catálogo" despliega el resto. */
+  const [verTodo, setVerTodo] = useState(false);
 
   useEffect(() => {
     document.title = 'Casa Abierta Cuba | Descubre la isla con quienes la viven';
   }, []);
 
+  // Al cambiar de pestaña o búsqueda se vuelve al límite corto de la portada.
+  useEffect(() => {
+    setVerTodo(false);
+  }, [q, cat, inclusivo]);
+
   const error = catalogError ?? favoritesError;
   const hayFiltro = cat !== 'todo' || inclusivo || q.trim().length > 0;
-  const mostrarResultados = hayFiltro || Boolean(error);
+
+  const filtros = { q, cat, inclusivo };
+  const lista = businesses ?? [];
+  // Primero se filtra ESTRICTAMENTE por categoría y después se ordena Premium.
+  const filtrados = useMemo(
+    () => ordenarPorPremium(filterBusinesses(lista, { q, cat, inclusivo })),
+    [businesses, q, cat, inclusivo],
+  );
+  const limite = verTodo ? filtrados.length : cat === 'todo' && !inclusivo ? LIMITE_INICIO : LIMITE_CATEGORIA;
+  const visibles = filtrados.slice(0, limite);
 
   function irAlCatalogo() {
     document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -179,22 +198,49 @@ export default function Home() {
       </section>
 
       {/* ---------------------------------------------------------- */}
-      {/* Resultados: sólo se pintan con búsqueda o filtro activo     */}
+      {/* Resultados: como mucho 8 lugares en "Todo" y 12 por categoría */}
       {/* ---------------------------------------------------------- */}
       <section
         id="catalogo"
-        className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pb-44 md:pb-24"
+        className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pb-20 md:pb-24"
       >
-        {mostrarResultados && (
-          <BusinessGrid
-            items={businesses}
-            favoritos={favoritos}
-            onToggleFavorite={onToggleFavorite}
-            error={error}
-            emptyTitle="Aún no hay alojamientos publicados"
-            emptyBody="Las propuestas nuevas pasan por revisión antes de aparecer aquí. Vuelve pronto o explora el catálogo completo."
-            emptyCta={{ href: '/alojamientos', label: 'Ver todo el catálogo' }}
-          />
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-xl font-extrabold text-azul sm:text-2xl">
+              {hayFiltro ? resultsTitle(filtros) : 'Destacados en Cuba'}
+            </h2>
+            <p className="mt-0.5 text-sm text-tinta/60">
+              {businesses === null
+                ? 'Cargando publicaciones…'
+                : `${filtrados.length} ${filtrados.length === 1 ? 'lugar disponible' : 'lugares disponibles'}`}
+            </p>
+          </div>
+        </div>
+
+        <BusinessGrid
+          items={businesses === null ? null : visibles}
+          favoritos={favoritos}
+          onToggleFavorite={onToggleFavorite}
+          error={error}
+          emptyTitle="Aún no hay publicaciones en esta categoría"
+          emptyBody="Las propuestas nuevas pasan por revisión antes de aparecer aquí. Prueba con otra categoría o explora el catálogo completo."
+          emptyCta={{ href: '/alojamientos', label: 'Ver todo el catálogo' }}
+        />
+
+        {businesses !== null && visibles.length < filtrados.length && (
+          <div className="mt-9 flex justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                setVerTodo(true);
+                irAlCatalogo();
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-azul px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-azul-700"
+            >
+              Ver todo el catálogo
+              <span aria-hidden>→</span>
+            </button>
+          </div>
         )}
       </section>
     </div>

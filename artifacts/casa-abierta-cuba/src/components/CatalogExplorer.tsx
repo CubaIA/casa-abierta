@@ -1,13 +1,13 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Business } from '@/lib/types';
 import {
   filterBusinesses,
-  groupCatalog,
   hasActiveFilter,
+  ordenarPorPremium,
   resultsTitle,
   type CatalogFilterState,
 } from '@/lib/catalog';
-import { BusinessCarousel } from './BusinessCarousel';
+import { BusinessGrid } from './BusinessGrid';
 import { AvisoError } from './AvisoError';
 
 interface CatalogExplorerProps extends CatalogFilterState {
@@ -15,11 +15,17 @@ interface CatalogExplorerProps extends CatalogFilterState {
   error: string | null;
   favoritos: Set<string>;
   onToggleFavorite: (business: Business) => void;
+  /** Tarjetas por página. 8 en Inicio y 12 en las categorías. */
+  pageSize?: number;
 }
 
 /**
- * Resultados del catálogo: esqueleto de carga, aviso de error y filas de tarjetas.
- * No incluye el buscador; cada vista coloca el suyo encima.
+ * Resultados del catálogo en rejilla paginada.
+ *
+ * El orden es siempre el mismo: primero se filtra de forma estricta por la
+ * categoría elegida (Premium nunca mezcla tipos de servicio) y sólo después se
+ * ponen los destacados delante. Se muestran como mucho `pageSize` tarjetas y el
+ * resto se carga con «Ver más».
  */
 export function CatalogExplorer({
   businesses,
@@ -29,87 +35,60 @@ export function CatalogExplorer({
   inclusivo,
   favoritos,
   onToggleFavorite,
+  pageSize = 12,
 }: CatalogExplorerProps) {
   const lista = useMemo(() => businesses ?? [], [businesses]);
   const filtros: CatalogFilterState = { q, cat, inclusivo };
-  const filtrados = useMemo(() => filterBusinesses(lista, filtros), [lista, q, cat, inclusivo]);
+  const filtrados = useMemo(
+    () => ordenarPorPremium(filterBusinesses(lista, filtros)),
+    [businesses, q, cat, inclusivo],
+  );
   const hayFiltro = hasActiveFilter(filtros);
-  const { alojamientos, gastronomia, servicios, inclusivos } = useMemo(() => groupCatalog(lista), [lista]);
+  const [pagina, setPagina] = useState(1);
+
+  // Al cambiar de pestaña, búsqueda o filtro se vuelve a la primera página.
+  useEffect(() => {
+    setPagina(1);
+  }, [q, cat, inclusivo, pageSize]);
+
+  const visibles = filtrados.slice(0, pagina * pageSize);
+  const quedan = visibles.length < filtrados.length;
 
   return (
     <>
       <AvisoError mensaje={error} className="mb-4" />
 
-      {businesses === null && (
-        <div className="space-y-4" aria-live="polite">
-          <div className="h-7 w-56 animate-pulse rounded-full bg-azul/10" />
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="w-[68vw] max-w-[280px] shrink-0 sm:w-64">
-                <div className="aspect-square animate-pulse rounded-2xl bg-azul/10" />
-                <div className="mt-3 h-4 w-3/4 animate-pulse rounded-full bg-azul/10" />
-                <div className="mt-2 h-3 w-1/2 animate-pulse rounded-full bg-azul/10" />
-              </div>
-            ))}
+      {businesses !== null && (
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-xl font-extrabold text-azul sm:text-2xl">
+              {hayFiltro ? resultsTitle(filtros) : 'Todo el catálogo'}
+            </h2>
+            <p className="mt-0.5 text-sm text-tinta/60">
+              {filtrados.length} {filtrados.length === 1 ? 'lugar disponible' : 'lugares disponibles'}
+            </p>
           </div>
         </div>
       )}
 
-      {businesses !== null && hayFiltro && (
-        <BusinessCarousel
-          title={resultsTitle(filtros)}
-          subtitle={`${filtrados.length} ${filtrados.length === 1 ? 'lugar' : 'lugares'} disponibles`}
-          items={filtrados}
-          favoritos={favoritos}
-          onToggleFavorite={onToggleFavorite}
-        />
-      )}
+      <BusinessGrid
+        items={businesses === null ? null : visibles}
+        favoritos={favoritos}
+        onToggleFavorite={onToggleFavorite}
+        emptyTitle="No hay lugares en esta categoría"
+        emptyBody="Prueba con otra categoría o con otra búsqueda."
+      />
 
-      {businesses !== null && !hayFiltro && (
-        <div className="space-y-10">
-          <BusinessCarousel
-            title="Disponibles en Cuba"
-            subtitle="Publicaciones revisadas por el equipo de Casa Abierta"
-            items={filtrados}
-            favoritos={favoritos}
-            onToggleFavorite={onToggleFavorite}
-          />
-          {alojamientos.length > 0 && (
-            <BusinessCarousel
-              title="Alojamientos en Cuba"
-              subtitle="Casas particulares, habitaciones y villas con anfitrión local"
-              items={alojamientos}
-              favoritos={favoritos}
-              onToggleFavorite={onToggleFavorite}
-            />
-          )}
-          {gastronomia.length > 0 && (
-            <BusinessCarousel
-              title="Mesas con sabor"
-              subtitle="Paladares y cocina criolla servida por quien la cocina"
-              items={gastronomia}
-              favoritos={favoritos}
-              onToggleFavorite={onToggleFavorite}
-            />
-          )}
-          {servicios.length > 0 && (
-            <BusinessCarousel
-              title="Experiencias y servicios"
-              subtitle="Taxis, rutas, guías y planes auténticos"
-              items={servicios}
-              favoritos={favoritos}
-              onToggleFavorite={onToggleFavorite}
-            />
-          )}
-          {inclusivos.length > 0 && (
-            <BusinessCarousel
-              title="Espacios LGBTQ+ friendly"
-              subtitle="Anfitriones y locales que celebran a todo el mundo"
-              items={inclusivos}
-              favoritos={favoritos}
-              onToggleFavorite={onToggleFavorite}
-            />
-          )}
+      {businesses !== null && quedan && (
+        <div className="mt-9 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setPagina((p) => p + 1)}
+            className="inline-flex items-center gap-2 rounded-full bg-azul px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-azul-700"
+          >
+            Ver más
+            <span aria-hidden>→</span>
+          </button>
         </div>
       )}
     </>

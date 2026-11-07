@@ -30,7 +30,7 @@ export function BusinessGrid({
       <AvisoError mensaje={error} className="mb-4" />
 
       {items === null ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
               <div className="aspect-square animate-pulse rounded-2xl bg-azul/10" />
@@ -51,7 +51,7 @@ export function BusinessGrid({
           )}
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((b) => (
             <BusinessCard
               key={b.id}
