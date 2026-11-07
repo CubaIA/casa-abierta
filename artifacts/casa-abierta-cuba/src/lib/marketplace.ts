@@ -100,11 +100,6 @@ async function columnasDeNegocio(conDueno: boolean): Promise<string> {
   return conDueno ? `${cols}, owner_id` : cols;
 }
 
-/** Los negocios con featured = true van primero, preservando el resto del orden. */
-function featuredFirst(a: Business, b: Business): number {
-  return (b.featured === true ? 1 : 0) - (a.featured === true ? 1 : 0);
-}
-
 /** Normaliza a string[] cualquier columna text[]/jsonb/text. */
 function asArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
@@ -443,11 +438,10 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
     const { data, error } = await query;
     if (error) throw new Error(error.message);
     return ((data ?? []) as unknown as Array<Record<string, unknown>>)
-      .map(mapBusinessRow)
-      .sort(featuredFirst);
+      .map(mapBusinessRow);
   }
 
-  let rows = [...loadStore().businesses.filter((b) => b.status === 'approved')].sort(featuredFirst);
+  let rows = [...loadStore().businesses.filter((b) => b.status === 'approved')];
   if (filters.province) rows = rows.filter((b) => b.province === filters.province);
   if (filters.service_type) rows = rows.filter((b) => b.service_type === filters.service_type);
   if (filters.q) {
@@ -456,6 +450,7 @@ export async function listBusinesses(filters: CatalogFilters = {}): Promise<Busi
       [b.name, b.municipality, b.province, b.description].some((v) => v?.toLowerCase().includes(q)),
     );
   }
+  rows.sort((a, b) => Number(b.featured === true) - Number(a.featured === true));
   return rows.map(comoPublico);
 }
 
