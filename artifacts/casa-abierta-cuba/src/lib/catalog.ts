@@ -107,6 +107,10 @@ export function filterBusinesses(lista: Business[], { q, cat, inclusivo }: Catal
       rows = rows.filter((b) => b.service_type === cat);
     }
   }
+  // El mismo criterio de orden se aplica a TODAS las categorías: Premium
+  // siempre arriba, estrictamente por `featured === true` y nunca mezclando
+  // tipos de servicio.
+  rows = ordenarPremiumPrimero(rows);
   if (inclusivo) rows = rows.filter((b) => b.lgbt_friendly);
   const term = q.trim().toLowerCase();
   if (term) {
@@ -120,6 +124,29 @@ export function filterBusinesses(lista: Business[], { q, cat, inclusivo }: Catal
 /** Ordena Premium (featured) primero DENTRO de la lista ya filtrada por categoría. */
 export function ordenarPorPremium(lista: Business[]): Business[] {
   return [...lista].sort((a, b) => Number(b.featured === true) - Number(a.featured === true));
+}
+
+/** Ordena por orderKey en orden ascendente y los Premium (featured === true)
+ *  al principios de la lista, para que cada categoría empiece por los
+ *  negocios destacados sin mezclar categorías ni depender del orden de la BD.
+ *
+ *  El criterio es estricto y determinista:
+ *    - si `a` y `b` son Premium, se deja el orden original (estable).
+ *    - si sólo uno es Premium, ese va primero.
+ *    - si ninguno lo es, se compara el campo `orderKey` como texto.
+ *  `featured` se lee exactamente como viene de la BD: `true` (boolean).
+ */
+export function ordenarPremiumPrimero(lista: Business[]): Business[] {
+  return [...lista].sort((a, b) => {
+    const ap = a.featured === true;
+    const bp = b.featured === true;
+    if (ap && bp) return 0;
+    if (ap) return -1;
+    if (bp) return 1;
+    const ka = (a.orderKey ?? '').toString().toLowerCase();
+    const kb = (b.orderKey ?? '').toString().toLowerCase();
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
 }
 
 /** ¿Hay algún filtro activo que deba sustituir las filas por los resultados? */

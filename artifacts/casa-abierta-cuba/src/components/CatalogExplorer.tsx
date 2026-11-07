@@ -3,7 +3,7 @@ import type { Business } from '@/lib/types';
 import {
   filterBusinesses,
   hasActiveFilter,
-  ordenarPorPremium,
+  ordenarPremiumPrimero,
   resultsTitle,
   type CatalogFilterState,
 } from '@/lib/catalog';
@@ -40,7 +40,7 @@ export function CatalogExplorer({
   const lista = useMemo(() => businesses ?? [], [businesses]);
   const filtros: CatalogFilterState = { q, cat, inclusivo };
   const filtrados = useMemo(
-    () => ordenarPorPremium(filterBusinesses(lista, filtros)),
+    () => ordenarPremiumPrimero(filterBusinesses(lista, filtros)),
     [businesses, q, cat, inclusivo],
   );
   const hayFiltro = hasActiveFilter(filtros);

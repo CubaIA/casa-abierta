@@ -1,5 +1,6 @@
 import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
+import { ordenarPremiumPrimero } from '@/lib/catalog';
 import { sectionBusinesses, type SectionDef } from '@/lib/sections';
 import { SectionPage } from './SectionPage';
 import { BusinessGrid } from './BusinessGrid';
@@ -19,7 +20,10 @@ interface SectionCatalogProps {
 export function SectionCatalog({ section, emptyTitle, emptyBody, children }: SectionCatalogProps) {
   const { businesses, error } = useCatalog();
   const { favoritos, error: favoritesError, toggle } = useFavorites();
-  const rows = businesses ? sectionBusinesses(businesses, section) : null;
+  // Cada sección ya devuelve sólo su categoría (alojamientos, gastronomía,
+  // guías locales, taxis, LGBTQ+); el ordenador la deja con los Premium al
+  // principio de la propia categoría.
+  const rows = businesses ? ordenarPremiumPrimero(sectionBusinesses(businesses, section)) : null;
 
   return (
     <SectionPage section={section} count={rows?.length ?? null}>
