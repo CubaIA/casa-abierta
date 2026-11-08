@@ -333,9 +333,9 @@ const DEMO_BUSINESSES: Business[] = [
   {
     id: demoUuid('traslado-playa'),
     owner_id: demoUuid('proveedor'),
-    title: 'Traslados Varadero–Habana',
+    title: 'Traslados Varadero–La Habana',
     host_name: 'Lázaro Suárez',
-    name: 'Traslados Varadero–Habana',
+    name: 'Traslados Varadero–La Habana',
     description: 'Servicio privado de traslado con vehículos cómodos, conductores locales y horarios a la medida.',
     host_story: 'Llevo quince años recorriendo la isla al volante; conozco cada parada digna de una foto.',
     service_type: 'transporte',

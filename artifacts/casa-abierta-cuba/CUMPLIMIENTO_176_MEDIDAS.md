@@ -13,7 +13,7 @@ El proyecto contribuye a la digitalización, IA, comercio electrónico, mercados
 | 166 | Fomento a la innovación y startups tecnológicas | Plataforma para anfitriones locales (economía colaborativa) |
 | 167 | Capacitación en TICs y economía del conocimiento | Documentación detallada (docs/), código abierto/entregable claro |
 | 168 | Ciberseguridad, protección de datos y privacidad | RLS, claves no expuestas al navegador (Edge Function), mínimo privilegio, políticas de privacidad |
-| 169 | Plataformas digitales con IA para compras públicas | Cuba Conecta IA (Edge Function + Groq) como asistente inteligente; arquitectura extensible a compras/licitaciones |
+| 169 | Plataformas digitales con IA para compras públicas | Asistente IA de Casa Abierta (Edge Function + Groq) como asistente inteligente; arquitectura extensible a compras/licitaciones |
 | 170 | Sistemas automatizados, auditables y públicos para licitaciones | Panel admin con trazabilidad, registro de auditoría (fecha/hora/actor), RLS, logs documentales |
 | 171 | Digitalización de procesos económicos y facturación | Flujos automatizados, trazabilidad de solicitudes/pagos, estructura preparada para facturación electrónica |
 | 172 | Economía del conocimiento, IA y datos | Uso responsable de IA, gobernanza de datos (RLS), almacenamiento en Supabase, separación entre datos públicos/privados |

@@ -1,5 +1,5 @@
 // ============================================================================
-// Cuba Conecta IA — Edge Function de Supabase
+// Asistente IA de Casa Abierta — Edge Function de Supabase
 //
 // Recibe { messages: [{role, content}] } y devuelve { content } del modelo
 // gratuito de Groq. La clave GROQ_API_KEY vive SOLO en los secretos de
@@ -96,8 +96,8 @@ Deno.serve(async (req: Request) => {
   const systemMsg: ChatMessage = {
     role: 'system',
     content: targetLangStr
-      ? `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. Si en el mensaje aparecen descripciones de servicios (casas, alojamientos, carros, traslados, tours, experiencias), tradúcelas automáticamente al ${targetLangStr} manteniendo nombres propios, números y ubicación. Responde en el mismo idioma cuando corresponda. ${REGLAS_CATALOGO}`
-      : `Eres Cuba Conecta IA, un asistente turístico verídico de Cuba. El creador de Casa Abierta Cuba es Yoanny Guillén Vargas, Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios. Bajo ninguna circunstancia inventes datos, fundadores, precios o atracciones turísticas. ${REGLAS_CATALOGO} Responde en el mismo idioma cuando corresponda.`}
+      ? `Eres el Asistente IA de Casa Abierta, un asistente turístico verídico de Cuba. Si en el mensaje aparecen descripciones de servicios (casas, alojamientos, carros, traslados, tours, experiencias), tradúcelas automáticamente al ${targetLangStr} manteniendo nombres propios, números y ubicación. Responde en el mismo idioma cuando corresponda. ${REGLAS_CATALOGO}`
+      : `Eres el Asistente IA de Casa Abierta, un asistente turístico verídico de Cuba. El creador de Casa Abierta Cuba es Yoanny Guillén Vargas, Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios. Bajo ninguna circunstancia inventes datos, fundadores, precios o atracciones turísticas. ${REGLAS_CATALOGO} Responde en el mismo idioma cuando corresponda.`}
   };
   const msgsForModel = [systemMsg, ...clean.filter((m) => m.role !== 'system')];
 

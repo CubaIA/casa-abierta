@@ -62,8 +62,8 @@ export default function Legal() {
       </div>
 
       <p className="legal-note">
-        Documentos informativos de la Plataforma en vivo (Versión 1.0). Casa Abierta revisa periódicamente estos textos
-        con asesoría legal adecuada a sus actividades y jurisdicciones.
+        Documentos informativos de la plataforma (versión 1.0). Casa Abierta revisa periódicamente estos textos
+        con asesoría legal adecuada a sus actividades y a las jurisdicciones en las que opera.
       </p>
 
       <p className="mt-4 text-sm text-tinta/60">

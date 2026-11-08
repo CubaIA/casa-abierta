@@ -102,7 +102,8 @@ export const SECTIONS: Record<SectionKey, SectionDef> = {
     path: '/concierge',
     title: 'Diseña tu viaje a medida',
     kicker: 'Concierge Casa Abierta',
-    subtitle: 'Días, personas, casa, taxi y comida: cuéntame tu idea y te cotizo el paquete completo por WhatsApp.',
+    subtitle:
+      'Días, personas, alojamiento, taxi y comida: cuéntame tu idea y te preparo una cotización completa por WhatsApp.',
     icon: Plane,
     image: '/img/concierge-bg.jpg',
   },

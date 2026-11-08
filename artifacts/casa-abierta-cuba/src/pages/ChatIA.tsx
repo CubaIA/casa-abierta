@@ -16,7 +16,7 @@ const SUGGESTIONS = [
 ];
 
 const SYSTEM_PROMPT =
-  'Eres "Cuba Conecta IA", el asistente turístico de Casa Abierta Cuba. ' +
+  'Eres el "Asistente IA de Casa Abierta", el asistente turístico de Casa Abierta Cuba. ' +
   'Ayudas a viajeros a planear viajes a Cuba: destinos, cultura, gastronomía, transporte, ' +
   'costumbres y consejos prácticos. Respondes en español, con calidez y precisión, en un tono ' +
   'cercano. Recuerda que Casa Abierta es una plataforma de conexión con anfitriones locales y ' +
@@ -133,7 +133,7 @@ export default function ChatIA() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = 'Cuba Conecta IA | Casa Abierta Cuba';
+    document.title = 'Asistente IA de Casa Abierta | Casa Abierta Cuba';
   }, []);
 
   useEffect(() => {
@@ -158,7 +158,7 @@ export default function ChatIA() {
       });
       setMessages([...history, { role: 'assistant', content: reply }]);
     } catch (e) {
-      console.warn('Cuba Conecta IA — fallo al enviar:', e);
+      console.warn('Asistente IA de Casa Abierta — fallo al enviar:', e);
       setError(mensajeFallo(e));
       setMessages(history);
     } finally {
@@ -170,7 +170,7 @@ export default function ChatIA() {
     <div className="page-shell max-w-3xl">
       <p className="section-kicker">Asistente</p>
       <h1 className="text-3xl font-extrabold text-azul inline-flex items-center gap-2">
-        <Sparkles className="text-dorado" size={26} /> Cuba Conecta IA
+        <Sparkles className="text-dorado" size={26} /> Asistente IA de Casa Abierta
       </h1>
       <p className="mt-2 text-tinta/70">
         Pregúntale sobre destinos, cultura y logística de tu viaje. Funciona con el modelo gratuito

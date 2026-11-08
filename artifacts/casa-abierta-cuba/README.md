@@ -39,7 +39,7 @@ Function. El manual completo está en [`../docs/INSTALACION.md`](../docs/INSTALA
   transiciones de estado.
 - **Panel admin**: aprobar/rechazar/eliminar negocios, roles y suspensión de usuarios,
   solicitudes (con contacto del viajero vía RPC), reportes y mensajes.
-- **Cuba Conecta IA**: asistente de viaje servido por Edge Function + Groq
+- **Asistente IA de Casa Abierta**: asistente de viaje servido por Edge Function + Groq
   (modelo gratuito `openai/gpt-oss-20b`); la clave nunca llega al navegador.
 - **PWA instalable**: manifest, service worker e iconos incluidos.
 

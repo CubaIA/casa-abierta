@@ -30,11 +30,9 @@ export function ConciergeBanner() {
         </div>
         <div className="min-w-0">
           <p className="section-kicker text-yellow-500">Concierge Casa Abierta</p>
-          <h2 className="text-xl font-extrabold sm:text-2xl">
-            <span className="inline-block align-middle text-yellow-500">✈️ Diseña tu Viaje a Medida</span>
-          </h2>
-          <p className="mt-1 max-w-xl text-sm text-yellow-500/90">
-            Días, personas, casa, taxi, comida… cuéntame tu idea y te cotizo el paquete completo por WhatsApp.
+          <p className="max-w-xl text-sm text-yellow-500/90">
+            Días, personas, alojamiento, taxi y comida: cuéntame tu idea y te preparo una cotización completa por
+            WhatsApp.
           </p>
         </div>
         <div className="shrink-0 sm:mt-0">

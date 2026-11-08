@@ -7,11 +7,11 @@ import { ConciergeBanner, CONCIERGE_WHATSAPP } from '@/components/ConciergeBanne
 const PASOS = [
   {
     title: 'Cuéntame tu idea',
-    body: 'Días de viaje, cuántas personas vienen y qué te apetece hacer. Escríbeme por WhatsApp y lo concretamos.',
+    body: 'Dime cuántos días durará el viaje, cuántas personas vienen y qué te apetece hacer. Escríbeme por WhatsApp y lo concretamos.',
   },
   {
-    title: 'Recibes la cotización',
-    body: 'Te paso una propuesta con casa, taxi, comida y actividades, con los precios por separado.',
+    title: 'Recibe tu cotización',
+    body: 'Te envío una propuesta con alojamiento, taxi, comida y actividades, con cada precio por separado.',
   },
   {
     title: 'Ajustamos los detalles',
@@ -21,7 +21,7 @@ const PASOS = [
 
 const INCLUYE = [
   'Alojamiento en casas y habitaciones del catálogo',
-  'Traslados del aeropuerto y viajes entre provincias',
+  'Traslados desde el aeropuerto y viajes entre provincias',
   'Paladares, cafeterías y planes gastronómicos',
   'Rutas culturales, música y guías que viven la isla',
 ];
@@ -63,7 +63,7 @@ export default function Concierge() {
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-arena-2 bg-white p-5">
         <p className="max-w-xl text-sm text-tinta/70">
-          El servicio es una gestión de asistencia personalizada. La cotización final y los detalles se acuerdan
+          Este es un servicio de asistencia personalizada. La cotización final y los detalles se acuerdan
           directamente por WhatsApp, fuera de la plataforma.
         </p>
         <a href={CONCIERGE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="button-primary">
@@ -72,11 +72,11 @@ export default function Concierge() {
       </div>
 
       <p className="mt-4 text-sm text-tinta/60">
-        Casa Abierta es una plataforma intermediaria de conexión: no vende paquetes en nombre propio. Consulta los{' '}
+        Casa Abierta es una plataforma intermediaria de conexión y no vende paquetes en nombre propio. Consulta los{' '}
         <Link href="/terms" className="font-semibold text-azul underline decoration-dotted underline-offset-2">
           términos y condiciones
-        </Link>
-        .{' '}
+        </Link>{' '}
+        o contacta con el equipo.{' '}
         <Link href="/contacto" className="inline-flex items-center gap-1 font-semibold text-azul underline decoration-dotted underline-offset-2">
           Contactar al equipo <ArrowRight size={14} aria-hidden />
         </Link>

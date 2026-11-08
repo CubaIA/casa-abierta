@@ -12,8 +12,6 @@ import { ArrowRight, CalendarDays, MapPin } from 'lucide-react';
 interface Evento {
   nombre: string;
   fecha: string;
-  /** Fecha aún no cerrada por los organizadores. */
-  porConfirmar?: boolean;
 }
 
 interface Provincia {
@@ -25,7 +23,7 @@ const PROVINCIAS: Provincia[] = [
   {
     nombre: 'Pinar del Río',
     eventos: [
-      { nombre: 'Festival «Nosotros»', fecha: 'Aprox. 26 de noviembre' },
+      { nombre: 'Festival «Nosotros»', fecha: '26 de noviembre (aprox.)' },
       { nombre: 'Viñales, valle vivo', fecha: '1 de diciembre' },
     ],
   },
@@ -52,28 +50,25 @@ const PROVINCIAS: Provincia[] = [
     eventos: [
       {
         nombre: 'Evento Internacional Canchánchara, Tradición y Cultura',
-        fecha: '8 al 10 de diciembre',
-        porConfirmar: true,
+        fecha: '8 al 10 de diciembre (por confirmar)',
       },
     ],
   },
   {
     nombre: 'Camagüey',
     eventos: [
-      { nombre: 'Jornada Campesina Guateque de la Llanura', fecha: 'Diciembre', porConfirmar: true },
+      { nombre: 'Jornada Campesina Guateque de la Llanura', fecha: 'Diciembre (fecha por confirmar)' },
     ],
   },
   {
     nombre: 'Santiago de Cuba',
-    eventos: [
-      { nombre: 'Festival Internacional de Coros', fecha: 'Noviembre', porConfirmar: true },
-    ],
+    eventos: [{ nombre: 'Festival Internacional de Coros', fecha: 'Noviembre (fecha por confirmar)' }],
   },
 ];
 
 export default function Eventos() {
   useEffect(() => {
-    document.title = 'Cartelera Cultural en Cuba (Noviembre - Diciembre 2026) | Casa Abierta Cuba';
+    document.title = 'Cartelera cultural en Cuba (noviembre–diciembre 2026) | Casa Abierta Cuba';
   }, []);
 
   return (
@@ -85,12 +80,12 @@ export default function Eventos() {
         </span>
 
         <h1 className="mt-4 text-2xl font-extrabold leading-tight text-azul sm:text-4xl">
-          Cartelera Cultural en Cuba (Noviembre - Diciembre 2026)
+          Cartelera cultural en Cuba (noviembre–diciembre 2026)
         </h1>
 
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-tinta/75 sm:text-lg">
-          Descubre los festivales y eventos que se celebran en la isla. Recomendamos confirmar las fechas exactas
-          con su anfitrión.
+          Descubre los festivales y eventos que se celebran en la isla. Te recomendamos confirmar las fechas exactas
+          con tu anfitrión.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -108,12 +103,7 @@ export default function Eventos() {
                 {provincia.eventos.map((evento) => (
                   <li key={evento.nombre} className="border-l-2 border-arena-2 pl-3">
                     <p className="text-sm font-semibold leading-snug text-tinta">{evento.nombre}</p>
-                    <p className="mt-0.5 text-sm text-tinta/65">
-                      {evento.fecha}
-                      {evento.porConfirmar ? (
-                        <span className="ml-1 font-semibold text-terracota-700">· fecha por confirmar</span>
-                      ) : null}
-                    </p>
+                    <p className="mt-0.5 text-sm text-tinta/65">{evento.fecha}</p>
                   </li>
                 ))}
               </ul>

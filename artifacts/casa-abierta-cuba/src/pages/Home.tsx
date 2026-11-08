@@ -89,7 +89,7 @@ export default function Home() {
             Descubre la isla con quienes <span className="text-dorado">la viven</span>.
           </h1>
           <p className="wallpaper-ink mt-4 max-w-xl text-base text-white/90 sm:text-lg">
-            Alojamientos, gastronomía, experiencias y taxis revisados uno a uno. Habla directo con los
+            Alojamientos, gastronomía, experiencias y taxis revisados uno a uno. Habla directamente con los
             anfitriones desde la plataforma.
           </p>
 
@@ -105,7 +105,7 @@ export default function Home() {
             <div className="flex max-w-2xl items-center gap-2 rounded-full bg-white/95 p-2 pl-5 shadow-[0_18px_50px_rgba(9,25,45,0.45)] ring-1 ring-white/70 backdrop-blur-sm">
               <Search size={20} aria-hidden className="shrink-0 text-tinta/50" />
               <label htmlFor="busqueda" className="sr-only">
-                Buscar alojamientos, gastronomía y experiencias
+                Busca alojamientos, gastronomía y experiencias
               </label>
               <input
                 id="busqueda"
@@ -129,7 +129,7 @@ export default function Home() {
           <p className="wallpaper-ink mt-3 flex max-w-2xl items-start gap-2 px-2 text-[12.5px] leading-snug text-white/80 sm:px-0">
             <Menu size={14} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
             <span>
-              Para registrarte, iniciar sesión o explorar todas las categorías, abre el menú
+              Abre el menú para registrarte, iniciar sesión o explorar todas las categorías.
             </span>
           </p>
 
@@ -191,7 +191,7 @@ export default function Home() {
               className="wallpaper-ink inline-flex items-center gap-2 rounded-full border border-dorado/80 bg-azul-700/40 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-azul-700/60"
             >
               <Sparkles size={16} aria-hidden className="text-dorado" />
-              Preguntar a Cuba Conecta IA
+              Pregunta al Asistente IA de Casa Abierta
             </Link>
           </div>
         </div>

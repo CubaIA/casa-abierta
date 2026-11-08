@@ -18,9 +18,9 @@ const ARTICULOS = [
 export function BlogPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 text-zinc-900">
-      <h1 className="text-3xl font-extrabold text-azul sm:text-4xl">Blog de Viajes - Casa Abierta Cuba</h1>
+      <h1 className="text-3xl font-extrabold text-azul sm:text-4xl">Blog de viajes de Casa Abierta Cuba</h1>
       <p className="mt-4 text-lg leading-relaxed text-zinc-600">
-        Guías y novedades para descubrir Cuba con confianza, preparados por el equipo de Casa Abierta Cuba.
+        Guías y novedades para descubrir Cuba con confianza, preparadas por el equipo de Casa Abierta Cuba.
       </p>
       <ol className="mt-10 space-y-6">
         {ARTICULOS.map((articulo) => (

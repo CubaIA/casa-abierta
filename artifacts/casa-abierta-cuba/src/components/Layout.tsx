@@ -372,7 +372,7 @@ function ChatIaFab() {
     <Link
       href="/chat"
       className="fixed bottom-20 right-4 z-50 h-14 w-14 shrink-0 grid place-items-center rounded-full bg-azul shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      aria-label="Preguntar a Cuba Conecta IA"
+      aria-label="Preguntar al Asistente IA de Casa Abierta"
     >
       <Sparkles size={24} className="text-dorado" aria-hidden />
       <span className="sr-only">Chat IA</span>
@@ -425,12 +425,11 @@ function BottomNav() {
 
 /* Texto de «Una idea que nace en Cuba»: se muestra literal, sin recortes. */
 const NUESTRA_HISTORIA: string[] = [
-  'Casa Abierta Cuba nació de una idea personal: crear algo propio que también pudiera abrir nuevas oportunidades para las personas que ofrecen sus servicios en nuestra isla.',
-  'Yo soy Yoanny Guillén, creador de este proyecto. Estoy construyendo Casa Abierta paso a paso, aprendiendo en el camino y trabajando para conectar a quienes visitan Cuba con alojamientos, restaurantes, transportistas, guías y otros negocios locales.',
-  'Sé que detrás de cada servicio hay personas que se esfuerzan por sacar adelante su trabajo. Quiero que tengan una oportunidad más de darse a conocer y que los viajeros puedan encontrar opciones, comparar propuestas y contactar directamente con quienes ofrecen esos servicios.',
-  'Todavía queda mucho por hacer. Por eso, mi compromiso es seguir mejorando la plataforma, ofrecer información lo más clara y actualizada posible y construir relaciones basadas en la confianza y el respeto.',
+  'Casa Abierta Cuba nació de una idea personal: crear algo propio que también abriera nuevas oportunidades a quienes ofrecen sus servicios en nuestra isla.',
+  'Soy Yoanny Guillén, creador de este proyecto. Estoy construyendo Casa Abierta paso a paso, aprendiendo por el camino y trabajando para conectar a quienes visitan Cuba con alojamientos, restaurantes, transportistas, guías y otros negocios locales.',
+  'Sé que detrás de cada servicio hay personas que se esfuerzan por sacar adelante su trabajo. Quiero que tengan una oportunidad más de darse a conocer y que los viajeros puedan encontrar opciones, comparar propuestas y contactar directamente con quienes las ofrecen.',
+  'Todavía queda mucho por hacer. Por eso me comprometo a seguir mejorando la plataforma, a ofrecer información lo más clara y actualizada posible y a construir relaciones basadas en la confianza y el respeto.',
   'Casa Abierta Cuba es un proyecto independiente que crece con cada negocio que se suma y con cada persona que decide confiar en él.',
-  'Una puerta abierta al mundo.',
 ];
 
 function Footer() {
@@ -466,7 +465,7 @@ function Footer() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5 font-extrabold text-white text-lg">
             <img
@@ -480,7 +479,7 @@ function Footer() {
             />
             <span>
               Casa Abierta Cuba
-              <span className="block text-[11px] font-medium text-azul-200">Una puerta abierta al mundo</span>
+              <span className="block text-[11px] font-medium text-azul-200">Una puerta abierta a Cuba</span>
             </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed">
@@ -493,11 +492,11 @@ function Footer() {
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Explorar</h3>
           <ul className="space-y-2 text-sm">
             <li><Link href="/" className="hover:text-white">Catálogo</Link></li>
-            <li><Link href="/providers" className="hover:text-white">Normas para proveedores</Link></li>
+            <li><Link href="/eventos" className="hover:text-white">Eventos</Link></li>
+            <li><Link href="/blog" className="hover:text-white">Blog de viajes</Link></li>
             <li><Link href="/anfitrion" className="hover:text-white">Publicar mi negocio</Link></li>
+            <li><Link href="/providers" className="hover:text-white">Normas para proveedores</Link></li>
             <li><Link href="/contacto" className="hover:text-white">Contacto</Link></li>
-            <li><Link href="/status" className="hover:text-white">Estado de la Plataforma</Link></li>
-            <li><Link href="/blog" className="hover:text-white">Blog de Viajes</Link></li>
             <li>
               <a
                 href={whatsappLink(SUPPORT_WHATSAPP, MENSAJE_SOPORTE)}
@@ -514,6 +513,7 @@ function Footer() {
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Confianza</h3>
           <ul className="space-y-2 text-sm">
             <li><Link href="/about" className="hover:text-white">Sobre el proyecto</Link></li>
+            <li><Link href="/status" className="hover:text-white">Estado de la plataforma</Link></li>
             <li><Link href="/antifraud" className="hover:text-white">Política antifraude</Link></li>
             <li><Link href="/privacy" className="hover:text-white">Privacidad</Link></li>
             <li><Link href="/terms" className="hover:text-white">Términos</Link></li>
@@ -521,31 +521,20 @@ function Footer() {
         </div>
         <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Redes</h3>
-          <ul className="space-y-2 text-sm">
-            <li className="text-white font-semibold">Fundador y responsable: Yoanny Guillén Vargas</li>
-            <li>Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios.</li>
-          </ul>
-          <p className="mt-3 text-xs text-azul-200 flex flex-wrap gap-1 items-center">
-            <span className="font-semibold text-white">Sígueme en redes:</span>
-            <a href="https://instagram.com/mirry.93" target="_blank" rel="noopener noreferrer" className="text-dorado hover:text-white underline decoration-dotted underline-offset-2">@mirry.93</a>
-          </p>
-          <p className="mt-3 text-xs font-semibold text-white">Casa Abierta Cuba — @casaabiertacuba</p>
+          <p className="text-sm font-semibold text-white">Casa Abierta Cuba — @casaabiertacuba</p>
           <div className="mt-1.5">
             <SocialsCasaAbierta />
           </div>
-        </div>
-        <div>
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Créditos</h3>
-          <ul className="space-y-2 text-sm">
-            <li className="text-white font-semibold">Fundador y responsable: Yoanny Guillén Vargas</li>
-            <li>Técnico en Programación, Control y Supervisión de Operaciones Turísticas; Diseñador de Aplicaciones de Servicios.</li>
-          </ul>
+          <p className="mt-4 text-sm leading-relaxed">
+            <span className="font-semibold text-white">Fundador y responsable:</span> Yoanny Guillén Vargas, técnico
+            en Programación, Control y Supervisión de Operaciones Turísticas.
+          </p>
         </div>
       </div>
       <div className="border-t border-azul">
         <div className="mx-auto max-w-6xl px-4 py-4 text-xs flex flex-wrap items-center justify-center gap-2">
           <span>© 2026 Casa Abierta Cuba. Todos los derechos reservados.</span>
-          <span className="ml-2">Hecho con 🇨🇺 por @mirry.93</span>
+          <span className="ml-2">Hecho en Cuba 🇨🇺</span>
         </div>
       </div>
     </footer>
