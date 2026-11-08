@@ -4,6 +4,7 @@ import {
   Sparkles,
   Bot,
   Briefcase,
+  CalendarDays,
   Compass,
   Facebook,
   Globe,
@@ -127,6 +128,16 @@ export function Layout({ children }: { children: ReactNode }) {
                   {t(item.key)}
                 </Link>
               ))}
+            {/* Cartelera cultural: enlace propio (no entra en NAV para no
+             *  aparecer también en «Mi cuenta» del menú móvil). */}
+            <Link
+              href="/eventos"
+              className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                location === '/eventos' ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+              }`}
+            >
+              Eventos
+            </Link>
             <LanguageSelect />
             <CurrencySelect onChange={(v) => { try { localStorage.setItem('casa_currency', v); } catch {} }} />
             {!loading && hostCta && (
@@ -249,6 +260,23 @@ export function Layout({ children }: { children: ReactNode }) {
                     </li>
                   );
                 })}
+                <li>
+                  <Link
+                    href="/eventos"
+                    onClick={() => setOpen(false)}
+                    aria-current={location === '/eventos' ? 'page' : undefined}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                      location === '/eventos' ? 'bg-white text-azul' : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                    }`}
+                  >
+                    <CalendarDays
+                      size={18}
+                      aria-hidden
+                      className={location === '/eventos' ? 'text-terracota-600' : 'text-dorado'}
+                    />
+                    Eventos
+                  </Link>
+                </li>
               </ul>
             </nav>
 
@@ -356,6 +384,7 @@ function ChatIaFab() {
 /* ------------------------------------------------------------------ */
 const BOTTOM_NAV = [
   { href: '/', label: 'Explora', icon: Search },
+  { href: '/eventos', label: 'Eventos', icon: CalendarDays },
   { href: '/favoritos', label: 'Favoritos', icon: Heart },
   { href: '/solicitudes', label: 'Viajes', icon: Briefcase },
   { href: '/contacto', label: 'Mensajes', icon: MessageCircle },
