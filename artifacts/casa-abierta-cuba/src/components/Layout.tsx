@@ -115,6 +115,10 @@ export function Layout({ children }: { children: ReactNode }) {
             />
           </Link>
 
+          {/* Acciones principales dentro de la barra: nunca flotan sobre el
+           *  contenido y siguen visibles porque el header es sticky. */}
+          <HeaderActions autenticado={Boolean(userId) && !loading} />
+
           <nav className="hidden md:flex flex-wrap items-center justify-end gap-1" aria-label="Principal">
             {visibleNav
               .filter((item) => !item.cta)
@@ -357,45 +361,42 @@ export function Layout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <ConciergeFab />
-      <EmergencyButton />
       <Footer />
       <BottomNav />
-      {userId && !loading && <ChatIaFab />}
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Acceso flotante al Concierge (visible en todas las pantallas)       */
+/* Acciones de la barra superior: Concierge, Asistente IA y Emergencia */
 /* ------------------------------------------------------------------ */
-function ConciergeFab() {
+function HeaderActions({ autenticado }: { autenticado: boolean }) {
   return (
-    <Link
-      href="/concierge"
-      aria-label="Diseña tu viaje a medida con el Concierge"
-      title="Diseña tu viaje a medida"
-      className="fixed top-24 left-4 z-30 inline-flex shrink-0 items-center gap-2 rounded-full bg-terracota-600 px-4 py-3 text-sm font-extrabold text-white shadow-2xl ring-2 ring-white/80 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.55)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-    >
-      <Plane size={18} className="text-dorado" aria-hidden />
-      Concierge
-    </Link>
-  );
-}
+    <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-4 md:gap-2">
+      <Link
+        href="/concierge"
+        aria-label="Diseña tu viaje a medida con el Concierge"
+        title="Diseña tu viaje a medida"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-terracota-600 px-2.5 py-2 text-sm font-extrabold text-white shadow-lg ring-1 ring-white/25 transition hover:bg-terracota-700 md:px-3.5"
+      >
+        <Plane size={18} aria-hidden />
+        <span className="hidden md:inline">Concierge</span>
+      </Link>
 
-/* ------------------------------------------------------------------ */
-/* Botón rápido de IA siempre visible para usuarios autenticados       */
-/* ------------------------------------------------------------------ */
-function ChatIaFab() {
-  return (
-    <Link
-      href="/chat"
-      className="fixed top-24 right-4 z-30 h-14 w-14 shrink-0 grid place-items-center rounded-full bg-azul shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      aria-label="Preguntar al Asistente IA de Casa Abierta"
-    >
-      <Sparkles size={24} className="text-dorado" aria-hidden />
-      <span className="sr-only">Chat IA</span>
-    </Link>
+      {autenticado && (
+        <Link
+          href="/chat"
+          aria-label="Preguntar al Asistente IA de Casa Abierta"
+          title="Asistente IA"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-azul-700 px-2.5 py-2 text-sm font-bold text-white ring-1 ring-white/40 transition hover:bg-azul-600 md:px-3.5"
+        >
+          <Sparkles size={18} className="text-dorado" aria-hidden />
+          <span className="hidden md:inline">Asistente IA</span>
+        </Link>
+      )}
+
+      <EmergencyButton />
+    </div>
   );
 }
 /* ------------------------------------------------------------------ */

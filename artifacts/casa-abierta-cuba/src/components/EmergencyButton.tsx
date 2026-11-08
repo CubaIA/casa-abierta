@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 export function EmergencyButton() {
   const numbers = [
     { name: 'Policía', tel: '106' },
@@ -5,11 +7,16 @@ export function EmergencyButton() {
     { name: 'Bomberos', tel: '105' },
   ];
   return (
-    <details className="fixed top-44 right-4 z-30">
-      <summary className="cursor-pointer rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-red-700">
-        Emergencia
+    <details className="relative shrink-0">
+      <summary
+        className="flex cursor-pointer list-none items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-2 text-sm font-bold text-white shadow-lg ring-1 ring-white/25 transition hover:bg-red-700 md:px-3.5 [&::-webkit-details-marker]:hidden"
+        aria-label="Emergencias y teléfonos de ayuda"
+        title="Emergencia"
+      >
+        <AlertTriangle size={18} aria-hidden />
+        <span className="hidden md:inline">Emergencia</span>
       </summary>
-      <div className="mt-2 w-60 rounded-lg border border-red-200 bg-white p-3 text-sm shadow-xl">
+      <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-red-200 bg-white p-3 text-sm text-tinta shadow-2xl">
         <p className="font-semibold text-red-700">Emergencias en Cuba:</p>
         <ul className="mt-2 space-y-1">
           {numbers.map((n) => (
