@@ -14,6 +14,7 @@ import {
   Menu,
   MessageCircle,
   MessageSquare,
+  Plane,
   Search,
   ShieldCheck,
   User,
@@ -356,11 +357,29 @@ export function Layout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
+      <ConciergeFab />
       <EmergencyButton />
       <Footer />
       <BottomNav />
       {userId && !loading && <ChatIaFab />}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Acceso flotante al Concierge (visible en todas las pantallas)       */
+/* ------------------------------------------------------------------ */
+function ConciergeFab() {
+  return (
+    <Link
+      href="/concierge"
+      aria-label="Diseña tu viaje a medida con el Concierge"
+      title="Diseña tu viaje a medida"
+      className="fixed bottom-20 left-4 z-40 inline-flex shrink-0 items-center gap-2 rounded-full bg-azul px-4 py-3 text-sm font-extrabold text-white shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:bottom-6"
+    >
+      <Plane size={18} className="text-dorado" aria-hidden />
+      Concierge
+    </Link>
   );
 }
 
