@@ -31,6 +31,7 @@ const Concierge = lazy(() => import('@/pages/sections/Concierge'));
 const LGBTQ = lazy(() => import('@/pages/sections/LGBTQ'));
 const Legal = lazy(() => import('@/pages/sections/Legal'));
 const Verificacion = lazy(() => import('@/pages/Verificacion'));
+const Eventos = lazy(() => import('@/pages/Eventos'));
 
 
 function ScrollToTop() {
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="/lgbtq" component={LGBTQ} />
               <Route path="/legal" component={Legal} />
               <Route path="/verificacion" component={Verificacion} />
+              <Route path="/eventos" component={Eventos} />
               <Route path="/negocio/:id" component={BusinessDetail} />
               <Route path="/entrar" component={Entrar} />
               <Route path="/perfil" component={Perfil} />
