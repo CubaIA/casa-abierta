@@ -5,7 +5,7 @@ export function EmergencyButton() {
     { name: 'Bomberos', tel: '105' },
   ];
   return (
-    <details className="fixed bottom-32 right-4 z-50 md:bottom-6">
+    <details className="fixed top-44 right-4 z-30">
       <summary className="cursor-pointer rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-red-700">
         Emergencia
       </summary>

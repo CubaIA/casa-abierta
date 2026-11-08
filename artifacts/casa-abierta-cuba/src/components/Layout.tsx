@@ -375,7 +375,7 @@ function ConciergeFab() {
       href="/concierge"
       aria-label="Diseña tu viaje a medida con el Concierge"
       title="Diseña tu viaje a medida"
-      className="fixed bottom-20 left-4 z-40 inline-flex shrink-0 items-center gap-2 rounded-full bg-azul px-4 py-3 text-sm font-extrabold text-white shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:bottom-6"
+      className="fixed top-24 left-4 z-30 inline-flex shrink-0 items-center gap-2 rounded-full bg-terracota-600 px-4 py-3 text-sm font-extrabold text-white shadow-2xl ring-2 ring-white/80 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.55)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
     >
       <Plane size={18} className="text-dorado" aria-hidden />
       Concierge
@@ -390,7 +390,7 @@ function ChatIaFab() {
   return (
     <Link
       href="/chat"
-      className="fixed bottom-20 right-4 z-50 h-14 w-14 shrink-0 grid place-items-center rounded-full bg-azul shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      className="fixed top-24 right-4 z-30 h-14 w-14 shrink-0 grid place-items-center rounded-full bg-azul shadow-xl ring-2 ring-white/80 transition hover:bg-azul-700 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       aria-label="Preguntar al Asistente IA de Casa Abierta"
     >
       <Sparkles size={24} className="text-dorado" aria-hidden />
