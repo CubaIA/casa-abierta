@@ -13,6 +13,7 @@ import {
   Flag,
   Heart,
   ImageOff,
+  Info,
   Languages,
   MapPin,
   MessageCircle,
@@ -509,6 +510,20 @@ export default function BusinessDetail() {
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent"
         />
 
+        {/* Pie de foto superpuesto: la experiencia o, si no hay, la ubicación. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-4 pt-14 sm:px-6 sm:pb-5">
+          <p className="flex items-start gap-2 text-sm font-semibold leading-snug text-white/95 drop-shadow sm:text-base">
+            {detalles.trim() ? (
+              <Info size={16} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+            ) : (
+              <MapPin size={16} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+            )}
+            <span className="line-clamp-2 sm:line-clamp-3">
+              {detalles.trim() || `${business.municipality}, ${business.province}`}
+            </span>
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -537,7 +552,7 @@ export default function BusinessDetail() {
           </button>
         </div>
         {copiado && (
-          <p className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white">
+          <p className="absolute bottom-28 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white">
             Enlace copiado
           </p>
         )}

@@ -1,6 +1,6 @@
 import { useMemo, type MouseEvent } from 'react';
 import { Link } from 'wouter';
-import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
+import { Heart, ImageOff, Info, MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
 import { firstPhoto } from '@/lib/images';
 import { SelloVerificado } from './SelloVerificado';
@@ -59,6 +59,9 @@ export function BusinessCard({
   const rating = typeof business.rating === 'number' ? business.rating : null;
   const href = `/negocio/${business.id}`;
   const featured = business.featured === true;
+  // Pie de foto: la experiencia contada por el anfitrión y, si no la hay,
+  // la ubicación. Se usa en la franja sobre la imagen.
+  const pieFoto = (business.experience_details ?? '').trim() || `${business.municipality}, ${business.province}`;
   const width = layout === 'grid' ? 'w-full' : 'w-[68vw] max-w-[280px] shrink-0 snap-start sm:w-64';
 
   function onHeart(e: MouseEvent<HTMLButtonElement>) {
@@ -95,8 +98,20 @@ export function BusinessCard({
 
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 via-black/40 to-transparent"
         />
+
+        {/* Franja inferior: pie de foto legible sobre la imagen. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-start gap-1.5 px-3 pb-2.5 pt-6 text-white">
+          {(business.experience_details ?? '').trim() ? (
+            <Info size={13} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+          ) : (
+            <MapPin size={13} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+          )}
+          <p className="line-clamp-2 text-[11px] font-semibold leading-snug drop-shadow sm:text-xs">
+            {pieFoto}
+          </p>
+        </div>
 
         {featured && (
           <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-yellow-500 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-black shadow-sm">
@@ -115,7 +130,7 @@ export function BusinessCard({
         )}
 
         {/* Sello de calidad: solo si el administrador verificó el negocio. */}
-        <SelloVerificado verified={business.verified === true} className="absolute bottom-3 left-3 z-10" />
+        <SelloVerificado verified={business.verified === true} className="absolute right-3 top-14 z-10" />
 
         {onToggleFavorite && (
           <button
