@@ -93,10 +93,35 @@ function resolverColumnasAnfitrion(): Promise<string[]> {
   return columnasAnfitrion;
 }
 
+/** Columnas de comodidades del alojamiento (camas, aire, baño, piscina).
+ *
+ * Se comprueban una sola vez y se cachean como las de anfitrión: si alguna
+ * todavía no existe en la BD, PostgREST rechazaría el `select` entero y el
+ * catálogo se quedaría vacío. */
+let columnasServicios: Promise<string[]> | null = null;
+
+const COLS_SERVICIOS = ['beds_count', 'has_ac', 'has_private_bath', 'has_pool'];
+
+function resolverColumnasServicios(): Promise<string[]> {
+  if (!supabase) return Promise.resolve([]);
+  if (!columnasServicios) {
+    const client = supabase;
+    columnasServicios = (async () => {
+      const existentes: string[] = [];
+      for (const col of COLS_SERVICIOS) {
+        const { error } = await client.from('businesses').select(col).limit(1);
+        if (!error || !esColumnaAusente(error.message)) existentes.push(col);
+      }
+      return existentes;
+    })();
+  }
+  return columnasServicios;
+}
+
 /** Lista de columnas a pedir en cada lectura de `businesses`. */
 async function columnasDeNegocio(conDueno: boolean): Promise<string> {
-  const propias = await resolverColumnasAnfitrion();
-  const cols = [LIVE_BUSINESS_COLS_BASE, ...propias].join(', ');
+  const [propias, servicios] = await Promise.all([resolverColumnasAnfitrion(), resolverColumnasServicios()]);
+  const cols = [LIVE_BUSINESS_COLS_BASE, ...propias, ...servicios].join(', ');
   return conDueno ? `${cols}, owner_id` : cols;
 }
 

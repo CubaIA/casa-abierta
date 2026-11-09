@@ -34,6 +34,7 @@ import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { AvisoError } from '@/components/AvisoError';
 import { FormularioResena } from '@/components/FormularioResena';
 import { SelloVerificado } from '@/components/SelloVerificado';
+import { IconosServicios } from '@/components/IconosServicios';
 import { adminGetUserAvatarUrl } from '@/lib/avatars';
 import { supabase } from '@/lib/supabase';
 
@@ -510,18 +511,19 @@ export default function BusinessDetail() {
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent"
         />
 
-        {/* Pie de foto superpuesto: la experiencia o, si no hay, la ubicación. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-4 pt-14 sm:px-6 sm:pb-5">
-          <p className="flex items-start gap-2 text-sm font-semibold leading-snug text-white/95 drop-shadow sm:text-base">
+        {/* Marco postal: franja crema con el pie de foto y los servicios. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 rounded-b-2xl border-t border-arena-2/70 bg-crema/95 px-4 py-3 backdrop-blur-[2px] sm:rounded-b-3xl sm:px-6">
+          <p className="flex items-start gap-2 text-sm font-semibold leading-snug text-tinta sm:text-base">
             {detalles.trim() ? (
-              <Info size={16} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+              <Info size={16} aria-hidden className="mt-0.5 shrink-0 text-verde-700" />
             ) : (
-              <MapPin size={16} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
+              <MapPin size={16} aria-hidden className="mt-0.5 shrink-0 text-verde-700" />
             )}
-            <span className="line-clamp-2 sm:line-clamp-3">
+            <span className="line-clamp-2">
               {detalles.trim() || `${business.municipality}, ${business.province}`}
             </span>
           </p>
+          <IconosServicios business={business} size={15} className="mt-2" />
         </div>
 
         <button

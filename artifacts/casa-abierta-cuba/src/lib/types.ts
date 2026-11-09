@@ -67,6 +67,11 @@ export interface Business {
   slug?: string;
   schedule?: string | null;
   capacity?: number | null;
+  /** Comodidades del alojamiento (columnas de `businesses`). */
+  beds_count?: number | null;
+  has_ac?: boolean | null;
+  has_private_bath?: boolean | null;
+  has_pool?: boolean | null;
   textos_adicionales?: string | null;
   descuentos?: string | null;
   pourquoi_traveler?: string | null;

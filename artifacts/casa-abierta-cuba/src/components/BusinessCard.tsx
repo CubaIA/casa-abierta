@@ -4,6 +4,7 @@ import { Heart, ImageOff, Info, MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
 import { firstPhoto } from '@/lib/images';
 import { SelloVerificado } from './SelloVerificado';
+import { IconosServicios } from './IconosServicios';
 
 /** Anti-caché: añade `?v=<timestamp>` a la URL de la foto para que el navegador
  *  descargue de nuevo la portada cuando cambia, en lugar de servir la anterior
@@ -96,21 +97,17 @@ export function BusinessCard({
           )}
         </Link>
 
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 via-black/40 to-transparent"
-        />
-
-        {/* Franja inferior: pie de foto legible sobre la imagen. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-start gap-1.5 px-3 pb-2.5 pt-6 text-white">
-          {(business.experience_details ?? '').trim() ? (
-            <Info size={13} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
-          ) : (
-            <MapPin size={13} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
-          )}
-          <p className="line-clamp-2 text-[11px] font-semibold leading-snug drop-shadow sm:text-xs">
-            {pieFoto}
+        {/* Marco postal: franja crema con el pie de foto y los servicios. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 rounded-b-2xl border-t border-arena-2/70 bg-crema/95 px-3 py-2 backdrop-blur-[2px]">
+          <p className="flex items-start gap-1.5 text-[11px] font-semibold leading-snug text-tinta/85">
+            {(business.experience_details ?? '').trim() ? (
+              <Info size={12} aria-hidden className="mt-0.5 shrink-0 text-verde-700" />
+            ) : (
+              <MapPin size={12} aria-hidden className="mt-0.5 shrink-0 text-verde-700" />
+            )}
+            <span className="line-clamp-1">{pieFoto}</span>
           </p>
+          <IconosServicios business={business} size={13} className="mt-1.5" />
         </div>
 
         {featured && (
