@@ -33,6 +33,55 @@ export function priceUnit(business: Business): string {
   return business.service_type === 'alojamiento' ? 'por noche' : '';
 }
 
+/** Texto normalizado para comparar sin acentos ni mayúsculas. */
+function claveTexto(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Frases que delatan una nota interna de administración y no una experiencia. */
+const NOTA_ADMIN = /^(agrega|agregar|anade|anadir|añade|añadir|poner|pon|completar|completa|pendiente|por definir|revisar|falta|falta por)\b/;
+
+/**
+ * Texto del marco postal de la tarjeta: SOLO `experience_details`.
+ *
+ * Los idiomas y «ideal para» (`languages` / `recommended_for`) tienen su
+ * propia sección en la ficha y a veces arrastran notas internas de
+ * administración («agrega los que él domine»), así que nunca se muestran
+ * aquí: se descartan los fragmentos que coinciden con esos campos, las
+ * líneas de idiomas y las notas de administración. Si no queda nada
+ * presentable, se cae a la ubicación.
+ */
+function pieDeFoto(business: Business): { texto: string; esExperiencia: boolean } {
+  const listaIdiomas = Array.isArray(business.languages) ? business.languages : [];
+  const listaRecomendados = Array.isArray(business.recommended_for) ? business.recommended_for : [];
+  const idiomas = new Set(listaIdiomas.map((v) => claveTexto(String(v ?? ''))).filter(Boolean));
+  const recomendados = new Set(listaRecomendados.map((v) => claveTexto(String(v ?? ''))).filter(Boolean));
+
+  const fragmentos = String(business.experience_details ?? '')
+    .split(/[\u00b7\n]+/)
+    .map((s) => s.trim())
+    .filter((s) => {
+      if (!s) return false;
+      const k = claveTexto(s);
+      if (!k || idiomas.has(k) || recomendados.has(k)) return false;
+      if (/^(habla|hablamos|idiomas?|lengua|lenguas?)\b/.test(k)) return false;
+      if (/^ideal para\b/.test(k)) return false;
+      if (NOTA_ADMIN.test(k)) return false;
+      // «Español, Inglés» cuando cada idioma vive en su propia fila.
+      const partes = k.split(',').map((p) => p.trim()).filter(Boolean);
+      if (partes.length > 1 && partes.every((p) => idiomas.has(p))) return false;
+      return true;
+    });
+
+  if (fragmentos.length > 0) return { texto: fragmentos.join(' · '), esExperiencia: true };
+  return { texto: `${business.municipality}, ${business.province}`, esExperiencia: false };
+}
+
 interface BusinessCardProps {
   business: Business;
   serviceLabel?: string;
@@ -60,9 +109,9 @@ export function BusinessCard({
   const rating = typeof business.rating === 'number' ? business.rating : null;
   const href = `/negocio/${business.id}`;
   const featured = business.featured === true;
-  // Pie de foto: la experiencia contada por el anfitrión y, si no la hay,
-  // la ubicación. Se usa en la franja sobre la imagen.
-  const pieFoto = (business.experience_details ?? '').trim() || `${business.municipality}, ${business.province}`;
+  // Pie de foto: solo la experiencia contada por el anfitrión y, si no la hay,
+  // la ubicación. Nunca idiomas ni «ideal para» (ver pieDeFoto).
+  const pieFoto = pieDeFoto(business);
   const width = layout === 'grid' ? 'w-full' : 'w-[68vw] max-w-[280px] shrink-0 snap-start sm:w-64';
 
   function onHeart(e: MouseEvent<HTMLButtonElement>) {
@@ -100,12 +149,12 @@ export function BusinessCard({
         {/* Marco postal: franja crema con el pie de foto y los servicios. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 rounded-b-2xl border-t border-arena-2/70 bg-crema/95 px-3 py-2 backdrop-blur-[2px]">
           <p className="flex items-start gap-1.5 text-[11px] font-semibold leading-snug text-tinta/85">
-            {(business.experience_details ?? '').trim() ? (
+            {pieFoto.esExperiencia ? (
               <Info size={12} aria-hidden className="mt-0.5 shrink-0 text-verde-700" />
             ) : (
               <MapPin size={12} aria-hidden className="mt-0.5 shrink-0 text-verde-700" />
             )}
-            <span className="line-clamp-1">{pieFoto}</span>
+            <span className="line-clamp-1">{pieFoto.texto}</span>
           </p>
           <IconosServicios business={business} size={13} className="mt-1.5" />
         </div>
