@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import { useLocation } from 'wouter';
-import { crearResenaDirecta } from '@/lib/marketplace';
+import { crearResenaPublica } from '@/lib/marketplace';
 
 interface FormularioResenaProps {
   businessId: string;
-  userId: string | null;
-  /** Se ejecuta tras insertar: recarga la lista para que aparezca la nueva. */
+  /** Se ejecuta tras insertar: recarga la lista de reseñas aprobadas. */
   onEnviada: () => Promise<void> | void;
 }
 
@@ -15,31 +13,18 @@ const ETIQUETAS = ['Muy mala', 'Mala', 'Regular', 'Buena', 'Excelente'];
 /**
  * Formulario para dejar una reseña desde la ficha pública.
  *
- * Solo se muestra con sesión iniciada: si no hay usuario se ofrece el acceso
- * en lugar de un formulario que la RLS rechazaría al enviar.
+ * Se muestra a cualquier visitante, con o sin cuenta: la reseña se guarda en
+ * `reviews` con `status = 'pending'` y solo aparece en la ficha cuando el
+ * equipo la aprueba desde el panel de administración.
  */
-export function FormularioResena({ businessId, userId, onEnviada }: FormularioResenaProps) {
-  const [, navigate] = useLocation();
+export function FormularioResena({ businessId, onEnviada }: FormularioResenaProps) {
+  const [nombre, setNombre] = useState('');
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviada, setEnviada] = useState(false);
-
-  if (!userId) {
-    return (
-      <div className="mt-5 rounded-2xl border border-arena-2 bg-white p-4">
-        <p className="text-sm font-semibold text-azul">Inicia sesión para dejar una reseña.</p>
-        <p className="mt-1 text-sm text-tinta/65">Solo las cuentas con sesión iniciada pueden valorar este negocio.</p>
-        <button type="button" className="button-ghost mt-3" onClick={() => navigate('/entrar')}>
-          Iniciar sesión
-        </button>
-      </div>
-    );
-  }
-
-  const idUsuario = userId;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,12 +33,16 @@ export function FormularioResena({ businessId, userId, onEnviada }: FormularioRe
       setError('Elige de 1 a 5 estrellas para puntuar el negocio.');
       return;
     }
+    if (!nombre.trim()) {
+      setError('Escribe tu nombre para que otros viajeros sepan quién opina.');
+      return;
+    }
     setEnviando(true);
     setError(null);
     setEnviada(false);
     try {
-      await crearResenaDirecta({ businessId, userId: idUsuario, rating, comment });
-      // Éxito: se limpia el formulario y se recarga la lista desde Supabase.
+      await crearResenaPublica({ businessId, authorName: nombre, rating, comment });
+      setNombre('');
       setRating(0);
       setHover(0);
       setComment('');
@@ -70,10 +59,24 @@ export function FormularioResena({ businessId, userId, onEnviada }: FormularioRe
     <form onSubmit={onSubmit} className="mt-5 rounded-2xl border border-arena-2 bg-white p-4 sm:p-5">
       <h3 className="text-base font-extrabold text-azul">Dejar una reseña</h3>
       <p className="mt-1 text-sm text-tinta/65">
-        Cuenta cómo fue tu experiencia con este negocio. Tu valoración es pública.
+        No necesitas cuenta. Tu reseña se publica en la ficha después de que el equipo la revise.
       </p>
 
-      <fieldset className="mt-3 border-0 p-0">
+      <label className="field-label mt-4 block" htmlFor="review-author">
+        Tu nombre
+      </label>
+      <input
+        id="review-author"
+        className="field-input"
+        type="text"
+        maxLength={80}
+        autoComplete="name"
+        value={nombre}
+        onChange={(e) => setNombre(e.target.value)}
+        placeholder="Ej. María de España"
+      />
+
+      <fieldset className="mt-4 border-0 p-0">
         <legend className="field-label p-0">Tu puntuación</legend>
         <div className="mt-1 flex flex-wrap items-center gap-1" role="group" aria-label="Puntuación de 1 a 5 estrellas">
           {[1, 2, 3, 4, 5].map((n) => (
@@ -120,12 +123,12 @@ export function FormularioResena({ businessId, userId, onEnviada }: FormularioRe
       )}
       {enviada && !error && (
         <p className="form-success mt-3" role="status">
-          ¡Gracias! Tu reseña ya aparece en la ficha.
+          ¡Gracias! Tu reseña ha sido enviada y será revisada por nuestro equipo.
         </p>
       )}
 
       <button type="submit" className="button-primary mt-4" disabled={enviando || rating < 1}>
-        {enviando ? 'Enviando…' : 'Enviar reseña'}
+        {enviando ? 'Enviando…' : 'Enviar Reseña'}
       </button>
     </form>
   );

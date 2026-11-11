@@ -82,6 +82,8 @@ export interface Business {
   /** Promedio de reseñas, cuando la fuente lo expone (opcional). */
   rating?: number | null;
   review_count?: number | null;
+  /** Clics de contacto acumulados en la ficha (contador del negocio). */
+  contacts_generated?: number | null;
   // Campos calculados por el mapeador (no vienen de la BD directamente).
   photos?: string[];
 }
@@ -108,6 +110,10 @@ export interface Review {
   reviewer_id?: string | null;
   /** Autor de las reseñas escritas desde la ficha pública. */
   user_id?: string | null;
+  /** Nombre escrito a mano en la reseña anónima (migración 015). */
+  author_name?: string | null;
+  /** `pending` hasta que el equipo la aprueba; la ficha solo lee `approved`. */
+  status?: 'pending' | 'approved';
   rating: number;
   comment: string;
   created_at: string;

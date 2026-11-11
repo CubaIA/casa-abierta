@@ -730,7 +730,10 @@ export default function BusinessDetail() {
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {reviews.map((r) => {
               const autorId = r.reviewer_id ?? r.user_id ?? '';
-              const nombre = (r.profiles as { full_name?: string | null } | undefined)?.full_name?.trim();
+              /* Las reseñas anónimas traen su nombre escrito a mano. */
+              const nombre =
+                (r.author_name ?? '').trim() ||
+                (r.profiles as { full_name?: string | null } | undefined)?.full_name?.trim();
               return (
               <li key={r.id} className="rounded-2xl border border-arena-2 bg-white p-4">
                 <div className="flex items-center gap-3">
@@ -756,7 +759,7 @@ export default function BusinessDetail() {
           </ul>
         )}
 
-        <FormularioResena businessId={id} userId={userId} onEnviada={recargarResenas} />
+        <FormularioResena businessId={id} onEnviada={recargarResenas} />
       </section>
 
       {/* ---------------------------------------------------------- */}

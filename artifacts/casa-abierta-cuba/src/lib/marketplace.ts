@@ -100,7 +100,7 @@ function resolverColumnasAnfitrion(): Promise<string[]> {
  * catálogo se quedaría vacío. */
 let columnasServicios: Promise<string[]> | null = null;
 
-const COLS_SERVICIOS = ['beds_count', 'has_ac', 'has_private_bath', 'has_pool'];
+const COLS_SERVICIOS = ['beds_count', 'has_ac', 'has_private_bath', 'has_pool', 'contacts_generated'];
 
 function resolverColumnasServicios(): Promise<string[]> {
   if (!supabase) return Promise.resolve([]);
@@ -738,18 +738,121 @@ export async function adminSetRequestStatus(requestId: string, status: RequestSt
 /* ------------------------------------------------------------------ */
 
 export async function listReviews(businessId: string): Promise<Review[]> {
-  if (supabase) {
-    const { data, error } = await supabase
-      .from('reviews')
-      .select('*, profiles(full_name)')
-      .eq('business_id', businessId)
-      .order('created_at', { ascending: false });
+  const client = supabase;
+  if (client) {
+    const consulta = () =>
+      client
+        .from('reviews')
+        .select('*, profiles(full_name)')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false });
+    // La ficha pública solo muestra lo aprobado por el equipo.
+    let { data, error } = await consulta().eq('status', 'approved');
+    if (error && esColumnaAusente(error.message)) {
+      // Proyectos sin la migración 015: todavía no existe la columna `status`.
+      ({ data, error } = await consulta());
+    }
     if (error) throw new Error(error.message);
     return (data ?? []) as Review[];
   }
   return loadStore()
-    .reviews.filter((r) => r.business_id === businessId)
+    .reviews.filter((r) => r.business_id === businessId && (r.status ?? 'approved') !== 'pending')
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+/**
+ * Reseña anónima desde la ficha pública.
+ *
+ * Entra en `reviews` como `pending`: no se publica hasta que un
+ * administrador la apruebe desde el panel. No exige cuenta ni sesión.
+ */
+export async function crearResenaPublica(input: {
+  businessId: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+}): Promise<void> {
+  const authorName = input.authorName.trim().replace(/\s+/g, ' ').slice(0, 80);
+  const comment = input.comment.trim().slice(0, 1000);
+  const rating = Math.min(5, Math.max(1, Math.round(input.rating)));
+
+  if (!authorName) throw new Error('Escribe tu nombre para enviar la reseña.');
+  if (comment.length < 5) throw new Error('Cuéntanos un poco más de tu experiencia (mínimo 5 caracteres).');
+
+  if (supabase) {
+    const { error } = await supabase.from('reviews').insert({
+      business_id: input.businessId,
+      author_name: authorName,
+      rating,
+      comment,
+      status: 'pending',
+    });
+    if (!error) return;
+    if (esColumnaAusente(error.message) || /row-level security|42501/i.test(error.message)) {
+      throw new Error(
+        'La base de datos todavía no acepta reseñas con aprobación: aplica supabase/migrations/015_resenas_publicas.sql en el proyecto de Supabase y reintenta.',
+      );
+    }
+    throw new Error(error.message);
+  }
+
+  const store = loadStore();
+  store.reviews.unshift({
+    id: crypto.randomUUID(),
+    request_id: null,
+    business_id: input.businessId,
+    author_name: authorName,
+    rating,
+    comment,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  });
+  saveStore(store);
+}
+
+/* ------------------------------------------------------------------ */
+/* Moderación de reseñas (panel admin)                                 */
+/* ------------------------------------------------------------------ */
+
+/** Reseñas esperando aprobación, de la más reciente a la más antigua. */
+export async function adminListPendingReviews(): Promise<Review[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Review[];
+  }
+  return loadStore().reviews.filter((r) => r.status === 'pending');
+}
+
+/** Aprueba una reseña: pasa a `approved` y ya aparece en la ficha. */
+export async function adminApproveReview(id: string): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('reviews').update({ status: 'approved' }).eq('id', id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  const reseña = store.reviews.find((r) => r.id === id);
+  if (reseña) {
+    reseña.status = 'approved';
+    saveStore(store);
+  }
+}
+
+/** Rechaza una reseña: se elimina de la tabla y no vuelve a mostrarse. */
+export async function adminDeleteReview(id: string): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('reviews').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+  const store = loadStore();
+  store.reviews = store.reviews.filter((r) => r.id !== id);
+  saveStore(store);
 }
 
 export async function createReview(input: {

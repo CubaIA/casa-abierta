@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { BadgeCheck, CheckCircle2, FileCheck2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, ShieldCheck, Star, Users, XCircle } from 'lucide-react';
 import {
+  adminApproveReview,
   adminDeleteBusiness,
+  adminDeleteReview,
   adminEditBusiness,
   adminGetBusinessLegal,
   adminGetBusinessMintur,
@@ -10,6 +12,7 @@ import {
   adminListAllBusinesses,
   adminListAllRequests,
   adminListContactMessages,
+  adminListPendingReviews,
   adminListReports,
   adminListUsers,
   adminSetBusinessFeatured,
@@ -33,18 +36,19 @@ import { resolvePhotos } from '@/lib/images';
 import { MENSAJE_PREMIUM, SUPPORT_WHATSAPP, whatsappLink } from '@/lib/whatsapp';
 import { supabase } from '@/lib/supabase';
 import { adminCountContactLeads, type AdminContactLeads } from '@/lib/admin-contact-leads';
-import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus } from '@/lib/types';
+import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus, Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { BusinessForm } from './Anfitrion';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
 
-type Tab = 'businesses' | 'users' | 'requests' | 'reports' | 'messages';
+type Tab = 'businesses' | 'users' | 'requests' | 'reviews' | 'reports' | 'messages';
 
 /** Secciones del panel mostradas en la sidebar de administración. */
 const ADMIN_TABS: AdminTabItem[] = [
   { key: 'businesses', label: 'Negocios', icon: CheckCircle2 },
   { key: 'users', label: 'Usuarios', icon: Users },
   { key: 'requests', label: 'Solicitudes', icon: MessageSquare },
+  { key: 'reviews', label: 'Reseñas Pendientes', icon: Star },
   { key: 'reports', label: 'Reportes', icon: Flag },
   { key: 'messages', label: 'Mensajes', icon: Inbox },
 ];
@@ -71,6 +75,7 @@ export default function Admin() {
       {tab === 'businesses' && <BusinessesTab onError={setError} />}
       {tab === 'users' && <UsersTab onError={setError} />}
       {tab === 'requests' && <RequestsTab onError={setError} />}
+      {tab === 'reviews' && <ReviewsTab onError={setError} />}
       {tab === 'reports' && <ReportsTab onError={setError} />}
       {tab === 'messages' && <MessagesTab onError={setError} />}
     </AdminLayout>
@@ -224,9 +229,10 @@ function BusinessesTab({ onError }: { onError: (m: string | null) => void }) {
               <span className={`badge ${b.legal_validated === true ? 'badge-green' : 'badge-neutral'}`}>
                 {b.legal_validated === true ? 'Legal validado' : 'Legal pendiente'}
               </span>
-              {/* Contadores de contacto silencioso (si la migración 011 está aplicada). */}
+              {/* Contador de contactos: la columna del negocio manda; si el
+                  proyecto aún no la tiene, se usa la tabla de leads (011). */}
               <span className="text-xs text-tinta/60">
-                Contactos generados: {contactLeads[b.id]?.count ?? '0'}
+                Contactos generados: {String(b.contacts_generated ?? contactLeads[b.id]?.count ?? 0)}
               </span>
             </div>
           </div>
@@ -1162,6 +1168,59 @@ function RequestCard({
         {contact !== null && <span className="badge badge-gold">{contact || 'sin correo guardado'}</span>}
       </div>
     </article>
+  );
+}
+
+/* ---------------- Reseñas pendientes ---------------- */
+
+function ReviewsTab({ onError }: { onError: (m: string | null) => void }) {
+  const { rows: reviews, err, reload } = useAdminData<Review[]>(adminListPendingReviews);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <button className="button-ghost" onClick={reload}><RefreshCw size={14} /> Actualizar</button>
+      </div>
+      <AvisoError mensaje={err} operador />
+      {reviews === null && !err && <div className="empty-state">Cargando…</div>}
+      {reviews?.length === 0 && (
+        <div className="empty-state"><Star size={24} className="mx-auto mb-2 opacity-50" />No hay reseñas pendientes.</div>
+      )}
+      {reviews?.map((r) => (
+        <article key={r.id} className="panel !p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-bold text-azul">{r.author_name?.trim() || 'Visitante'}</p>
+            <span className="flex items-center gap-0.5 text-dorado" aria-label={`${r.rating} de 5`}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <Star key={i} size={13} className={i < r.rating ? 'fill-dorado' : 'opacity-25'} />
+              ))}
+            </span>
+          </div>
+          <p className="text-xs text-tinta/55">
+            {new Date(r.created_at).toLocaleString('es-ES')}
+            {' · '}
+            <Link href={`/negocio/${r.business_id}`} className="text-link">ver ficha</Link>
+          </p>
+          <p className="mt-1.5 text-sm text-tinta/80">{r.comment}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              className="button-primary !text-xs !py-1 !px-2.5"
+              onClick={wrap(() => adminApproveReview(r.id), onError, reload)}
+            >
+              <CheckCircle2 size={14} /> Aprobar
+            </button>
+            <button
+              className="button-ghost !text-xs !py-1 !px-2.5 !text-terracota-600 !border-terracota-500"
+              onClick={wrap(async () => {
+                if (confirm('¿Rechazar y eliminar esta reseña?')) await adminDeleteReview(r.id);
+              }, onError, reload)}
+            >
+              <XCircle size={14} /> Rechazar
+            </button>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 
