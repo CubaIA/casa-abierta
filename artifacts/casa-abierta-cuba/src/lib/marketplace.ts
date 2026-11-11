@@ -743,7 +743,8 @@ export async function listReviews(businessId: string): Promise<Review[]> {
     const consulta = () =>
       client
         .from('reviews')
-        .select('*, profiles(full_name)')
+        // Sin JOIN a `profiles`: las reseñas anónimas solo guardan `author_name`.
+        .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
     // La ficha pública solo muestra lo aprobado por el equipo.
