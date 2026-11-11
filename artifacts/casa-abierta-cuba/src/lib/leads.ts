@@ -146,6 +146,27 @@ export async function listarLeadsDelAnfitrion(hostId: string): Promise<Lead[]> {
   return leerDemo().filter((l) => l.host_id === hostId);
 }
 
+/** Todas las solicitudes, para el panel de administración. */
+export async function listarTodosLosLeads(): Promise<Lead[]> {
+  const client = supabase;
+  if (client) {
+    const consulta = (cols: string) =>
+      client.from('leads').select(cols).order('created_at', { ascending: false });
+    // Con el nombre del negocio cuando la relación está en el esquema.
+    let { data, error } = await consulta('*, businesses(title)');
+    if (error && /Could not find a relationship|PGRST200|schema cache/i.test(error.message)) {
+      ({ data, error } = await consulta('*'));
+    }
+    if (error) {
+      console.error('[leads] Error leyendo todas las solicitudes:', error);
+      if (esTablaAusente(error.message)) return [];
+      throw new Error(error.message);
+    }
+    return (data ?? []) as Lead[];
+  }
+  return leerDemo();
+}
+
 /** Cambia el estado de una solicitud (`contacted` o `booked`). */
 export async function actualizarEstadoLead(id: string, status: LeadStatus): Promise<void> {
   if (supabase) {

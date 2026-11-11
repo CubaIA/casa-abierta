@@ -153,6 +153,8 @@ export interface Lead {
   budget: string | null;
   message: string | null;
   status: LeadStatus;
+  /** Negocio de la solicitud cuando la consulta lo trae con `businesses(title)`. */
+  business?: { title?: string | null; name?: string | null } | null;
   created_at: string;
 }
 

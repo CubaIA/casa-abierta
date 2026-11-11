@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { BadgeCheck, CheckCircle2, FileCheck2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, ShieldCheck, Star, Users, XCircle } from 'lucide-react';
+import { BadgeCheck, CalendarCheck, CheckCircle2, FileCheck2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, ShieldCheck, Star, Users, XCircle } from 'lucide-react';
 import {
   adminApproveReview,
   adminDeleteBusiness,
@@ -36,18 +36,20 @@ import { resolvePhotos } from '@/lib/images';
 import { MENSAJE_PREMIUM, SUPPORT_WHATSAPP, whatsappLink } from '@/lib/whatsapp';
 import { supabase } from '@/lib/supabase';
 import { adminCountContactLeads, type AdminContactLeads } from '@/lib/admin-contact-leads';
-import type { Business, BusinessRow, ContactMessage, Profile, Report, RequestStatus, Review } from '@/lib/types';
+import type { Business, BusinessRow, ContactMessage, Lead, LeadStatus, Profile, Report, RequestStatus, Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { BusinessForm } from './Anfitrion';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
+import { actualizarEstadoLead, listarTodosLosLeads } from '@/lib/leads';
 
-type Tab = 'businesses' | 'users' | 'requests' | 'reviews' | 'reports' | 'messages';
+type Tab = 'businesses' | 'users' | 'requests' | 'leads' | 'reviews' | 'reports' | 'messages';
 
 /** Secciones del panel mostradas en la sidebar de administración. */
 const ADMIN_TABS: AdminTabItem[] = [
   { key: 'businesses', label: 'Negocios', icon: CheckCircle2 },
   { key: 'users', label: 'Usuarios', icon: Users },
   { key: 'requests', label: 'Solicitudes', icon: MessageSquare },
+  { key: 'leads', label: 'Solicitudes (Leads)', icon: CalendarCheck },
   { key: 'reviews', label: 'Reseñas Pendientes', icon: Star },
   { key: 'reports', label: 'Reportes', icon: Flag },
   { key: 'messages', label: 'Mensajes', icon: Inbox },
@@ -75,6 +77,7 @@ export default function Admin() {
       {tab === 'businesses' && <BusinessesTab onError={setError} />}
       {tab === 'users' && <UsersTab onError={setError} />}
       {tab === 'requests' && <RequestsTab onError={setError} />}
+      {tab === 'leads' && <LeadsTab onError={setError} />}
       {tab === 'reviews' && <ReviewsTab onError={setError} />}
       {tab === 'reports' && <ReportsTab onError={setError} />}
       {tab === 'messages' && <MessagesTab onError={setError} />}
@@ -1168,6 +1171,90 @@ function RequestCard({
         {contact !== null && <span className="badge badge-gold">{contact || 'sin correo guardado'}</span>}
       </div>
     </article>
+  );
+}
+
+/* ---------------- Solicitudes de reserva (leads) ---------------- */
+
+const LEAD_ESTADO: Record<LeadStatus, { label: string; badge: string }> = {
+  pending: { label: 'Pendiente', badge: 'badge-gold' },
+  contacted: { label: 'Contactado', badge: 'badge-blue' },
+  booked: { label: 'Reservado', badge: 'badge-green' },
+};
+
+/**
+ * Todas las solicitudes de reserva de la plataforma.
+ *
+ * El administrador no es dueño de los negocios, así que aquí no se filtra por
+ * `host_id`: se listan todos los leads con el nombre del negocio asociado.
+ */
+function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
+  const { rows: leads, err, reload } = useAdminData<Lead[]>(listarTodosLosLeads);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <button className="button-ghost" onClick={reload}><RefreshCw size={14} /> Actualizar</button>
+      </div>
+      <AvisoError mensaje={err} operador />
+      {leads === null && !err && <div className="empty-state">Cargando…</div>}
+      {leads?.length === 0 && (
+        <div className="empty-state">
+          <CalendarCheck size={24} className="mx-auto mb-2 opacity-50" />
+          No hay solicitudes de reserva.
+        </div>
+      )}
+      {leads?.map((l) => {
+        const estado = LEAD_ESTADO[l.status] ?? LEAD_ESTADO.pending;
+        const negocio = l.business?.title || l.business?.name || l.business_id;
+        return (
+          <article key={l.id} className="panel !p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="font-extrabold text-azul">{l.tourist_name || 'Visitante'}</h2>
+                <p className="text-xs text-tinta/55">
+                  {negocio} · {new Date(l.created_at).toLocaleString('es-ES')}
+                </p>
+              </div>
+              <span className={`badge ${estado.badge}`}>{estado.label}</span>
+            </div>
+            <div className="mt-2 grid gap-1 text-sm text-tinta/80 sm:grid-cols-2">
+              <p>Llegada: <strong>{l.check_in ?? '—'}</strong></p>
+              <p>Salida: <strong>{l.check_out ?? '—'}</strong></p>
+              <p>Huéspedes: <strong>{l.guests ?? '—'}</strong></p>
+              <p>Presupuesto: <strong>{l.budget ?? 'A consultar'}</strong></p>
+              <p>
+                WhatsApp:{' '}
+                <a className="text-link" href={`tel:${l.tourist_phone}`}>{l.tourist_phone}</a>
+              </p>
+              <p>
+                Email:{' '}
+                <a className="text-link" href={`mailto:${l.tourist_email}`}>{l.tourist_email}</a>
+              </p>
+            </div>
+            {l.message && <p className="mt-2 text-sm text-tinta/75">{l.message}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {l.status === 'pending' && (
+                <button
+                  className="button-ghost !text-xs !py-1 !px-2.5"
+                  onClick={wrap(() => actualizarEstadoLead(l.id, 'contacted'), onError, reload)}
+                >
+                  Marcar contactado
+                </button>
+              )}
+              {l.status !== 'booked' && (
+                <button
+                  className="button-primary !text-xs !py-1 !px-2.5"
+                  onClick={wrap(() => actualizarEstadoLead(l.id, 'booked'), onError, reload)}
+                >
+                  Marcar reservado
+                </button>
+              )}
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 
