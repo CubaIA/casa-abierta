@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { Trash2, MinusCircle } from 'lucide-react';
-import { Building2, Inbox, MessageCircle, PlusCircle, RefreshCw } from 'lucide-react';
+import { Building2, CalendarCheck, Inbox, MessageCircle, PlusCircle, RefreshCw } from 'lucide-react';
 import {
   DEMO_CATEGORIES,
   listCategories,
@@ -12,7 +12,8 @@ import {
   SERVICE_TYPES,
 } from '@/lib/marketplace';
 import { uploadBusinessImages } from '@/lib/storage';
-import type { Business, BusinessRow, RequestStatus, SubmitBusinessInput } from '@/lib/types';
+import { actualizarEstadoLead, listarLeadsDelAnfitrion } from '@/lib/leads';
+import type { Business, BusinessRow, Lead, LeadStatus, RequestStatus, SubmitBusinessInput } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
@@ -32,6 +33,12 @@ const REQUEST_STATUS_LABEL: Record<RequestStatus, { label: string; badge: string
   cancelled: { label: 'Cancelada', badge: 'badge-red' },
 };
 
+const LEAD_STATUS: Record<LeadStatus, { label: string; badge: string }> = {
+  pending: { label: 'Pendiente', badge: 'badge-gold' },
+  contacted: { label: 'Contactado', badge: 'badge-blue' },
+  booked: { label: 'Reservado', badge: 'badge-green' },
+};
+
 const BUSINESS_STATUS: Record<string, { label: string; badge: string }> = {
   pending: { label: 'Pendiente de revisión', badge: 'badge-gold' },
   approved: { label: 'Aprobado', badge: 'badge-green' },
@@ -41,19 +48,37 @@ const BUSINESS_STATUS: Record<string, { label: string; badge: string }> = {
 
 export default function Anfitrion() {
   const { userId, profile, loading } = useAuth();
-  const [tab, setTab] = useState<'form' | 'businesses' | 'requests'>('businesses');
+  const [tab, setTab] = useState<'form' | 'businesses' | 'requests' | 'leads'>('businesses');
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [requests, setRequests] = useState<BusinessRow[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
     try {
-      const [bs, rs] = await Promise.all([listMyBusinesses(userId), listIncomingRequests(userId)]);
+      const [bs, rs, ls] = await Promise.all([
+        listMyBusinesses(userId),
+        listIncomingRequests(userId),
+        listarLeadsDelAnfitrion(userId),
+      ]);
       setBusinesses(bs);
       setRequests(rs);
+      setLeads(ls);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error cargando tu panel');
+    }
+  }, [userId]);
+
+  /** Cambia el estado de una solicitud de reserva y refresca la lista. */
+  const cambiarEstadoLead = useCallback(async (id: string, status: LeadStatus) => {
+    if (!userId) return;
+    setError(null);
+    try {
+      await actualizarEstadoLead(id, status);
+      setLeads(await listarLeadsDelAnfitrion(userId));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo actualizar la solicitud');
     }
   }, [userId]);
 
@@ -101,6 +126,9 @@ export default function Anfitrion() {
         </button>
         <button className={`button-ghost ${tab === 'requests' ? '!bg-azul !text-white !border-azul' : ''}`} onClick={() => setTab('requests')} role="tab" aria-selected={tab === 'requests'}>
           <Inbox size={15} /> Solicitudes ({requests.length})
+        </button>
+        <button className={`button-ghost ${tab === 'leads' ? '!bg-azul !text-white !border-azul' : ''}`} onClick={() => setTab('leads')} role="tab" aria-selected={tab === 'leads'}>
+          <CalendarCheck size={15} /> Solicitudes (Leads) ({leads.length})
         </button>
         <button className={`button-ghost ${tab === 'form' ? '!bg-azul !text-white !border-azul' : ''}`} onClick={() => setTab('form')} role="tab" aria-selected={tab === 'form'}>
           <PlusCircle size={15} /> Nueva publicación
@@ -190,6 +218,59 @@ export default function Anfitrion() {
                   )}
                   {r.status === 'accepted' && (
                     <RequestStatusButton id={r.id} to="completed" onDone={load} variant="primary">Marcar completada</RequestStatusButton>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 'leads' && (
+        <div className="mt-5 space-y-3">
+          <div className="flex justify-end">
+            <button className="button-ghost" onClick={() => void load()}>
+              <RefreshCw size={14} /> Actualizar
+            </button>
+          </div>
+          {leads.length === 0 && (
+            <div className="empty-state">
+              <p>No has recibido solicitudes de reserva todavía. Cuando un viajero pida disponibilidad en una de tus fichas, aparecerá aquí.</p>
+            </div>
+          )}
+          {leads.map((l) => {
+            const st = LEAD_STATUS[l.status] ?? LEAD_STATUS.pending;
+            const negocio = businesses.find((b) => b.id === l.business_id);
+            return (
+              <article key={l.id} className="panel">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="font-extrabold text-azul">{l.full_name}</h2>
+                    <p className="text-xs text-tinta/55">
+                      {negocio?.name ?? 'Tu negocio'} · {new Date(l.created_at).toLocaleString('es-ES')}
+                    </p>
+                  </div>
+                  <span className={`badge ${st.badge}`}>{st.label}</span>
+                </div>
+                <div className="mt-2 grid gap-1 text-sm text-tinta/80 sm:grid-cols-2">
+                  <p>Llegada: <strong>{l.check_in ?? '—'}</strong></p>
+                  <p>Salida: <strong>{l.check_out ?? '—'}</strong></p>
+                  <p>Huéspedes: <strong>{l.guests ?? '—'}</strong></p>
+                  <p>Presupuesto: <strong>{l.budget ?? 'A consultar'}</strong></p>
+                  <p>Correo: <a className="text-link" href={`mailto:${l.email}`}>{l.email}</a></p>
+                  <p>Teléfono: <a className="text-link" href={`tel:${l.phone}`}>{l.phone}</a></p>
+                </div>
+                {l.message && <p className="mt-2 text-sm text-tinta/75">{l.message}</p>}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {l.status === 'pending' && (
+                    <button className="button-ghost" onClick={() => void cambiarEstadoLead(l.id, 'contacted')}>
+                      Marcar contactado
+                    </button>
+                  )}
+                  {l.status !== 'booked' && (
+                    <button className="button-primary !py-1.5 !px-3 text-sm" onClick={() => void cambiarEstadoLead(l.id, 'booked')}>
+                      Marcar reservado
+                    </button>
                   )}
                 </div>
               </article>

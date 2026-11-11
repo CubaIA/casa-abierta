@@ -16,7 +16,6 @@ import {
   Info,
   Languages,
   MapPin,
-  MessageCircle,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -33,6 +32,7 @@ import { formatPrice } from '@/components/BusinessCard';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { AvisoError } from '@/components/AvisoError';
 import { FormularioResena } from '@/components/FormularioResena';
+import { SolicitudReserva } from '@/components/SolicitudReserva';
 import { SelloVerificado } from '@/components/SelloVerificado';
 import { IconosServicios } from '@/components/IconosServicios';
 import { adminGetUserAvatarUrl } from '@/lib/avatars';
@@ -41,18 +41,11 @@ import { supabase } from '@/lib/supabase';
 import {
   createReport,
   getBusiness,
-  getBusinessWhatsapp,
   listFavoriteIds,
   listReviews,
   toggleFavorite,
   SERVICE_TYPES,
 } from '@/lib/marketplace';
-import {
-  MENSAJE_NEGOCIO,
-  SUPPORT_WHATSAPP,
-  telefonoDeNegocio,
-  whatsappLink,
-} from '@/lib/whatsapp';
 
 /* Cada amenidad lleva su propio icono según lo que dice el texto: los idiomas
  * nunca deben heredar iconos de camas, baños o coches por el orden del array. */
@@ -117,23 +110,8 @@ export default function BusinessDetail() {
   const [avatarLoadError, setAvatarLoadError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
-  /** WhatsApp leído aparte: la columna de contacto es privada en producción. */
-  const [whatsappPublicado, setWhatsappPublicado] = useState<string | null>(null);
 
   const [reportOpen, setReportOpen] = useState(false);
-  /** Registro del clic de contacto en el contador del negocio.
-   *  Es un RPC de Supabase y se lanza sin esperar: si tarda o falla, el
-   *  enlace de WhatsApp se abre exactamente igual. */
-  const registrarContacto = useCallback((businessId: string) => {
-    if (!supabase || !businessId) return;
-    try {
-      void supabase
-        .rpc('increment_contact_clicks', { b_id: businessId })
-        .then(() => undefined, () => undefined);
-    } catch {
-      /* sin RPC desplegado o sin permisos: el contacto sigue funcionando */
-    }
-  }, []);
 
   const [reportReason, setReportReason] = useState('');
   const [reportSent, setReportSent] = useState(false);
@@ -155,7 +133,6 @@ export default function BusinessDetail() {
         return;
       }
       setBusiness(b);
-      setWhatsappPublicado(await getBusinessWhatsapp(id));
       const reviewsList = await listReviews(id);
       setReviews(reviewsList);
       if (userId && reviewsList.length > 0) {
@@ -287,12 +264,6 @@ export default function BusinessDetail() {
     SERVICE_TYPES.find((s) => s.value === business?.service_type)?.label ??
     (business?.service_type ?? '').charAt(0).toUpperCase() + (business?.service_type ?? '').slice(1);
   const precio = formatPrice(business) ?? 'Precio a consultar';
-  /* Contacto directo: el WhatsApp del anuncio o, si la BD no lo expone al
-   * público, el de soporte para que nadie se quede sin poder escribir. */
-  const whatsappNegocio = telefonoDeNegocio(business) ?? whatsappPublicado;
-  const enlaceWhatsapp = whatsappNegocio
-    ? whatsappLink(whatsappNegocio, MENSAJE_NEGOCIO)
-    : whatsappLink(SUPPORT_WHATSAPP, `${MENSAJE_NEGOCIO} (${business.name || 'un negocio'})`);
   const unidad = business.service_type === 'alojamiento' ? 'por noche' : 'precio orientativo';
   const foto = firstPhoto(business, { skipFirstLogoWhenAvailable: true });
   const fotosValidas = resolvePhotos(business);
@@ -761,37 +732,9 @@ export default function BusinessDetail() {
       </section>
 
       {/* ---------------------------------------------------------- */}
-      {/* Contacto directo por WhatsApp                               */}
+      {/* Solicitud de reserva (lead capture)                         */}
       {/* ---------------------------------------------------------- */}
-      <section id="contacto" className="mt-8 scroll-mt-24 rounded-2xl border border-arena-2 bg-white p-5 sm:p-6">
-        <h2 className="inline-flex items-center gap-2 text-lg font-extrabold text-azul">
-          <MessageCircle size={18} aria-hidden /> Contacta directo con el anfitrión
-        </h2>
-        <p className="mt-1 text-sm text-tinta/65">
-          Sin formularios ni esperas: escríbele por WhatsApp y coordina fechas, precios y detalles del servicio. La
-          conversación y el pago se acuerdan directamente con el anfitrión.
-        </p>
-
-        {/* El clic primero cuenta en Supabase y luego abre WhatsApp: aunque el
-            RPC tarde o falle, el navegador abre el enlace en otra pestaña. */}
-        <a
-          href={enlaceWhatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => {
-            registrarContacto(business.id);
-          }}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1EBE5B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1EBE5B]"
-        >
-          <MessageCircle size={22} aria-hidden /> Contactar directo por WhatsApp
-        </a>
-
-        <p className="mt-2 text-xs text-tinta/55">
-          {whatsappNegocio
-            ? 'Se abre WhatsApp con un mensaje ya escrito. Puedes editarlo antes de enviarlo.'
-            : 'Este anuncio aún no publica su número: escríbenos y te conectamos con el anfitrión.'}
-        </p>
-      </section>
+      <SolicitudReserva business={business} />
 
       {/* Reportar */}
       <div className="mt-6">

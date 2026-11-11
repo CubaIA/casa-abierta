@@ -134,6 +134,27 @@ export interface ContactLead {
   created_at: string;
 }
 
+/** Estado de una solicitud de reserva (lead de la ficha pública). */
+export type LeadStatus = 'pending' | 'contacted' | 'booked';
+
+export interface Lead {
+  id: string;
+  business_id: string;
+  /** Anfitrión destinatario (`businesses.owner_id`). */
+  host_id: string | null;
+  full_name: string;
+  email: string;
+  phone: string;
+  /** Fechas en formato ISO corto (YYYY-MM-DD). */
+  check_in: string | null;
+  check_out: string | null;
+  guests: number | null;
+  budget: string | null;
+  message: string | null;
+  status: LeadStatus;
+  created_at: string;
+}
+
 export interface ContactMessage {
   id: string;
   /** Columnas reales de la BD en producción (antes sender_id/inquiry_type). */
