@@ -534,6 +534,9 @@ function Footer() {
           <ul className="space-y-2 text-sm">
             <li><Link href="/about" className="hover:text-white">Sobre el proyecto</Link></li>
             <li><Link href="/status" className="hover:text-white">Estado de la plataforma</Link></li>
+            <li><Link href="/faq" className="hover:text-white">Preguntas frecuentes</Link></li>
+            <li><Link href="/politica-de-cancelacion" className="hover:text-white">Política de cancelación</Link></li>
+            <li><Link href="/seguridad" className="hover:text-white">Seguridad y sello Verificado</Link></li>
             <li><Link href="/antifraud" className="hover:text-white">Política antifraude</Link></li>
             <li><Link href="/privacy" className="hover:text-white">Privacidad</Link></li>
             <li><Link href="/terms" className="hover:text-white">Términos</Link></li>
