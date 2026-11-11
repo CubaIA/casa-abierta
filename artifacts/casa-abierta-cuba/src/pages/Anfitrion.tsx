@@ -245,7 +245,7 @@ export default function Anfitrion() {
               <article key={l.id} className="panel">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h2 className="font-extrabold text-azul">{l.full_name}</h2>
+                    <h2 className="font-extrabold text-azul">{l.tourist_name}</h2>
                     <p className="text-xs text-tinta/55">
                       {negocio?.name ?? 'Tu negocio'} · {new Date(l.created_at).toLocaleString('es-ES')}
                     </p>
@@ -257,8 +257,8 @@ export default function Anfitrion() {
                   <p>Salida: <strong>{l.check_out ?? '—'}</strong></p>
                   <p>Huéspedes: <strong>{l.guests ?? '—'}</strong></p>
                   <p>Presupuesto: <strong>{l.budget ?? 'A consultar'}</strong></p>
-                  <p>Correo: <a className="text-link" href={`mailto:${l.email}`}>{l.email}</a></p>
-                  <p>Teléfono: <a className="text-link" href={`tel:${l.phone}`}>{l.phone}</a></p>
+                  <p>Correo: <a className="text-link" href={`mailto:${l.tourist_email}`}>{l.tourist_email}</a></p>
+                  <p>Teléfono: <a className="text-link" href={`tel:${l.tourist_phone}`}>{l.tourist_phone}</a></p>
                 </div>
                 {l.message && <p className="mt-2 text-sm text-tinta/75">{l.message}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">

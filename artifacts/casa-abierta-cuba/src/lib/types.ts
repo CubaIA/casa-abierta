@@ -142,9 +142,10 @@ export interface Lead {
   business_id: string;
   /** Anfitrión destinatario (`businesses.owner_id`). */
   host_id: string | null;
-  full_name: string;
-  email: string;
-  phone: string;
+  /** Nombre, correo y teléfono del viajero (columnas reales de `leads`). */
+  tourist_name: string;
+  tourist_email: string;
+  tourist_phone: string;
   /** Fechas en formato ISO corto (YYYY-MM-DD). */
   check_in: string | null;
   check_out: string | null;

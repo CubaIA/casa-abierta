@@ -5,6 +5,10 @@
  * guarda en `public.leads` como `pending` y el anfitrión la ve en su panel y
  * la mueve a `contacted` o `booked`. Sin Supabase configurado se guarda en
  * localStorage para que el modo demostración siga siendo coherente.
+ *
+ * Nombres de columna exactos de la tabla `leads`:
+ * business_id, host_id, tourist_name, tourist_email, tourist_phone,
+ * check_in, check_out, guests, budget, message, status.
  */
 
 import { supabase } from './supabase';
@@ -40,6 +44,31 @@ function guardarDemo(leads: Lead[]): void {
   }
 }
 
+/**
+ * Dueño del negocio (`businesses.owner_id`).
+ *
+ * La ficha pública no puede leer `owner_id` (columna privada para anon), así
+ * que cuando el negocio cargado no lo trae se pide por la función
+ * `business_host_id`, que solo devuelve ese identificador. Si falla, el lead
+ * se envía sin destinatario antes que perder la solicitud.
+ */
+async function hostDelNegocio(businessId: string): Promise<string | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.rpc('business_host_id', {
+      target_business_id: businessId,
+    });
+    if (error) {
+      console.warn('[leads] No se pudo resolver el anfitrión del negocio:', error.message);
+      return null;
+    }
+    return typeof data === 'string' && data.trim() ? data : null;
+  } catch (error) {
+    console.warn('[leads] Error inesperado resolviendo el anfitrión:', error);
+    return null;
+  }
+}
+
 export interface NuevoLead {
   businessId: string;
   /** Dueño del negocio (`businesses.owner_id`), destinatario de la solicitud. */
@@ -56,31 +85,44 @@ export interface NuevoLead {
 
 /** Crea una solicitud de reserva en estado `pending`. */
 export async function crearLead(input: NuevoLead): Promise<void> {
+  const hostId = input.hostId ?? (await hostDelNegocio(input.businessId));
+
   const fila = {
     business_id: input.businessId,
-    host_id: input.hostId,
-    full_name: input.fullName.trim().slice(0, 120),
-    email: input.email.trim().slice(0, 160),
-    phone: input.phone.trim().slice(0, 40),
+    host_id: hostId,
+    tourist_name: input.fullName.trim().slice(0, 120),
+    tourist_email: input.email.trim().slice(0, 160),
+    tourist_phone: input.phone.trim().slice(0, 40),
     check_in: input.checkIn || null,
     check_out: input.checkOut || null,
     guests: Number.isFinite(input.guests) && input.guests > 0 ? Math.round(input.guests) : null,
     budget: input.budget.trim().slice(0, 80) || null,
     message: input.message.trim().slice(0, 1000) || null,
-    status: 'pending' as LeadStatus,
+    status: 'pending',
   };
 
   if (supabase) {
     const { error } = await supabase.from('leads').insert(fila);
     if (!error) return;
+
+    // Error exacto en consola para diagnosticar sin adivinar.
+    console.error('[leads] Error insertando la solicitud en Supabase:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      fila,
+    });
+
     if (esTablaAusente(error.message) || /row-level security|42501/i.test(error.message)) {
       throw new Error(FALTA_TABLA);
     }
-    throw new Error(error.message);
+    if (error.message) throw new Error(error.message);
+    throw new Error('No se pudo enviar la solicitud.');
   }
 
   guardarDemo([
-    { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...fila },
+    { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...fila, status: 'pending' },
     ...leerDemo(),
   ]);
 }
@@ -94,6 +136,7 @@ export async function listarLeadsDelAnfitrion(hostId: string): Promise<Lead[]> {
       .eq('host_id', hostId)
       .order('created_at', { ascending: false });
     if (error) {
+      console.error('[leads] Error leyendo las solicitudes del anfitrión:', error);
       // Proyecto sin la migración 016: panel vacío, no error de página.
       if (esTablaAusente(error.message)) return [];
       throw new Error(error.message);
@@ -107,7 +150,10 @@ export async function listarLeadsDelAnfitrion(hostId: string): Promise<Lead[]> {
 export async function actualizarEstadoLead(id: string, status: LeadStatus): Promise<void> {
   if (supabase) {
     const { error } = await supabase.from('leads').update({ status }).eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('[leads] Error actualizando el estado de la solicitud:', error);
+      throw new Error(error.message);
+    }
     return;
   }
   const leads = leerDemo();
