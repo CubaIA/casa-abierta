@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CalendarCheck, X } from 'lucide-react';
+import { CalendarCheck, CalendarDays, HelpCircle, Shield, X } from 'lucide-react';
+import { Link } from 'wouter';
 import type { Business } from '@/lib/types';
 import { crearLead } from '@/lib/leads';
 
@@ -113,6 +114,28 @@ export function SolicitudReserva({ business }: { business: Business }) {
       >
         <CalendarCheck size={20} aria-hidden /> Solicitar Reserva
       </button>
+
+      {/* Bloque de confianza: enlaces rápidos a las páginas de ayuda. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        <Link
+          href="/seguridad"
+          className="inline-flex items-center gap-1.5 font-semibold text-verde-700 hover:underline"
+        >
+          <Shield size={15} aria-hidden /> Verificado CA
+        </Link>
+        <Link
+          href="/politica-de-cancelacion"
+          className="inline-flex items-center gap-1.5 font-semibold text-tinta/80 hover:underline"
+        >
+          <CalendarDays size={15} aria-hidden /> Cancelación flexible
+        </Link>
+        <Link
+          href="/faq"
+          className="inline-flex items-center gap-1.5 font-semibold text-tinta/80 hover:underline"
+        >
+          <HelpCircle size={15} aria-hidden /> Preguntas frecuentes
+        </Link>
+      </div>
 
       <p className="mt-2 text-xs text-tinta/55">
         Te contactamos por correo o WhatsApp para confirmar fechas y condiciones.
