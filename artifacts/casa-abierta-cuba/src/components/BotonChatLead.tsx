@@ -22,11 +22,11 @@ export function BotonChatLead({ leadId }: { leadId: string }) {
           role="dialog"
           aria-modal="true"
           aria-label="Chat de la solicitud"
-          className="fixed inset-0 z-50 overflow-y-auto bg-tinta/60 p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-tinta/60 p-3 sm:items-center sm:p-4"
           onClick={() => setAbierto(false)}
         >
           <div
-            className="mx-auto my-6 w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl sm:p-5"
+            className="my-4 w-full max-w-lg overflow-x-hidden rounded-2xl bg-white p-3 shadow-xl sm:my-6 sm:p-5 max-h-[90dvh] overflow-y-auto sm:max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between gap-3">

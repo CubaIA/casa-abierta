@@ -75,8 +75,8 @@ export function ChatLeadPanel({
   }
 
   return (
-    <div className={`flex flex-col ${className}`}>
-      <div className="max-h-80 min-h-[180px] flex-1 space-y-2 overflow-y-auto rounded-xl border border-arena-2 bg-arena/20 p-3">
+    <div className={`flex w-full min-w-0 flex-col ${className}`}>
+      <div className="max-h-[50vh] min-h-[160px] w-full min-w-0 space-y-2 overflow-y-auto overscroll-contain rounded-xl border border-arena-2 bg-arena/20 p-3">
         {cargando && <p className="text-sm text-tinta/60">Cargando conversación…</p>}
         {!cargando && mensajes.length === 0 && (
           <p className="text-sm text-tinta/60">
@@ -110,11 +110,11 @@ export function ChatLeadPanel({
         </p>
       )}
 
-      <form onSubmit={enviar} className="mt-2 flex items-end gap-2">
-        <label className="flex-1">
+      <form onSubmit={enviar} className="mt-2 flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+        <label className="w-full min-w-0 sm:flex-1">
           <span className="sr-only">Escribe un mensaje</span>
           <textarea
-            className="field-input"
+            className="field-input resize-none"
             rows={2}
             maxLength={2000}
             value={texto}
@@ -122,7 +122,11 @@ export function ChatLeadPanel({
             placeholder="Escribe un mensaje…"
           />
         </label>
-        <button type="submit" className="button-primary !py-2.5" disabled={enviando || !texto.trim()}>
+        <button
+          type="submit"
+          className="button-primary w-full shrink-0 justify-center !py-2.5 sm:w-auto"
+          disabled={enviando || !texto.trim()}
+        >
           <Send size={16} aria-hidden /> {enviando ? '…' : 'Enviar'}
         </button>
       </form>
