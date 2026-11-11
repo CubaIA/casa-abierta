@@ -162,7 +162,8 @@ export async function listarTodosLosLeads(): Promise<Lead[]> {
       if (esTablaAusente(error.message)) return [];
       throw new Error(error.message);
     }
-    return (data ?? []) as Lead[];
+    // `select()` con columnas dinámicas pierde el tipo: se afirma el resultado.
+    return (data ?? []) as unknown as Lead[];
   }
   return leerDemo();
 }
