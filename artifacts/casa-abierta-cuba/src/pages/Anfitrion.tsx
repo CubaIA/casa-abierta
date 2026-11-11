@@ -15,7 +15,7 @@ import { uploadBusinessImages } from '@/lib/storage';
 import { actualizarEstadoLead, listarLeadsDelAnfitrion } from '@/lib/leads';
 import type { Business, BusinessRow, Lead, LeadStatus, RequestStatus, SubmitBusinessInput } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
-import { normalizeRole } from '@/lib/roles';
+import { esMasterAgent, normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { AvisoError } from '@/components/AvisoError';
 import {
@@ -119,6 +119,12 @@ export default function Anfitrion() {
         Publica tus servicios y responde a las solicitudes de viajeros. Toda alta se revisa antes de aparecer en el
         catálogo.
       </p>
+
+      {(esMasterAgent(profile?.role) || businesses.length > 1) && (
+        <Link href="/agencia" className="button-primary mt-4 inline-flex">
+          <Building2 size={15} /> Panel de agencia (B2B)
+        </Link>
+      )}
 
       <div className="mt-5 flex flex-wrap gap-2" role="tablist">
         <button className={`button-ghost ${tab === 'businesses' ? '!bg-azul !text-white !border-azul' : ''}`} onClick={() => setTab('businesses')} role="tab" aria-selected={tab === 'businesses'}>

@@ -168,6 +168,63 @@ export async function listarTodosLosLeads(): Promise<Lead[]> {
   return leerDemo();
 }
 
+/** Solicitudes de un conjunto de casas (panel de agencia). */
+export async function listarLeadsDeNegocios(businessIds: string[]): Promise<Lead[]> {
+  if (businessIds.length === 0) return [];
+
+  const client = supabase;
+  if (client) {
+    const orden = { ascending: false } as const;
+    const sinJoin = async () => {
+      const { data, error } = await client
+        .from('leads')
+        .select('*')
+        .in('business_id', businessIds)
+        .order('created_at', orden);
+      if (error) {
+        console.error('[leads] Error leyendo las solicitudes de la agencia:', error);
+        if (esTablaAusente(error.message)) return [];
+        throw new Error(error.message);
+      }
+      return (data ?? []) as unknown as Lead[];
+    };
+
+    const { data, error } = await client
+      .from('leads')
+      .select('*, businesses(title)')
+      .in('business_id', businessIds)
+      .order('created_at', orden);
+    if (error) {
+      // Relación no expuesta en el esquema: se leen sin el nombre del negocio.
+      if (/Could not find a relationship|PGRST200|schema cache/i.test(error.message)) return sinJoin();
+      console.error('[leads] Error leyendo las solicitudes de la agencia:', error);
+      if (esTablaAusente(error.message)) return [];
+      throw new Error(error.message);
+    }
+    return (data ?? []) as unknown as Lead[];
+  }
+
+  return leerDemo().filter((l) => businessIds.includes(l.business_id));
+}
+
+/** Reasigna una solicitud a otra casa de la misma agencia. */
+export async function reasignarLead(id: string, businessId: string): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.from('leads').update({ business_id: businessId }).eq('id', id);
+    if (error) {
+      console.error('[leads] Error reasignando la solicitud:', error);
+      throw new Error(error.message);
+    }
+    return;
+  }
+  const leads = leerDemo();
+  const lead = leads.find((l) => l.id === id);
+  if (lead) {
+    lead.business_id = businessId;
+    guardarDemo(leads);
+  }
+}
+
 /** Cambia el estado de una solicitud (`contacted` o `booked`). */
 export async function actualizarEstadoLead(id: string, status: LeadStatus): Promise<void> {
   if (supabase) {

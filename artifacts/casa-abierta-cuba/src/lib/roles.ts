@@ -24,6 +24,19 @@ export function normalizeRole(raw: string | null | undefined): Role | null {
   return null;
 }
 
+/**
+ * ¿El socio es un Master Agent (agencia B2B)?
+ *
+ * El rol llega literal de la base de datos (`master_agent`) y no forma parte
+ * del union `Role`, así que se compara en texto. Un anfitrión con varias casas
+ * se trata como agencia en el panel, aunque su rol siga siendo `provider`.
+ */
+export function esMasterAgent(raw: string | null | undefined): boolean {
+  if (!raw) return false;
+  const value = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return value === 'master_agent' || value === 'master' || value === 'agency' || value === 'agencia';
+}
+
 /** ¿El rol es de anfitrión o administrador? Tolerante a `provider`/`anfitrion`. */
 export function isHostRole(raw: string | null | undefined): boolean {
   const role = normalizeRole(raw);
