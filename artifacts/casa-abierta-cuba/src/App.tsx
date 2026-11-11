@@ -21,6 +21,7 @@ const Agencia = lazy(() => import('@/pages/Agencia'));
 const Faq = lazy(() => import('@/pages/Faq'));
 const PoliticaCancelacion = lazy(() => import('@/pages/PoliticaCancelacion'));
 const Seguridad = lazy(() => import('@/pages/Seguridad'));
+const ChatLead = lazy(() => import('@/pages/ChatLead'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
 const ChatIA = lazy(() => import('@/pages/ChatIA'));
 const Perfil = lazy(() => import('@/pages/Perfil'));
@@ -109,6 +110,7 @@ export default function App() {
               <Route path="/faq" component={Faq} />
               <Route path="/politica-de-cancelacion" component={PoliticaCancelacion} />
               <Route path="/seguridad" component={Seguridad} />
+              <Route path="/chat/:id" component={ChatLead} />
               <Route path="/contacto" component={Contacto} />
               <Route path="/status" component={StatusPage} />
               <Route path="/blog" component={BlogPage} />

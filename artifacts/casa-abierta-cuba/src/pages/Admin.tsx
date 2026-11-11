@@ -41,6 +41,7 @@ import { useAuth } from '@/lib/auth';
 import { BusinessForm } from './Anfitrion';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
 import { actualizarEstadoLead, listarTodosLosLeads } from '@/lib/leads';
+import { BotonChatLead } from '@/components/BotonChatLead';
 
 type Tab = 'businesses' | 'users' | 'requests' | 'leads' | 'reviews' | 'reports' | 'messages';
 
@@ -1250,6 +1251,7 @@ function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
                   Marcar reservado
                 </button>
               )}
+              <BotonChatLead leadId={l.id} />
             </div>
           </article>
         );

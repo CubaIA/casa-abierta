@@ -44,6 +44,7 @@ export function SolicitudReserva({ business }: { business: Business }) {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviada, setEnviada] = useState(false);
+  const [leadId, setLeadId] = useState<string | null>(null);
 
   const campo = (clave: keyof Formulario) => ({
     value: form[clave],
@@ -76,7 +77,7 @@ export function SolicitudReserva({ business }: { business: Business }) {
     setEnviando(true);
     setError(null);
     try {
-      await crearLead({
+      const nuevoLead = await crearLead({
         businessId: business.id,
         hostId: business.owner_id ?? null,
         fullName: form.nombre,
@@ -88,6 +89,7 @@ export function SolicitudReserva({ business }: { business: Business }) {
         budget: form.presupuesto,
         message: form.mensaje,
       });
+      setLeadId(nuevoLead);
       setForm(FORMULARIO_VACIO);
       setEnviada(true);
     } catch (err) {
@@ -173,6 +175,14 @@ export function SolicitudReserva({ business }: { business: Business }) {
                 <p className="form-success" role="status">
                   {MENSAJE_EXITO}
                 </p>
+                {leadId && (
+                  <Link
+                    href={`/chat/${leadId}`}
+                    className="button-primary mt-3 mr-2 inline-flex"
+                  >
+                    Ir al chat con el anfitrión
+                  </Link>
+                )}
                 <button type="button" className="button-ghost mt-3" onClick={cerrar}>
                   Cerrar
                 </button>

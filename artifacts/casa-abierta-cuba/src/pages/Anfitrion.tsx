@@ -18,6 +18,7 @@ import { useAuth } from '@/lib/auth';
 import { esMasterAgent, normalizeRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { AvisoError } from '@/components/AvisoError';
+import { BotonChatLead } from '@/components/BotonChatLead';
 import {
   ADMIN_WHATSAPP,
   SUPPORT_WHATSAPP,
@@ -278,6 +279,7 @@ export default function Anfitrion() {
                       Marcar reservado
                     </button>
                   )}
+                  <BotonChatLead leadId={l.id} />
                 </div>
               </article>
             );

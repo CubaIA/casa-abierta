@@ -84,10 +84,13 @@ export interface NuevoLead {
 }
 
 /** Crea una solicitud de reserva en estado `pending`. */
-export async function crearLead(input: NuevoLead): Promise<void> {
+/** Crea una solicitud y devuelve su id (también sirve de enlace al chat). */
+export async function crearLead(input: NuevoLead): Promise<string> {
+  const leadId = crypto.randomUUID();
   const hostId = input.hostId ?? (await hostDelNegocio(input.businessId));
 
   const fila = {
+    id: leadId,
     business_id: input.businessId,
     host_id: hostId,
     tourist_name: input.fullName.trim().slice(0, 120),
@@ -103,7 +106,7 @@ export async function crearLead(input: NuevoLead): Promise<void> {
 
   if (supabase) {
     const { error } = await supabase.from('leads').insert(fila);
-    if (!error) return;
+    if (!error) return leadId;
 
     // Error exacto en consola para diagnosticar sin adivinar.
     console.error('[leads] Error insertando la solicitud en Supabase:', {
@@ -122,9 +125,10 @@ export async function crearLead(input: NuevoLead): Promise<void> {
   }
 
   guardarDemo([
-    { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...fila, status: 'pending' },
+    { created_at: new Date().toISOString(), ...fila, status: 'pending' },
     ...leerDemo(),
   ]);
+  return leadId;
 }
 
 /** Solicitudes recibidas por un anfitrión, de la más reciente a la más antigua. */

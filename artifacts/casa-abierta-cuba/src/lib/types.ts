@@ -158,6 +158,14 @@ export interface Lead {
   created_at: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  lead_id: string;
+  sender_type: 'tourist' | 'host';
+  content: string;
+  created_at: string;
+}
+
 export interface ContactMessage {
   id: string;
   /** Columnas reales de la BD en producción (antes sender_id/inquiry_type). */
