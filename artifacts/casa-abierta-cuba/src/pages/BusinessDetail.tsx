@@ -121,19 +121,19 @@ export default function BusinessDetail() {
   const [whatsappPublicado, setWhatsappPublicado] = useState<string | null>(null);
 
   const [reportOpen, setReportOpen] = useState(false);
-  /** Registro silencioso de contacto: solo guarda id del negocio y cuándo.
-   *  Nunca bloquea ni retrasa la apertura de WhatsApp. */
-  const registrarContacto = useCallback(
-    async (businessId: string) => {
-      if (!supabase) return;
-      try {
-        await supabase.from('contact_leads').insert({ business_id: businessId });
-      } catch {
-        /* si la tabla no existe o RLS lo bloquea, ya se abrió WhatsApp */
-      }
-    },
-    [],
-  );
+  /** Registro del clic de contacto en el contador del negocio.
+   *  Es un RPC de Supabase y se lanza sin esperar: si tarda o falla, el
+   *  enlace de WhatsApp se abre exactamente igual. */
+  const registrarContacto = useCallback((businessId: string) => {
+    if (!supabase || !businessId) return;
+    try {
+      void supabase
+        .rpc('increment_contact_clicks', { b_id: businessId })
+        .then(() => undefined, () => undefined);
+    } catch {
+      /* sin RPC desplegado o sin permisos: el contacto sigue funcionando */
+    }
+  }, []);
 
   const [reportReason, setReportReason] = useState('');
   const [reportSent, setReportSent] = useState(false);
@@ -771,12 +771,14 @@ export default function BusinessDetail() {
           conversación y el pago se acuerdan directamente con el anfitrión.
         </p>
 
+        {/* El clic primero cuenta en Supabase y luego abre WhatsApp: aunque el
+            RPC tarde o falle, el navegador abre el enlace en otra pestaña. */}
         <a
           href={enlaceWhatsapp}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => {
-            void registrarContacto(id);
+            registrarContacto(business.id);
           }}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1EBE5B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1EBE5B]"
         >
