@@ -64,6 +64,8 @@ export default function Partners() {
       setAnnualClients('');
       setMessage('');
     } catch (err) {
+      // El detalle real de Supabase ya se registra en consola; aquí se muestra.
+      console.error('[operadores] No se pudo enviar la solicitud:', err);
       setError(err instanceof Error ? err.message : 'No se pudo enviar la solicitud');
     } finally {
       setBusy(false);

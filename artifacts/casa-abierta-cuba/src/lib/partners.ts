@@ -12,12 +12,12 @@ export type PartnerStatus = 'new' | 'contacted' | 'active';
 
 export interface Partner {
   id: string;
-  agency_name: string;
+  company_name: string;
   contact_name: string;
   email: string;
   country: string;
   website: string | null;
-  annual_clients: string | null;
+  annual_volume: string | null;
   message: string | null;
   status: PartnerStatus;
   created_at: string;
@@ -64,13 +64,14 @@ function guardarDemo(partners: Partner[]): void {
 
 /** Guarda la solicitud de una agencia en estado `new`. */
 export async function crearPartner(input: NuevoPartner): Promise<void> {
+  // Nombres de columna exactos de la tabla `partners`.
   const fila = {
-    agency_name: input.agencyName.trim().slice(0, 160),
+    company_name: input.agencyName.trim().slice(0, 160),
     contact_name: input.contactName.trim().slice(0, 120),
     email: input.email.trim().slice(0, 160),
     country: input.country.trim().slice(0, 80),
     website: input.website.trim().slice(0, 200) || null,
-    annual_clients: input.annualClients.trim().slice(0, 80) || null,
+    annual_volume: input.annualClients.trim().slice(0, 80) || null,
     message: input.message.trim().slice(0, 2000) || null,
     status: 'new' as PartnerStatus,
   };
@@ -78,8 +79,15 @@ export async function crearPartner(input: NuevoPartner): Promise<void> {
   if (supabase) {
     const { error } = await supabase.from('partners').insert(fila);
     if (!error) return;
-    console.error('[partners] Error guardando la solicitud:', error);
-    if (esTablaAusente(error.message) || /row-level security|42501/i.test(error.message)) {
+    // Error real de Supabase, sin mensajes genéricos: datos para diagnosticar.
+    console.error('[partners] Error insertando la solicitud:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      fila,
+    });
+    if (esTablaAusente(error.message) || /row-level security|42501|PGRST204/i.test(error.message)) {
       throw new Error(FALTA_TABLA);
     }
     throw new Error(error.message || 'No se pudo enviar la solicitud.');

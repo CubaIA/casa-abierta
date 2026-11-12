@@ -515,6 +515,7 @@ function Footer() {
             <li><Link href="/eventos" className="hover:text-white">Eventos</Link></li>
             <li><Link href="/blog" className="hover:text-white">Blog de viajes</Link></li>
             <li><Link href="/anfitrion" className="hover:text-white">Publicar mi negocio</Link></li>
+            <li><Link href="/operadores" className="hover:text-white">Para Agencias / Partners B2B</Link></li>
             <li><Link href="/providers" className="hover:text-white">Normas para proveedores</Link></li>
             <li><Link href="/contacto" className="hover:text-white">Contacto</Link></li>
             <li>

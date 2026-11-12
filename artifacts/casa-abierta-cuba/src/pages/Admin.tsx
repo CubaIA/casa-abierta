@@ -1430,7 +1430,7 @@ function PartnersTab({ onError }: { onError: (m: string | null) => void }) {
           <article key={p.id} className="panel !p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="font-extrabold text-azul">{p.agency_name}</h2>
+                <h2 className="font-extrabold text-azul">{p.company_name}</h2>
                 <p className="text-xs text-tinta/55">
                   {new Date(p.created_at).toLocaleString('es-ES')} · {p.country}
                 </p>
@@ -1454,7 +1454,7 @@ function PartnersTab({ onError }: { onError: (m: string | null) => void }) {
                   <strong>—</strong>
                 )}
               </p>
-              <p>Volumen anual: <strong>{p.annual_clients || '—'}</strong></p>
+              <p>Volumen anual: <strong>{p.annual_volume || '—'}</strong></p>
             </div>
             <p className="mt-2 whitespace-pre-line text-sm text-tinta/80">{p.message || 'Sin mensaje.'}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
