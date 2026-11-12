@@ -86,20 +86,25 @@ export async function enviarMensaje(input: {
   return mensaje;
 }
 
-/** Borra todo el historial del hilo (tabla `messages`). */
-export async function borrarMensajes(leadId: string): Promise<void> {
-  if (!leadId) return;
+/**
+ * Borra todo el historial del hilo (tabla `messages`).
+ * Devuelve `true` solo si el borrado se completó sin error.
+ */
+export async function borrarMensajes(leadId: string): Promise<boolean> {
+  if (!leadId) return false;
 
   if (supabase) {
     const { error } = await supabase.from('messages').delete().eq('lead_id', leadId);
     if (error) {
       console.error('[chat] Error borrando el historial:', error);
-      throw new Error(error.message);
+      alert('No se pudo borrar el chat: ' + error.message);
+      return false;
     }
-    return;
+    return true;
   }
 
   guardarDemo(leerDemo().filter((m) => m.lead_id !== leadId));
+  return true;
 }
 
 /**

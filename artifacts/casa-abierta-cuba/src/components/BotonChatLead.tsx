@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { MessageCircle, Trash2, X } from 'lucide-react';
+import { Loader2, MessageCircle, Trash2, X } from 'lucide-react';
 import { ChatLeadPanel, type ChatLeadPanelHandle } from './ChatLeadPanel';
 import { borrarMensajes } from '@/lib/chat';
 
@@ -17,10 +17,8 @@ export function BotonChatLead({ leadId }: { leadId: string }) {
 
     setBorrando(true);
     try {
-      await borrarMensajes(leadId);
-      panelRef.current?.vaciar();
-    } catch (e) {
-      window.alert(e instanceof Error ? e.message : 'No se pudo borrar el chat');
+      const borrado = await borrarMensajes(leadId);
+      if (borrado) panelRef.current?.vaciar();
     } finally {
       setBorrando(false);
     }
@@ -56,11 +54,16 @@ export function BotonChatLead({ leadId }: { leadId: string }) {
                   type="button"
                   onClick={borrarChat}
                   disabled={borrando}
-                  aria-label="Borrar chat"
+                  aria-busy={borrando}
+                  aria-label={borrando ? 'Borrando chat…' : 'Borrar chat'}
                   title="Borrar chat"
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-terracota/10 text-terracota-700 transition hover:bg-terracota-700 hover:text-white disabled:opacity-50"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-terracota/10 text-terracota-700 transition hover:bg-terracota-700 hover:text-white disabled:cursor-wait disabled:opacity-60"
                 >
-                  <Trash2 size={17} aria-hidden />
+                  {borrando ? (
+                    <Loader2 size={17} className="animate-spin" aria-hidden />
+                  ) : (
+                    <Trash2 size={17} aria-hidden />
+                  )}
                 </button>
                 <button
                   type="button"
