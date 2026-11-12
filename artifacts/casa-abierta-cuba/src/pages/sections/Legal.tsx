@@ -39,7 +39,38 @@ const DOCUMENTOS = [
 export default function Legal() {
   return (
     <SectionPage section={SECTIONS.legal}>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <section aria-labelledby="aviso-legal" className="max-w-3xl">
+        <h2 id="aviso-legal" className="text-2xl font-extrabold text-azul sm:text-3xl">
+          Aviso Legal y Marco Regulatorio
+        </h2>
+        <div className="mt-3 space-y-3 text-sm leading-relaxed text-tinta/80 sm:text-base">
+          <p>
+            Casa Abierta Cuba es una plataforma digital de intermediación y conexión tecnológica. Nuestra función
+            principal es facilitar el contacto directo entre los viajeros internacionales y los proveedores de
+            servicios turísticos locales (alojamientos, gastronomía, transporte y guías).
+          </p>
+          <p>
+            En cumplimiento con las regulaciones del Ministerio de Turismo de la República de Cuba (MINTUR), Casa
+            Abierta Cuba no opera como una agencia de viajes tradicional ni vende paquetes turísticos en nombre propio.
+          </p>
+          <p>
+            Nuestro modelo se alinea con los servicios de representación y facilitación que estipula la normativa
+            vigente, ofreciendo a las agencias internacionales y tour operadores (DMCs) un canal tecnológico para:
+          </p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Gestionar la visibilidad de los proveedores locales verificados.</li>
+            <li>Facilitar la comunicación y el filtrado de clientes (Leads).</li>
+            <li>Coordinar servicios de transporte y reservas a través de nuestros Perfiles Máster (socios locales).</li>
+          </ul>
+          <p>
+            Toda reserva o contratación final se formaliza directamente entre el turista y el proveedor del servicio,
+            o mediante los acuerdos B2B establecidos con nuestros socios operativos en el territorio nacional.
+          </p>
+        </div>
+      </section>
+
+      <h2 className="mt-8 text-lg font-extrabold text-azul">Documentos legales</h2>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2">
         {DOCUMENTOS.map((doc) => {
           const Icon = doc.icon;
           return (
