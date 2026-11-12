@@ -54,8 +54,10 @@ i18n
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
     detection: {
-      order: ['localStorage', 'navigator', 'querystring', 'htmlTag', 'cookie'],
+      // Primero la preferencia guardada; si no hay, el idioma del navegador.
+      order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
+      lookupLocalStorage: CLAVE_PREFERENCIA,
     },
     react: {
       useSuspense: false,

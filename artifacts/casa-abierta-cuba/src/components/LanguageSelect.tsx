@@ -11,12 +11,22 @@ const LANGS = [
 export function LanguageSelect() {
   const { i18n } = useTranslation();
   const current = i18n.resolvedLanguage || i18n.language || 'es';
+
+  /** Cambia el idioma y guarda la elección para que sobreviva a la recarga. */
+  const cambiarIdioma = (idioma: string) => {
+    void i18n.changeLanguage(idioma);
+    try {
+      window.localStorage.setItem('i18nextLng', idioma);
+    } catch {
+      /* almacenamiento bloqueado: el cambio se aplica solo en esta sesión */
+    }
+  };
   return (
     <select
       aria-label="Idioma"
       className="rounded-full bg-white/10 px-2 py-1 text-sm font-semibold text-white hover:bg-white/20"
       value={current}
-      onChange={(e) => i18n.changeLanguage(e.target.value)}
+      onChange={(e) => cambiarIdioma(e.target.value)}
     >
       {LANGS.map((l) => (
         <option key={l.code} value={l.code} className="text-black">
