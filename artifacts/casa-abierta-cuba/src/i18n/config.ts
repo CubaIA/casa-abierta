@@ -6,43 +6,15 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 /** Idiomas con traducción disponible (el selector manual puede elegir todos). */
 const IDIOMAS_DISPONIBLES = ['es', 'en', 'fr', 'ru', 'zh-CN'];
 
-/** Idiomas que se detectan desde el navegador; el resto cae a inglés. */
-const IDIOMAS_NAVEGADOR = ['es', 'en', 'ru'];
-
-/** Clave donde el detector guarda la preferencia manual del usuario. */
-const CLAVE_PREFERENCIA = 'i18nextLng';
-
-/** Preferencia manual guardada, si existe y es un idioma disponible. */
-function leerPreferencia(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const guardado = window.localStorage.getItem(CLAVE_PREFERENCIA);
-    return guardado && IDIOMAS_DISPONIBLES.includes(guardado) ? guardado : null;
-  } catch {
-    /* almacenamiento bloqueado: se usa el idioma del navegador */
-    return null;
-  }
-}
-
 /**
- * Idioma del navegador: es-ES → es, en-US → en, ru → ru. Cualquier otro
- * idioma (alemán, francés, chino…) usa inglés como fallback.
+ * Sin `lng` fijo: el LanguageDetector decide el idioma inicial.
+ * Primero la preferencia guardada (localStorage) y, si no hay, el navegador.
  */
-export function idiomaDelNavegador(): string {
-  const navegador = typeof navigator === 'undefined' ? '' : navigator.language || '';
-  const base = navegador.toLowerCase().split('-')[0];
-  return IDIOMAS_NAVEGADOR.includes(base) ? base : 'en';
-}
-
-/** Primera carga: manda la preferencia guardada; si no hay, el navegador. */
-const idiomaInicial = leerPreferencia() ?? idiomaDelNavegador();
-
 i18n
   .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    lng: idiomaInicial,
     fallbackLng: 'en',
     supportedLngs: IDIOMAS_DISPONIBLES,
     ns: ['common'],
@@ -54,10 +26,9 @@ i18n
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
     detection: {
-      // Primero la preferencia guardada; si no hay, el idioma del navegador.
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
-      lookupLocalStorage: CLAVE_PREFERENCIA,
+      lookupLocalStorage: 'i18nextLng',
     },
     react: {
       useSuspense: false,
