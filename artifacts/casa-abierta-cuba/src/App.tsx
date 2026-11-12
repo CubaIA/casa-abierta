@@ -23,6 +23,7 @@ const PoliticaCancelacion = lazy(() => import('@/pages/PoliticaCancelacion'));
 const Seguridad = lazy(() => import('@/pages/Seguridad'));
 const ChatLead = lazy(() => import('@/pages/ChatLead'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
+const Partners = lazy(() => import('@/pages/Partners'));
 const ChatIA = lazy(() => import('@/pages/ChatIA'));
 const Perfil = lazy(() => import('@/pages/Perfil'));
 const UpdatePassword = lazy(() => import('@/pages/UpdatePassword'));
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="/seguridad" component={Seguridad} />
               <Route path="/chat/:id" component={ChatLead} />
               <Route path="/contacto" component={Contacto} />
+              <Route path="/operadores" component={Partners} />
               <Route path="/status" component={StatusPage} />
               <Route path="/blog" component={BlogPage} />
               <Route path="/blog/:slug" component={BlogPost} />

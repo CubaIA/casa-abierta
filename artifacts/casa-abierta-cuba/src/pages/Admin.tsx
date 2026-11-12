@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { BadgeCheck, CalendarCheck, CheckCircle2, FileCheck2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, ShieldCheck, Star, Users, XCircle } from 'lucide-react';
+import { BadgeCheck, Building2, CalendarCheck, CheckCircle2, FileCheck2, Flag, Inbox, MessageSquare, Pencil, Plus, RefreshCw, ShieldCheck, Star, Users, XCircle } from 'lucide-react';
 import {
   adminApproveReview,
   adminDeleteBusiness,
@@ -42,8 +42,9 @@ import { BusinessForm } from './Anfitrion';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
 import { actualizarEstadoLead, listarTodosLosLeads } from '@/lib/leads';
 import { BotonChatLead } from '@/components/BotonChatLead';
+import { actualizarEstadoPartner, listarPartners, type Partner, type PartnerStatus } from '@/lib/partners';
 
-type Tab = 'businesses' | 'users' | 'requests' | 'leads' | 'reviews' | 'reports' | 'messages';
+type Tab = 'businesses' | 'users' | 'requests' | 'leads' | 'reviews' | 'reports' | 'messages' | 'partners';
 
 /** Secciones del panel mostradas en la sidebar de administración. */
 const ADMIN_TABS: AdminTabItem[] = [
@@ -54,6 +55,7 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: 'reviews', label: 'Reseñas Pendientes', icon: Star },
   { key: 'reports', label: 'Reportes', icon: Flag },
   { key: 'messages', label: 'Mensajes', icon: Inbox },
+  { key: 'partners', label: 'Partners B2B', icon: Building2 },
 ];
 
 export default function Admin() {
@@ -82,6 +84,7 @@ export default function Admin() {
       {tab === 'reviews' && <ReviewsTab onError={setError} />}
       {tab === 'reports' && <ReportsTab onError={setError} />}
       {tab === 'messages' && <MessagesTab onError={setError} />}
+      {tab === 'partners' && <PartnersTab onError={setError} />}
     </AdminLayout>
   );
 }
@@ -1392,6 +1395,92 @@ function MessagesTab({ onError }: { onError: (m: string | null) => void }) {
           )}
         </article>
       ))}
+    </div>
+  );
+}
+
+/* ---------------- Partners B2B ---------------- */
+
+const PARTNER_ESTADO: Record<PartnerStatus, { label: string; badge: string }> = {
+  new: { label: 'Nueva', badge: 'badge-gold' },
+  contacted: { label: 'Contactada', badge: 'badge-blue' },
+  active: { label: 'Activa', badge: 'badge-green' },
+};
+
+/** Solicitudes de agencias y tour operadores recibidas desde /operadores. */
+function PartnersTab({ onError }: { onError: (m: string | null) => void }) {
+  const { rows: partners, err, reload } = useAdminData<Partner[]>(listarPartners);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <button className="button-ghost" onClick={reload}><RefreshCw size={14} /> Actualizar</button>
+      </div>
+      <AvisoError mensaje={err} operador />
+      {partners === null && !err && <div className="empty-state">Cargando…</div>}
+      {partners?.length === 0 && (
+        <div className="empty-state">
+          <Building2 size={24} className="mx-auto mb-2 opacity-50" />
+          No hay solicitudes de agencias todavía.
+        </div>
+      )}
+      {partners?.map((p) => {
+        const estado = PARTNER_ESTADO[p.status] ?? PARTNER_ESTADO.new;
+        return (
+          <article key={p.id} className="panel !p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="font-extrabold text-azul">{p.agency_name}</h2>
+                <p className="text-xs text-tinta/55">
+                  {new Date(p.created_at).toLocaleString('es-ES')} · {p.country}
+                </p>
+              </div>
+              <span className={`badge ${estado.badge}`}>{estado.label}</span>
+            </div>
+            <div className="mt-2 grid gap-1 text-sm text-tinta/80 sm:grid-cols-2">
+              <p>Contacto: <strong>{p.contact_name}</strong></p>
+              <p>
+                Email:{' '}
+                <a className="text-link" href={`mailto:${p.email}`}>{p.email}</a>
+              </p>
+              <p>País: <strong>{p.country}</strong></p>
+              <p>
+                Sitio web:{' '}
+                {p.website ? (
+                  <a className="text-link" href={p.website} target="_blank" rel="noopener noreferrer">
+                    {p.website}
+                  </a>
+                ) : (
+                  <strong>—</strong>
+                )}
+              </p>
+              <p>Volumen anual: <strong>{p.annual_clients || '—'}</strong></p>
+            </div>
+            <p className="mt-2 whitespace-pre-line text-sm text-tinta/80">{p.message || 'Sin mensaje.'}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <label className="field-label !mb-0" htmlFor={`partner-estado-${p.id}`}>Estado</label>
+              <select
+                id={`partner-estado-${p.id}`}
+                className="field-input !w-auto !py-1.5 text-sm"
+                value={p.status}
+                onChange={async (e) => {
+                  onError(null);
+                  try {
+                    await actualizarEstadoPartner(p.id, e.target.value as PartnerStatus);
+                    reload();
+                  } catch (error) {
+                    onError(error instanceof Error ? error.message : 'No se pudo cambiar el estado');
+                  }
+                }}
+              >
+                <option value="new">Nueva</option>
+                <option value="contacted">Contactada</option>
+                <option value="active">Activa</option>
+              </select>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
