@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { CLAVE_IDIOMA } from '@/i18n/config';
 
 const LANGS = [
   { code: 'es', label: 'ES' },
@@ -16,7 +17,7 @@ export function LanguageSelect() {
   const cambiarIdioma = (idioma: string) => {
     void i18n.changeLanguage(idioma);
     try {
-      window.localStorage.setItem('i18nextLng', idioma);
+      window.localStorage.setItem(CLAVE_IDIOMA, idioma);
     } catch {
       /* almacenamiento bloqueado: el cambio se aplica solo en esta sesión */
     }
