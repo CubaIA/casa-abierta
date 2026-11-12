@@ -22,18 +22,15 @@ export function BotonChatLead({ leadId }: { leadId: string }) {
           role="dialog"
           aria-modal="true"
           aria-label="Chat de la solicitud"
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-tinta/60 p-3 sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
           onClick={() => setAbierto(false)}
         >
           <div
-            className="my-4 w-full max-w-lg overflow-x-hidden rounded-2xl bg-white p-3 shadow-xl sm:my-6 sm:p-5 max-h-[90dvh] overflow-y-auto sm:max-h-[85vh]"
+            className="bg-white w-full max-w-md rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-base font-extrabold text-azul">Chat con el turista</h3>
-                <p className="text-xs text-tinta/55">Los mensajes llegan en tiempo real.</p>
-              </div>
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-base font-extrabold text-azul">Chat con el turista</h3>
               <button
                 type="button"
                 onClick={() => setAbierto(false)}
