@@ -86,6 +86,22 @@ export async function enviarMensaje(input: {
   return mensaje;
 }
 
+/** Borra todo el historial del hilo (tabla `messages`). */
+export async function borrarMensajes(leadId: string): Promise<void> {
+  if (!leadId) return;
+
+  if (supabase) {
+    const { error } = await supabase.from('messages').delete().eq('lead_id', leadId);
+    if (error) {
+      console.error('[chat] Error borrando el historial:', error);
+      throw new Error(error.message);
+    }
+    return;
+  }
+
+  guardarDemo(leerDemo().filter((m) => m.lead_id !== leadId));
+}
+
 /**
  * Escucha los mensajes nuevos del hilo en tiempo real.
  * Devuelve la función para cortar la suscripción.

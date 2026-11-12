@@ -9,14 +9,18 @@ import type { ChatMessage } from '@/lib/types';
  * Se usa en el panel del anfitrión (dentro de un modal) y en la ruta pública
  * `/chat/:id` del turista. Los mensajes llegan en vivo por Supabase Realtime.
  */
+export type ChatLeadPanelHandle = { vaciar: () => void };
+
 export function ChatLeadPanel({
   leadId,
   senderType,
   className = '',
+  panelRef,
 }: {
   leadId: string;
   senderType: 'tourist' | 'host';
   className?: string;
+  panelRef?: React.RefObject<ChatLeadPanelHandle | null>;
 }) {
   const [mensajes, setMensajes] = useState<ChatMessage[]>([]);
   const [texto, setTexto] = useState('');
@@ -55,6 +59,16 @@ export function ChatLeadPanel({
     finRef.current?.scrollIntoView({ block: 'nearest' });
   }, [mensajes.length]);
 
+  useEffect(() => {
+    if (!panelRef) return;
+    panelRef.current = { vaciar: () => setMensajes([]) };
+    return () => {
+      panelRef.current = null;
+    };
+  }, [panelRef]);
+
+  const hiloVacio = !cargando && mensajes.length === 0;
+
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     const limpio = texto.trim();
@@ -78,7 +92,7 @@ export function ChatLeadPanel({
     <div className={`flex w-full min-w-0 min-h-0 flex-1 flex-col ${className}`}>
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {cargando && <p className="text-sm text-gray-500">Cargando conversación…</p>}
-        {!cargando && mensajes.length === 0 && (
+        {hiloVacio && (
           <p className="text-sm text-gray-500">
             Todavía no hay mensajes. Escribe el primero para coordinar la reserva.
           </p>
@@ -117,7 +131,7 @@ export function ChatLeadPanel({
           </label>
           <textarea
             id={`chat-mensaje-${leadId}`}
-            className="flex-1 border rounded-lg p-2 focus:outline-none resize-none min-h-[44px] max-h-[120px]"
+            className="flex-1 border rounded-lg p-2 text-gray-900 placeholder-gray-400 focus:outline-none resize-none min-h-[44px] max-h-[120px]"
             rows={1}
             maxLength={2000}
             value={texto}
