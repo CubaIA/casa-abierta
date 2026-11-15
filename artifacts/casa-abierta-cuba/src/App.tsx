@@ -24,6 +24,7 @@ const Seguridad = lazy(() => import('@/pages/Seguridad'));
 const ChatLead = lazy(() => import('@/pages/ChatLead'));
 const Contacto = lazy(() => import('@/pages/Contacto'));
 const Partners = lazy(() => import('@/pages/Partners'));
+const ComoFunciona = lazy(() => import('@/pages/ComoFunciona'));
 const ChatIA = lazy(() => import('@/pages/ChatIA'));
 const Perfil = lazy(() => import('@/pages/Perfil'));
 const UpdatePassword = lazy(() => import('@/pages/UpdatePassword'));
@@ -114,6 +115,7 @@ export default function App() {
               <Route path="/chat/:id" component={ChatLead} />
               <Route path="/contacto" component={Contacto} />
               <Route path="/operadores" component={Partners} />
+              <Route path="/como-funciona" component={ComoFunciona} />
               <Route path="/status" component={StatusPage} />
               <Route path="/blog" component={BlogPage} />
               <Route path="/blog/:slug" component={BlogPost} />

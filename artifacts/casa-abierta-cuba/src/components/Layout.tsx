@@ -533,6 +533,7 @@ function Footer() {
         <div>
           <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Confianza</h3>
           <ul className="space-y-2 text-sm">
+            <li><Link href="/como-funciona" className="hover:text-white">Cómo funciona</Link></li>
             <li><Link href="/about" className="hover:text-white">Sobre el proyecto</Link></li>
             <li><Link href="/status" className="hover:text-white">Estado de la plataforma</Link></li>
             <li><Link href="/faq" className="hover:text-white">Preguntas frecuentes</Link></li>
