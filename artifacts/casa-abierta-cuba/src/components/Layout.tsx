@@ -4,6 +4,7 @@ import {
   Sparkles,
   Bot,
   Briefcase,
+  Building2,
   CalendarDays,
   Compass,
   Facebook,
@@ -143,6 +144,17 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               Eventos
             </Link>
+            {/* Enlace B2B para agencias y tour operadores. */}
+            <Link
+              href="/operadores"
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                location === '/operadores'
+                  ? 'bg-white text-azul'
+                  : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+              }`}
+            >
+              <Building2 size={14} aria-hidden /> Para Agencias
+            </Link>
             <LanguageSelect />
             <CurrencySelect onChange={(v) => { try { localStorage.setItem('casa_currency', v); } catch {} }} />
             {!loading && hostCta && (
@@ -280,6 +292,25 @@ export function Layout({ children }: { children: ReactNode }) {
                       className={location === '/eventos' ? 'text-terracota-600' : 'text-dorado'}
                     />
                     Eventos
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/operadores"
+                    onClick={() => setOpen(false)}
+                    aria-current={location === '/operadores' ? 'page' : undefined}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                      location === '/operadores'
+                        ? 'bg-white text-azul'
+                        : 'text-azul-200 hover:bg-azul-700 hover:text-white'
+                    }`}
+                  >
+                    <Building2
+                      size={18}
+                      aria-hidden
+                      className={location === '/operadores' ? 'text-terracota-600' : 'text-dorado'}
+                    />
+                    Para Agencias / Partners B2B
                   </Link>
                 </li>
               </ul>
