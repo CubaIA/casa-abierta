@@ -2,6 +2,10 @@ import { Link } from 'wouter';
 
 const ARTICULOS = [
   {
+    titulo: 'Viñales sin apagones: Las mejores casas con paneles solares en Cuba',
+    slug: 'vinales-paneles-solares',
+  },
+  {
     titulo: 'Las 5 mejores casas coloniales para hospedarse en Trinidad, Cuba',
     slug: 'trinidad',
   },
