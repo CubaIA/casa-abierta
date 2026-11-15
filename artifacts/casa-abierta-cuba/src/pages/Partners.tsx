@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Building2, CheckCircle2, Globe2, Headset, Send } from 'lucide-react';
+import { Building2, CheckCircle2, Globe2, Headset, Mail, MessageCircle, Send } from 'lucide-react';
 import { AvisoError } from '@/components/AvisoError';
 import { crearPartner } from '@/lib/partners';
 
@@ -86,6 +86,30 @@ export default function Partners() {
         Te damos acceso a nuestra red de proveedores locales verificados, tecnología para gestionar reservas y
         solicitudes sin fricción, y asistencia local en Cuba para resolver cualquier imprevisto sobre el terreno.
       </p>
+
+      {/* Contacto directo para agencias que prefieren no rellenar el formulario. */}
+      <div className="panel mt-5 border-l-4 !border-l-verde-600">
+        <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-verde-700">Contacto directo</p>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <a
+            href="https://wa.me/5356289645?text=Hola%20Yoanny,%20vi%20la%20p%C3%A1gina%20de%20operadores%20y%20quiero%20explorar%20una%20alianza%20B2B."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-center text-sm font-extrabold text-[#0b2e13] shadow-sm transition hover:brightness-95"
+          >
+            <MessageCircle size={18} aria-hidden /> Hablar directo con el CEO por WhatsApp
+          </a>
+          <a
+            href="mailto:casaabiertacuba@gmail.com?subject=Inter%C3%A9s%20en%20alianza%20B2B%20-%20Casa%20Abierta%20Cuba"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-azul px-5 py-3 text-center text-sm font-extrabold text-white shadow-sm transition hover:bg-azul-600"
+          >
+            <Mail size={18} aria-hidden /> Enviar un correo directo
+          </a>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-tinta/60">
+          O si lo prefieres, déjanos tus datos en el formulario a continuación y te contactaremos.
+        </p>
+      </div>
 
       <ul className="mt-5 grid gap-3 sm:grid-cols-3">
         <li className="panel !p-4">
