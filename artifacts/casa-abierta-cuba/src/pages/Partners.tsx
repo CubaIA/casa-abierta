@@ -213,6 +213,13 @@ export default function Partners() {
         <button className="button-primary" type="submit" disabled={busy}>
           <Send size={16} aria-hidden /> {busy ? 'Enviando…' : 'Enviar solicitud'}
         </button>
+
+        <p className="max-w-prose break-words text-xs leading-relaxed text-gray-500">
+          Al enviar este formulario, aceptas que Casa Abierta Cuba trate tus datos de contacto con el único fin de
+          evaluar una posible colaboración comercial. No compartiremos tu información con terceros sin tu
+          consentimiento. Puedes solicitar la eliminación de tus datos en cualquier momento escribiendo a{' '}
+          casaabiertacuba@gmail.com.
+        </p>
       </form>
     </div>
   );
