@@ -6,6 +6,10 @@ const ARTICULOS = [
     slug: 'vinales-paneles-solares',
   },
   {
+    titulo: 'El Turismo de Proximidad en Cuba: Viajar Cerca, Conectar Profundo',
+    slug: 'turismo-proximidad-cuba',
+  },
+  {
     titulo: 'Las 5 mejores casas coloniales para hospedarse en Trinidad, Cuba',
     slug: 'trinidad',
   },

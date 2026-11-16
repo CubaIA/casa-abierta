@@ -101,6 +101,61 @@ const ARTICULOS: Articulo[] = [
     ],
   },
   {
+    slug: 'turismo-proximidad-cuba',
+    titulo: 'El Turismo de Proximidad en Cuba: Viajar Cerca, Conectar Profundo',
+    subtitulo:
+      'Descubre cómo el turismo de proximidad está cambiando la forma de viajar a Cuba, priorizando el apoyo a las economías locales y las experiencias auténticas sobre el turismo masivo.',
+    metaDescripcion:
+      'Descubre cómo el turismo de proximidad está cambiando la forma de viajar a Cuba, priorizando el apoyo a las economías locales y las experiencias auténticas sobre el turismo masivo.',
+    bloques: [
+      {
+        tipo: 'p',
+        texto:
+          'Durante mucho tiempo, el turismo se midió por la cantidad de kilómetros recorridos o la cantidad de países visitados. Sin embargo, una nueva tendencia está transformando la industria: el Turismo de Proximidad.',
+      },
+      {
+        tipo: 'p',
+        texto:
+          'Aunque el término suele asociarse con viajar cerca del lugar de residencia, en Casa Abierta Cuba lo aplicamos a una filosofía más profunda: conectar de forma cercana y real con el territorio que se visita. No se trata de hacer menos, sino de viajar mejor.',
+      },
+      { tipo: 'h2', texto: '¿Qué significa hacer turismo de proximidad en Cuba?' },
+      {
+        tipo: 'p',
+        texto:
+          'En el contexto cubano, el turismo de proximidad significa dejar de lado los grandes paquetes hoteleros de masas y acercarse a la realidad de la isla. Implica:',
+      },
+      {
+        tipo: 'ul',
+        items: [
+          'Apoyar la economía local: Elegir alojarte en una casa particular significa que tu dinero va directamente a una familia cubana, no a una gran corporación.',
+          'Redescubrir lo cotidiano: Comer en un paladar, caminar por un barrio local, hablar con el taxista o aprender de un guía que vive en la zona.',
+          'Viajar con propósito: Entender que el verdadero lujo es tener una experiencia auténtica y segura, respetando los ritmos y la cultura del destino.',
+        ],
+      },
+      { tipo: 'h2', texto: 'La sostenibilidad real: Comunidad y tradición' },
+      {
+        tipo: 'p',
+        texto:
+          'El turismo de proximidad no se trata solo de ecología, se trata de sostenibilidad social. Al reservar a través de plataformas como Casa Abierta Cuba, estás validando la verificación legal de los proveedores y fomentando que las tradiciones, la gastronomía y el patrimonio cultural de los pueblos se mantengan vivos.',
+      },
+      {
+        tipo: 'p',
+        texto:
+          'En un mundo globalizado, viajar cerca de las personas y de sus historias es, irónicamente, el viaje más lejano que puedes hacer de la rutina.',
+      },
+      { tipo: 'h2', texto: 'Viajar cerca como elección consciente' },
+      {
+        tipo: 'p',
+        texto:
+          'Elegir un alojamiento verificado, hablar directamente con el anfitrión sin intermediarios y decidir explorar las maravillas que Cuba tiene para ofrecer de la mano de quienes la viven es, hoy más que nunca, una decisión transformadora.',
+      },
+      {
+        tipo: 'p',
+        texto: 'En Casa Abierta Cuba, estamos construyendo el puente para ese turismo humano, equilibrado y consciente.',
+      },
+    ],
+  },
+  {
     slug: 'trinidad',
     titulo: 'Las 5 mejores casas coloniales para hospedarse en Trinidad, Cuba',
     subtitulo: 'Guía de las casas coloniales más bonitas de Trinidad para quedarte en este pueblo mágico.',
