@@ -80,6 +80,7 @@ export function ProfileAvatar({
           src={display}
           alt="Avatar"
           loading="lazy"
+          decoding="async"
           className="h-full w-full rounded-full object-cover"
           onError={(e) => {
             const target = e.currentTarget as HTMLImageElement;

@@ -536,7 +536,13 @@ export function BusinessForm({ onDone }: { onDone: () => void }) {
         <div className="mt-1 flex flex-wrap gap-2">
           {photoPreview.map((url, i) => (
             <span key={url} className="relative inline-block w-[84px] h-[84px] overflow-hidden rounded-xl border border-arena-2 bg-azul-900">
-              <img src={url} alt={`preview ${i}`} className="h-full w-full object-cover" />
+              <img
+                src={url}
+                alt={`preview ${i}`}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
               <button
                 type="button"
                 className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 text-white text-xs font-semibold hover:bg-black/50"

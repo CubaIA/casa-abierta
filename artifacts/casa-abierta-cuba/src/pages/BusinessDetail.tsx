@@ -429,6 +429,7 @@ export default function BusinessDetail() {
                     src={url}
                     alt={`Foto ${i + 1} de ${business.name}`}
                     loading={i === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -470,7 +471,13 @@ export default function BusinessDetail() {
       <div className="relative overflow-hidden rounded-2xl bg-azul-700 sm:rounded-3xl">
         <div className="h-[300px] w-full sm:h-[420px]">
           {foto ? (
-            <img src={foto} alt={`Foto de ${business.name}`} className="h-full w-full object-cover" />
+            <img
+              src={foto}
+              alt={`Foto de ${business.name}`}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           ) : (
             <div className="grid h-full w-full place-items-center bg-gradient-to-br from-azul to-azul-700 text-white/70">
               <ImageOff size={44} aria-hidden />
@@ -813,6 +820,8 @@ export default function BusinessDetail() {
                   <img
                     src={fotosValidas[fotoActual]}
                     alt={`Foto ${fotoActual + 1} de ${business?.name ?? ''}`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-[70vh] w-full object-contain"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.opacity = '0.3';

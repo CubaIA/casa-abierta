@@ -86,6 +86,7 @@ export function BusinessCard({
               src={photoSrc}
               alt={`Foto de ${business.name}`}
               loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.opacity = '0';

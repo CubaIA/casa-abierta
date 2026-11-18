@@ -112,6 +112,7 @@ export function Layout({ children }: { children: ReactNode }) {
               width={56}
               height={56}
               className="h-12 w-12 max-w-[50px] shrink-0 rounded-full object-contain md:h-14 md:w-14 md:max-w-[60px]"
+              loading="lazy"
               decoding="async"
             />
           </Link>
@@ -224,6 +225,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   width={40}
                   height={40}
                   className="h-10 w-10 shrink-0 rounded-full object-contain"
+                  loading="lazy"
                   decoding="async"
                 />
                 <span className="truncate text-sm font-extrabold">Casa Abierta Cuba</span>

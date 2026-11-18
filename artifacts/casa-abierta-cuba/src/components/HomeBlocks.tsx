@@ -23,6 +23,7 @@ export function CategoryTiles({ onSelect }: CategoryTilesProps) {
               src={c.img}
               alt={c.alt}
               loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -77,6 +78,7 @@ export function ReviewNote({ className = '' }: { className?: string }) {
         height={32}
         className="h-8 w-8 shrink-0 rounded-full object-contain"
         loading="lazy"
+        decoding="async"
       />
       <p className="text-sm leading-relaxed text-tinta/70">
         Cada propuesta pasa por revisión manual antes de publicarse. La verificación es una medida de calidad de la

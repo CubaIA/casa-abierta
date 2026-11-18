@@ -967,7 +967,13 @@ function BusinessEditor({
               key={url}
               className="relative inline-block h-20 w-20 overflow-hidden rounded-xl border border-arena-2 bg-azul-900"
             >
-              <img src={url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
+              <img
+                src={url}
+                alt={`Foto ${i + 1}`}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
               {i === 0 && (
                 <span className="absolute left-0 top-0 rounded-br-md bg-azul px-1 py-0.5 text-[9px] font-extrabold uppercase text-white">
                   Portada
@@ -988,7 +994,13 @@ function BusinessEditor({
               key={n.preview}
               className="relative inline-block h-20 w-20 overflow-hidden rounded-xl border-2 border-dashed border-azul bg-azul-900"
             >
-              <img src={n.preview} alt={`Foto nueva ${i + 1}`} className="h-full w-full object-cover" />
+              <img
+                src={n.preview}
+                alt={`Foto nueva ${i + 1}`}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute left-0 top-0 rounded-br-md bg-verde px-1 py-0.5 text-[9px] font-extrabold uppercase text-white">
                 Nueva
               </span>

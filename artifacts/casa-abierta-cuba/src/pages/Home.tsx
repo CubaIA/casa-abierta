@@ -72,6 +72,7 @@ export default function Home() {
           aria-hidden
           className="home-wallpaper__photo"
           fetchPriority="high"
+          loading="lazy"
           decoding="async"
         />
         {/* Velo tenue para que el texto blanco respire sobre el agua. */}
