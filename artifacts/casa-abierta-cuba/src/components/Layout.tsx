@@ -590,25 +590,9 @@ function Footer() {
         </div>
       </div>
       <div className="border-t border-azul">
-        <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 text-xs flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2 md:pb-4">
-          <div className="flex flex-wrap items-center justify-center gap-2 text-center">
-            <span>© 2026 Casa Abierta Cuba. Todos los derechos reservados.</span>
-            <span className="sm:ml-2">Hecho en Cuba 🇨🇺</span>
-          </div>
-          <a
-            href="https://besttravelapps.online"
-            target="_blank"
-            rel="noopener"
-            title="Listed on TravelApps"
-            className="inline-flex shrink-0 items-center sm:ml-4"
-          >
-            <img
-              src="https://besttravelapps.online/badge.svg"
-              alt="Listed on TravelApps"
-              height={40}
-              className="h-10 w-auto"
-            />
-          </a>
+        <div className="mx-auto max-w-6xl px-4 py-4 text-xs flex flex-wrap items-center justify-center gap-2">
+          <span>© 2026 Casa Abierta Cuba. Todos los derechos reservados.</span>
+          <span className="ml-2">Hecho en Cuba 🇨🇺</span>
         </div>
       </div>
     </footer>
