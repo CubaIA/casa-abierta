@@ -59,7 +59,7 @@ export default function Entrar() {
         const wrongCreds = isLogin &&
           (typeof err === 'object' && err !== null &&
            (String((err as { code?: string | null }).code ?? '') === 'invalid_credentials' ||
-            /invalid credentials/i.test(message) ||
+            /invalid (login )?credentials/i.test(message) ||
             /Correo o contraseña/i.test(message)));
         if (wrongCreds) {
           setError('Correo o contraseña incorrectos. Verifica tus datos.');

@@ -2168,7 +2168,12 @@ export async function signIn(email: string, password: string): Promise<Session> 
       if (code === 'email_not_confirmed' || /not confirmed/i.test(error.message)) {
         throw new Error('Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.');
       }
-      throw new Error(error.message);
+      // El código de Supabase (`invalid_credentials`, etc.) se conserva para que
+      // la pantalla de acceso pueda distinguir credenciales incorrectas de un
+      // fallo técnico real.
+      const fallo = new Error(error.message) as Error & { code?: string };
+      fallo.code = code;
+      throw fallo;
     }
     return { user: { id: data.user.id, email: data.user.email ?? email } };
   }
