@@ -590,7 +590,7 @@ function Footer() {
         </div>
       </div>
       <div className="border-t border-azul">
-        <div className="mx-auto max-w-6xl px-4 py-4 text-xs flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2">
+        <div className="mx-auto max-w-6xl px-4 pb-20 pt-4 text-xs flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2 md:pb-4">
           <div className="flex flex-wrap items-center justify-center gap-2 text-center">
             <span>© 2026 Casa Abierta Cuba. Todos los derechos reservados.</span>
             <span className="sm:ml-2">Hecho en Cuba 🇨🇺</span>
