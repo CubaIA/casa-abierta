@@ -1198,6 +1198,26 @@ const LEAD_ESTADO: Record<LeadStatus, { label: string; badge: string }> = {
   booked: { label: 'Reservado', badge: 'badge-green' },
 };
 
+/** Horas transcurridas desde `created_at` (nunca negativas). */
+function horasDesde(iso: string): number {
+  const ms = Date.now() - new Date(iso).getTime();
+  return Number.isFinite(ms) ? Math.max(0, ms / 3_600_000) : 0;
+}
+
+/** Tiempo transcurrido en formato corto: "Hace X h" o "Hace X días". */
+function tiempoTranscurrido(iso: string): string {
+  const horas = horasDesde(iso);
+  if (horas < 1) return 'Hace menos de 1 h';
+  if (horas < 24) return `Hace ${Math.floor(horas)} h`;
+  const dias = Math.floor(horas / 24);
+  return `Hace ${dias} ${dias === 1 ? 'día' : 'días'}`;
+}
+
+/** Pendiente sin respuesta durante más de 24 horas. */
+function leadVencido(l: Lead): boolean {
+  return l.status === 'pending' && horasDesde(l.created_at) > 24;
+}
+
 /**
  * Todas las solicitudes de reserva de la plataforma.
  *
@@ -1206,6 +1226,8 @@ const LEAD_ESTADO: Record<LeadStatus, { label: string; badge: string }> = {
  */
 function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
   const { rows: leads, err, reload } = useAdminData<Lead[]>(listarTodosLosLeads);
+  // Pendientes vencidas (+24 h) primero; el resto conserva su orden.
+  const ordenados = leads ? [...leads].sort((a, b) => Number(leadVencido(b)) - Number(leadVencido(a))) : leads;
 
   return (
     <div className="space-y-3">
@@ -1220,20 +1242,43 @@ function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
           No hay solicitudes de reserva.
         </div>
       )}
-      {leads?.map((l) => {
+      {ordenados?.map((l) => {
         const estado = LEAD_ESTADO[l.status] ?? LEAD_ESTADO.pending;
         const negocio = l.business?.title || l.business?.name || l.business_id;
+        const anfitrion = String(l.business?.host_name ?? '').trim();
+        const telefono = String(l.business?.phone ?? '').trim();
+        const vencido = leadVencido(l);
         return (
           <article key={l.id} className="panel !p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h2 className="font-extrabold text-azul">{l.tourist_name || 'Visitante'}</h2>
+                <p className="text-sm font-semibold text-tinta/80">{negocio}</p>
+                <p className="text-[11px] text-tinta/40">ID: {l.business_id}</p>
                 <p className="text-xs text-tinta/55">
-                  {negocio} · {new Date(l.created_at).toLocaleString('es-ES')}
+                  {new Date(l.created_at).toLocaleString('es-ES')} · {tiempoTranscurrido(l.created_at)}
                 </p>
               </div>
-              <span className={`badge ${estado.badge}`}>{estado.label}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`badge ${estado.badge}`}>{estado.label}</span>
+                {l.status === 'pending' && (
+                  vencido
+                    ? <span className="badge badge-red">Sin respuesta +24 h</span>
+                    : <span className="badge badge-neutral">En plazo</span>
+                )}
+              </div>
             </div>
+            {l.business && (
+              <div className="mt-2 rounded-lg border border-tinta/10 px-3 py-2 text-xs text-tinta/70">
+                <p><strong>Anfitrión:</strong> {anfitrion || '—'}</p>
+                <p>
+                  <strong>Teléfono:</strong>{' '}
+                  {telefono
+                    ? <a className="text-link" href={`tel:${telefono}`}>{telefono}</a>
+                    : '—'}
+                </p>
+              </div>
+            )}
             <div className="mt-2 grid gap-1 text-sm text-tinta/80 sm:grid-cols-2">
               <p>Llegada: <strong>{l.check_in ?? '—'}</strong></p>
               <p>Salida: <strong>{l.check_out ?? '—'}</strong></p>

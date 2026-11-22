@@ -156,10 +156,16 @@ export async function listarTodosLosLeads(): Promise<Lead[]> {
   if (client) {
     const consulta = (cols: string) =>
       client.from('leads').select(cols).order('created_at', { ascending: false });
-    // Con el nombre del negocio cuando la relación está en el esquema.
-    let { data, error } = await consulta('*, businesses(title)');
-    if (error && /Could not find a relationship|PGRST200|schema cache/i.test(error.message)) {
-      ({ data, error } = await consulta('*'));
+    // Con el negocio y sus datos de contacto cuando la relación y las columnas
+    // están en el esquema; si falta alguna, se degrada sin romper el panel.
+    const selecciones = ['*, businesses(title, host_name, phone)', '*, businesses(title, host_name)', '*, businesses(title)', '*'];
+    let data: unknown = null;
+    let error: { message: string } | null = null;
+    for (const cols of selecciones) {
+      ({ data, error } = await consulta(cols));
+      if (!error) break;
+      // Solo se reintenta si el problema es del join/columna, no de la tabla.
+      if (!/Could not find a relationship|PGRST200|schema cache|does not exist|42703/i.test(error.message)) break;
     }
     if (error) {
       console.error('[leads] Error leyendo todas las solicitudes:', error);

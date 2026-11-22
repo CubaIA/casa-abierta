@@ -153,8 +153,14 @@ export interface Lead {
   budget: string | null;
   message: string | null;
   status: LeadStatus;
-  /** Negocio de la solicitud cuando la consulta lo trae con `businesses(title)`. */
-  business?: { title?: string | null; name?: string | null } | null;
+  /** Negocio de la solicitud cuando la consulta lo trae con `businesses(...)`.
+   *  `host_name` y `phone` se leen solo en el panel de administración. */
+  business?: {
+    title?: string | null;
+    name?: string | null;
+    host_name?: string | null;
+    phone?: string | null;
+  } | null;
   created_at: string;
 }
 
