@@ -1,6 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Star } from 'lucide-react';
 import { crearResenaPublica } from '@/lib/marketplace';
+import { CampoTrampa } from './CampoTrampa';
+import {
+  MENSAJE_LIMITE,
+  esEnvioAutomatico,
+  puedeEnviar,
+  registrarEnvio,
+  validarComentarioResena,
+  validarEnlaces,
+  validarNombre,
+} from '@/lib/antiSpam';
 
 interface FormularioResenaProps {
   businessId: string;
@@ -25,27 +35,63 @@ export function FormularioResena({ businessId, onEnviada }: FormularioResenaProp
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviada, setEnviada] = useState(false);
+  // Antispam: campo trampa oculto y momento en que se mostró el formulario.
+  const [trampa, setTrampa] = useState('');
+  const abiertoEn = useRef(Date.now());
+
+  function limpiar() {
+    setNombre('');
+    setRating(0);
+    setHover(0);
+    setComment('');
+    setTrampa('');
+    abiertoEn.current = Date.now();
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (enviando) return;
+
+    // Envío automático (trampa rellena o menos de 4 s): se ignora en silencio
+    // y se muestra el éxito normal, sin escribir nada en la base de datos.
+    if (esEnvioAutomatico(trampa, abiertoEn.current)) {
+      limpiar();
+      setError(null);
+      setEnviada(true);
+      return;
+    }
+
     if (rating < 1) {
       setError('Elige de 1 a 5 estrellas para puntuar el negocio.');
       return;
     }
-    if (!nombre.trim()) {
-      setError('Escribe tu nombre para que otros viajeros sepan quién opina.');
+    const errorNombre = validarNombre(nombre);
+    if (errorNombre) {
+      setError(errorNombre);
       return;
     }
+    const errorComentario = validarComentarioResena(comment);
+    if (errorComentario) {
+      setError(errorComentario);
+      return;
+    }
+    const errorEnlaces = validarEnlaces(comment);
+    if (errorEnlaces) {
+      setError(errorEnlaces);
+      return;
+    }
+    if (!puedeEnviar('resenas')) {
+      setError(MENSAJE_LIMITE);
+      return;
+    }
+
     setEnviando(true);
     setError(null);
     setEnviada(false);
     try {
-      await crearResenaPublica({ businessId, authorName: nombre, rating, comment });
-      setNombre('');
-      setRating(0);
-      setHover(0);
-      setComment('');
+      await crearResenaPublica({ businessId, authorName: nombre.trim(), rating, comment: comment.trim() });
+      registrarEnvio('resenas');
+      limpiar();
       setEnviada(true);
       await onEnviada();
     } catch (err) {
@@ -56,7 +102,8 @@ export function FormularioResena({ businessId, onEnviada }: FormularioResenaProp
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-5 rounded-2xl border border-arena-2 bg-white p-4 sm:p-5">
+    <form onSubmit={onSubmit} className="relative mt-5 rounded-2xl border border-arena-2 bg-white p-4 sm:p-5">
+      <CampoTrampa id="review-website" valor={trampa} onCambio={setTrampa} />
       <h3 className="text-base font-extrabold text-azul">Dejar una reseña</h3>
       <p className="mt-1 text-sm text-tinta/65">
         No necesitas cuenta. Tu reseña se publica en la ficha después de que el equipo la revise.

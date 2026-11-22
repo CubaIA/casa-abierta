@@ -1,8 +1,17 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CalendarCheck, CalendarDays, HelpCircle, Shield, X } from 'lucide-react';
 import { Link } from 'wouter';
 import type { Business } from '@/lib/types';
 import { crearLead } from '@/lib/leads';
+import { CampoTrampa } from './CampoTrampa';
+import {
+  MENSAJE_LIMITE,
+  esEnvioAutomatico,
+  puedeEnviar,
+  registrarEnvio,
+  validarEnlaces,
+  validarNombre,
+} from '@/lib/antiSpam';
 
 const MENSAJE_EXITO =
   '¡Gracias! Tu solicitud ha sido enviada. Nos pondremos en contacto contigo muy pronto para confirmar la disponibilidad.';
@@ -45,6 +54,9 @@ export function SolicitudReserva({ business }: { business: Business }) {
   const [error, setError] = useState<string | null>(null);
   const [enviada, setEnviada] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
+  // Antispam: campo trampa oculto y momento en que se abrió el formulario.
+  const [trampa, setTrampa] = useState('');
+  const abiertoEn = useRef(Date.now());
 
   const campo = (clave: keyof Formulario) => ({
     value: form[clave],
@@ -55,6 +67,8 @@ export function SolicitudReserva({ business }: { business: Business }) {
   function abrir() {
     setError(null);
     setEnviada(false);
+    setTrampa('');
+    abiertoEn.current = Date.now();
     setAbierto(true);
   }
 
@@ -66,13 +80,28 @@ export function SolicitudReserva({ business }: { business: Business }) {
     e.preventDefault();
     if (enviando) return;
 
-    if (!form.nombre.trim()) return setError('Escribe tu nombre completo.');
+    // Envío automático (trampa rellena o menos de 4 s): se ignora en silencio
+    // y se muestra el éxito normal, sin guardar nada en la base de datos.
+    if (esEnvioAutomatico(trampa, abiertoEn.current)) {
+      setForm(FORMULARIO_VACIO);
+      setTrampa('');
+      setLeadId(null);
+      setError(null);
+      setEnviada(true);
+      return;
+    }
+
+    const errorNombre = validarNombre(form.nombre);
+    if (errorNombre) return setError(errorNombre);
     if (!CORREO_VALIDO.test(form.email.trim())) return setError('Escribe un correo electrónico válido.');
+    const errorEnlaces = validarEnlaces(form.mensaje);
+    if (errorEnlaces) return setError(errorEnlaces);
     if (form.telefono.replace(/\D/g, '').length < 6) return setError('Escribe un teléfono o WhatsApp de contacto.');
     if (!form.llegada || !form.salida) return setError('Indica la fecha de llegada y la de salida.');
     if (form.salida < form.llegada) return setError('La fecha de salida no puede ser anterior a la de llegada.');
     const huespedes = Number.parseInt(form.huespedes, 10);
     if (!Number.isFinite(huespedes) || huespedes < 1) return setError('Indica cuántos huéspedes viajan.');
+    if (!puedeEnviar('solicitudes')) return setError(MENSAJE_LIMITE);
 
     setEnviando(true);
     setError(null);
@@ -89,8 +118,10 @@ export function SolicitudReserva({ business }: { business: Business }) {
         budget: form.presupuesto,
         message: form.mensaje,
       });
+      registrarEnvio('solicitudes');
       setLeadId(nuevoLead);
       setForm(FORMULARIO_VACIO);
+      setTrampa('');
       setEnviada(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo enviar la solicitud.');
@@ -188,7 +219,8 @@ export function SolicitudReserva({ business }: { business: Business }) {
                 </button>
               </div>
             ) : (
-              <form onSubmit={enviar} className="mt-4 grid gap-3 sm:grid-cols-2">
+              <form onSubmit={enviar} className="relative mt-4 grid gap-3 sm:grid-cols-2">
+                <CampoTrampa id="lead-website" valor={trampa} onCambio={setTrampa} />
                 <label className="sm:col-span-2">
                   <span className="field-label">Nombre completo</span>
                   <input className="field-input" type="text" required maxLength={120} autoComplete="name" {...campo('nombre')} />
