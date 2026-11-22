@@ -40,7 +40,7 @@ import type { Business, BusinessRow, ContactMessage, Lead, LeadStatus, Profile, 
 import { useAuth } from '@/lib/auth';
 import { BusinessForm } from './Anfitrion';
 import { AdminLayout, type AdminTabItem } from '@/components/AdminLayout';
-import { actualizarEstadoLead, listarTodosLosLeads } from '@/lib/leads';
+import { actualizarEstadoLead, listarTodosLosLeads, type LeadsAdminResultado } from '@/lib/leads';
 import { BotonChatLead } from '@/components/BotonChatLead';
 import { actualizarEstadoPartner, listarPartners, type Partner, type PartnerStatus } from '@/lib/partners';
 
@@ -1225,7 +1225,10 @@ function leadVencido(l: Lead): boolean {
  * `host_id`: se listan todos los leads con el nombre del negocio asociado.
  */
 function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
-  const { rows: leads, err, reload } = useAdminData<Lead[]>(listarTodosLosLeads);
+  const { rows, err, reload } = useAdminData<LeadsAdminResultado>(listarTodosLosLeads);
+  const leads = rows?.leads ?? null;
+  // Error al leer los negocios: se avisa sin ocultar las solicitudes.
+  const avisoNegocios = rows?.aviso ?? null;
   // Pendientes vencidas (+24 h) primero; el resto conserva su orden.
   const ordenados = leads ? [...leads].sort((a, b) => Number(leadVencido(b)) - Number(leadVencido(a))) : leads;
 
@@ -1235,6 +1238,10 @@ function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
         <button className="button-ghost" onClick={reload}><RefreshCw size={14} /> Actualizar</button>
       </div>
       <AvisoError mensaje={err} operador />
+      <AvisoError
+        mensaje={avisoNegocios ? `No se pudieron cargar los datos del negocio: ${avisoNegocios}` : null}
+        operador
+      />
       {leads === null && !err && <div className="empty-state">Cargando…</div>}
       {leads?.length === 0 && (
         <div className="empty-state">
@@ -1244,7 +1251,7 @@ function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
       )}
       {ordenados?.map((l) => {
         const estado = LEAD_ESTADO[l.status] ?? LEAD_ESTADO.pending;
-        const negocio = l.business?.title || l.business?.name || l.business_id;
+        const negocio = l.business?.title || l.business?.name || 'Negocio no encontrado';
         const anfitrion = String(l.business?.host_name ?? '').trim();
         const telefono = String(l.business?.phone ?? '').trim();
         const vencido = leadVencido(l);
@@ -1268,17 +1275,15 @@ function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
                 )}
               </div>
             </div>
-            {l.business && (
-              <div className="mt-2 rounded-lg border border-tinta/10 px-3 py-2 text-xs text-tinta/70">
-                <p><strong>Anfitrión:</strong> {anfitrion || '—'}</p>
-                <p>
-                  <strong>Teléfono:</strong>{' '}
-                  {telefono
-                    ? <a className="text-link" href={`tel:${telefono}`}>{telefono}</a>
-                    : '—'}
-                </p>
-              </div>
-            )}
+            <div className="mt-2 rounded-lg border border-tinta/10 px-3 py-2 text-xs text-tinta/70">
+              <p><strong>Anfitrión:</strong> {anfitrion || '—'}</p>
+              <p>
+                <strong>Teléfono:</strong>{' '}
+                {telefono
+                  ? <a className="text-link" href={`tel:${telefono}`}>{telefono}</a>
+                  : '—'}
+              </p>
+            </div>
             <div className="mt-2 grid gap-1 text-sm text-tinta/80 sm:grid-cols-2">
               <p>Llegada: <strong>{l.check_in ?? '—'}</strong></p>
               <p>Salida: <strong>{l.check_out ?? '—'}</strong></p>

@@ -150,32 +150,73 @@ export async function listarLeadsDelAnfitrion(hostId: string): Promise<Lead[]> {
   return leerDemo().filter((l) => l.host_id === hostId);
 }
 
-/** Todas las solicitudes, para el panel de administración. */
-export async function listarTodosLosLeads(): Promise<Lead[]> {
+/** Resultado del listado del panel: solicitudes y aviso si falló el negocio. */
+export interface LeadsAdminResultado {
+  leads: Lead[];
+  /** Error al leer los negocios; el listado de solicitudes sigue visible. */
+  aviso: string | null;
+}
+
+/**
+ * Todas las solicitudes, para el panel de administración.
+ *
+ * La relación con `businesses` se resuelve en dos consultas (leads y luego
+ * negocios por id) y se une en memoria: así el panel no depende de que
+ * PostgREST exponga la relación anidada y, si la segunda consulta falla, el
+ * aviso llega a la pantalla en vez de esconderse.
+ */
+export async function listarTodosLosLeads(): Promise<LeadsAdminResultado> {
   const client = supabase;
   if (client) {
-    const consulta = (cols: string) =>
-      client.from('leads').select(cols).order('created_at', { ascending: false });
-    // Con el negocio y sus datos de contacto cuando la relación y las columnas
-    // están en el esquema; si falta alguna, se degrada sin romper el panel.
-    const selecciones = ['*, businesses(title, host_name, phone)', '*, businesses(title, host_name)', '*, businesses(title)', '*'];
-    let data: unknown = null;
-    let error: { message: string } | null = null;
-    for (const cols of selecciones) {
-      ({ data, error } = await consulta(cols));
-      if (!error) break;
-      // Solo se reintenta si el problema es del join/columna, no de la tabla.
-      if (!/Could not find a relationship|PGRST200|schema cache|does not exist|42703/i.test(error.message)) break;
-    }
+    const { data, error } = await client
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
     if (error) {
       console.error('[leads] Error leyendo todas las solicitudes:', error);
-      if (esTablaAusente(error.message)) return [];
+      if (esTablaAusente(error.message)) return { leads: [], aviso: null };
       throw new Error(error.message);
     }
-    // `select()` con columnas dinámicas pierde el tipo: se afirma el resultado.
-    return (data ?? []) as unknown as Lead[];
+    const leads = (data ?? []) as unknown as Lead[];
+
+    const ids = Array.from(
+      new Set(leads.map((l) => l.business_id).filter((id): id is string => Boolean(id))),
+    );
+    if (ids.length === 0) return { leads, aviso: null };
+
+    const { data: negocios, error: errorNegocios } = await client
+      .from('businesses')
+      .select('id, title, host_name, phone')
+      .in('id', ids);
+    if (errorNegocios) {
+      // Objeto completo en consola para diagnosticar sin adivinar.
+      console.error('[leads] Error leyendo los negocios de las solicitudes:', errorNegocios);
+      return { leads, aviso: errorNegocios.message };
+    }
+
+    const mapa = new Map<
+      string,
+      { title: string | null; host_name: string | null; phone: string | null }
+    >();
+    for (const n of (negocios ?? []) as Array<{
+      id: string;
+      title?: string | null;
+      host_name?: string | null;
+      phone?: string | null;
+    }>) {
+      mapa.set(n.id, {
+        title: n.title ?? null,
+        host_name: n.host_name ?? null,
+        phone: n.phone ?? null,
+      });
+    }
+
+    return {
+      leads: leads.map((l) => ({ ...l, business: mapa.get(l.business_id) ?? null })),
+      aviso: null,
+    };
   }
-  return leerDemo();
+  return { leads: leerDemo(), aviso: null };
 }
 
 /** Solicitudes de un conjunto de casas (panel de agencia). */
