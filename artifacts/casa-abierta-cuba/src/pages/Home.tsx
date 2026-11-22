@@ -94,6 +94,21 @@ export default function Home() {
             anfitriones desde la plataforma.
           </p>
 
+          {/* Llamado a la acción: catálogo de alojamientos. Va arriba del
+              buscador para que se vea sin hacer scroll en móvil. */}
+          <div className="mt-6 max-w-2xl">
+            <Link
+              href="/alojamientos?utm_source=portada&utm_medium=boton"
+              className="wallpaper-ink button-primary w-full justify-center !px-7 !py-4 text-base shadow-[0_14px_36px_rgba(9,25,45,0.45)] sm:w-auto"
+            >
+              Ver casas verificadas
+              <span aria-hidden>→</span>
+            </Link>
+            <p className="wallpaper-ink mt-2.5 text-[12.5px] leading-snug text-white/85 sm:text-sm">
+              Solicita tu reserva directo con el anfitrión. Sin cuenta, sin pagos por adelantado.
+            </p>
+          </div>
+
           {/* Buscador protagonista */}
           <form
             role="search"
@@ -241,6 +256,15 @@ export default function Home() {
               Ver todo el catálogo
               <span aria-hidden>→</span>
             </button>
+          </div>
+        )}
+
+        {businesses !== null && (
+          <div className="mt-8 flex justify-center">
+            <Link href="/alojamientos" className="text-link text-sm">
+              Ver todas las casas
+              <span aria-hidden>→</span>
+            </Link>
           </div>
         )}
       </section>
