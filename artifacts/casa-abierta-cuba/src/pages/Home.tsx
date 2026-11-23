@@ -83,13 +83,13 @@ export default function Home() {
         <div aria-hidden className="home-wallpaper__blend-bottom absolute inset-x-0 bottom-0 h-80 sm:h-96" />
 
         <div className="relative mx-auto w-full max-w-5xl px-5 pt-8 sm:pt-12">
-          <p className="wallpaper-ink text-[0.72rem] font-extrabold uppercase tracking-[0.18em] text-dorado">
+          <p className="wallpaper-ink text-[0.72rem] font-extrabold uppercase tracking-[0.18em] text-azul-700">
             Una puerta abierta a Cuba
           </p>
-          <h1 className="wallpaper-ink mt-3 max-w-3xl text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-            Descubre la isla con quienes <span className="text-dorado">la viven</span>.
+          <h1 className="wallpaper-ink mt-3 max-w-3xl text-4xl font-extrabold leading-[1.05] text-azul-700 sm:text-5xl lg:text-6xl">
+            Descubre la isla con quienes <span className="text-azul">la viven</span>.
           </h1>
-          <p className="wallpaper-ink mt-4 max-w-xl text-base text-white/90 sm:text-lg">
+          <p className="wallpaper-ink mt-4 max-w-xl text-base text-azul-700 sm:text-lg">
             Alojamientos, gastronomía, experiencias y taxis revisados uno a uno. Habla directamente con los
             anfitriones desde la plataforma.
           </p>
@@ -104,7 +104,7 @@ export default function Home() {
               Ver casas verificadas
               <span aria-hidden>→</span>
             </Link>
-            <p className="wallpaper-ink mt-2.5 text-[12.5px] leading-snug text-white/85 sm:text-sm">
+            <p className="wallpaper-ink mt-2.5 text-[12.5px] leading-snug text-azul-700 sm:text-sm">
               Solicita tu reserva directo con el anfitrión. Sin cuenta, sin pagos por adelantado.
             </p>
           </div>
@@ -142,7 +142,7 @@ export default function Home() {
           </form>
 
           {/* Aviso del menú: registro, sesión y todas las categorías */}
-          <p className="wallpaper-ink mt-3 flex max-w-2xl items-start gap-2 px-2 text-[12.5px] leading-snug text-white/80 sm:px-0">
+          <p className="wallpaper-ink mt-3 flex max-w-2xl items-start gap-2 px-2 text-[12.5px] leading-snug text-azul-700 sm:px-0">
             <Menu size={14} aria-hidden className="mt-0.5 shrink-0 text-dorado" />
             <span>
               Abre el menú para registrarte, iniciar sesión o explorar todas las categorías.
@@ -172,7 +172,7 @@ export default function Home() {
                   className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur-md transition ${
                     activo
                       ? 'bg-white text-azul shadow-lg'
-                      : 'bg-azul-700/35 text-white ring-1 ring-white/45 hover:bg-azul-700/55'
+                      : 'bg-azul-700/70 text-white ring-1 ring-white/45 hover:bg-azul-700/85'
                   }`}
                 >
                   <Icon size={15} aria-hidden />
@@ -192,7 +192,7 @@ export default function Home() {
               className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur-md transition ${
                 inclusivo
                   ? 'bg-white text-azul shadow-lg'
-                  : 'bg-azul-700/35 text-white ring-1 ring-white/45 hover:bg-azul-700/55'
+                  : 'bg-azul-700/70 text-white ring-1 ring-white/45 hover:bg-azul-700/85'
               }`}
             >
               <Heart size={15} aria-hidden />
@@ -204,7 +204,7 @@ export default function Home() {
           <div className="mt-7">
             <Link
               href="/chat"
-              className="wallpaper-ink inline-flex items-center gap-2 rounded-full border border-dorado/80 bg-azul-700/40 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-azul-700/60"
+              className="wallpaper-ink inline-flex items-center gap-2 rounded-full border border-dorado/80 bg-azul-700/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-azul-700/85"
             >
               <Sparkles size={16} aria-hidden className="text-dorado" />
               Pregunta al Asistente IA de Casa Abierta
