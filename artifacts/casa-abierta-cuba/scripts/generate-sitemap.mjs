@@ -14,7 +14,17 @@ import { fileURLToPath } from 'node:url';
 const SITE_URL = 'https://casaabiertacuba.vercel.app';
 
 /** Páginas públicas que siempre existen (aunque la BD falle). */
-const PAGINAS_ESTATICAS = ['/', '/about', '/alojamientos', '/operadores'];
+const PAGINAS_ESTATICAS = [
+  '/',
+  '/about',
+  '/alojamientos',
+  '/operadores',
+  '/gastronomia',
+  '/guias',
+  '/taxis',
+  '/lgbtq',
+  '/blog',
+];
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const destino = path.join(raiz, 'public', 'sitemap.xml');

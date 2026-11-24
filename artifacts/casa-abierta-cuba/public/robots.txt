@@ -6,5 +6,9 @@ Disallow: /entrar
 Disallow: /perfil
 Disallow: /mensajes
 Disallow: /host
+Disallow: /solicitudes
+Disallow: /anfitrion
+Disallow: /favoritos
+Disallow: /chat
 
 Sitemap: https://casaabiertacuba.vercel.app/sitemap.xml
