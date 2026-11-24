@@ -18,7 +18,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const WEBHOOK_SECRET = Deno.env.get('LEAD_WEBHOOK_SECRET') ?? '';
 const FROM = Deno.env.get('LEAD_FROM_EMAIL') ?? 'Casa Abierta Cuba <reservas@casaabiertacuba.com>';
 const ADMIN_COPY = Deno.env.get('LEAD_ADMIN_EMAIL') ?? 'casaabiertacuba@gmail.com';
-const PANEL_URL = Deno.env.get('APP_PANEL_URL') ?? 'https://casa-abierta-r7g9.vercel.app/anfitrion';
+const PANEL_URL = Deno.env.get('APP_PANEL_URL') ?? 'https://casaabiertacuba.vercel.app/anfitrion';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 

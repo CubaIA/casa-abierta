@@ -20,7 +20,7 @@ supabase secrets set RESEND_API_KEY=re_xxxxxxxxx
 supabase secrets set LEAD_WEBHOOK_SECRET=un-secreto-largo-aleatorio
 supabase secrets set LEAD_FROM_EMAIL="Casa Abierta Cuba <reservas@casaabiertacuba.com>"
 supabase secrets set LEAD_ADMIN_EMAIL=casaabiertacuba@gmail.com
-supabase secrets set APP_PANEL_URL=https://casa-abierta-r7g9.vercel.app/anfitrion
+supabase secrets set APP_PANEL_URL=https://casaabiertacuba.vercel.app/anfitrion
 ```
 
 ## 3. Desplegar la función
