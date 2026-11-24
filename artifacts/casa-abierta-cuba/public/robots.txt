@@ -10,5 +10,12 @@ Disallow: /solicitudes
 Disallow: /anfitrion
 Disallow: /favoritos
 Disallow: /chat
+Disallow: /agencia
+Disallow: /concierge
+Disallow: /antifraud
+Disallow: /verificacion
+Disallow: /update-password
+Disallow: /payment/success
+Disallow: /payment/cancel
 
 Sitemap: https://casaabiertacuba.vercel.app/sitemap.xml
