@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /entrar
+Disallow: /perfil
+Disallow: /mensajes
+Disallow: /host
+
+Sitemap: https://casaabiertacuba.vercel.app/sitemap.xml

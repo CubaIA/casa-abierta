@@ -37,6 +37,8 @@ import { SelloVerificado } from '@/components/SelloVerificado';
 import { IconosServicios } from '@/components/IconosServicios';
 import { adminGetUserAvatarUrl } from '@/lib/avatars';
 import { supabase } from '@/lib/supabase';
+import { Seo } from '@/components/Seo';
+import { absoluteUrl, businessPath, DEFAULT_OG_IMAGE } from '@/lib/site';
 
 import {
   createReport,
@@ -79,6 +81,15 @@ function familiaDeServicio(business: Business): 'alojamiento' | 'gastronomia' | 
   if (/transport|taxi|traslado|chofer|alquiler de auto|renta de auto|renta de carro/.test(crudo)) return 'transporte';
   if (/alojamiento|hostal|hospedaje|villa|apartamento|habitacion|casa/.test(crudo)) return 'alojamiento';
   return 'experiencia';
+}
+
+/** Texto de una sola línea, sin espacios repetidos y acotado para SEO. */
+function recortarTexto(texto: string, maximo: number): string {
+  const limpio = texto.replace(/\s+/g, ' ').trim();
+  if (limpio.length <= maximo) return limpio;
+  const corte = limpio.slice(0, maximo);
+  const ultimoEspacio = corte.lastIndexOf(' ');
+  return `${(ultimoEspacio > 0 ? corte.slice(0, ultimoEspacio) : corte).replace(/[.,;:]$/, '')}…`;
 }
 
 function iconoDeAmenidad(amenidad: Amenidad) {
@@ -179,8 +190,9 @@ export default function BusinessDetail() {
 
   useEffect(() => {
     if (!business?.name) return;
-    document.title = `${business.name} | Casa Abierta Cuba`;
-  }, [business?.name]);
+    // Título único por ficha: nombre del negocio + ciudad cuando existe.
+    document.title = `${business.name}${business.municipality ? ` en ${business.municipality}` : ''} | Casa Abierta Cuba`;
+  }, [business?.name, business?.municipality]);
 
   async function onFavorite() {
     if (!userId) {
@@ -270,6 +282,23 @@ export default function BusinessDetail() {
   const miniaturas = fotosValidas.slice(0, 4);
   const hayGaleria = fotosValidas.length > 1;
 
+  /* --- Metadatos de la ficha: descripción, canonical, Open Graph y JSON-LD --- */
+  const ciudadSeo = [business.municipality, business.province].filter(Boolean).join(', ');
+  const precioSeo = formatPrice(business);
+  const descripcionSeo = recortarTexto(
+    [
+      `${tipoLabel}${ciudadSeo ? ` en ${ciudadSeo}` : ''}.`,
+      String(business.description ?? '').trim(),
+      precioSeo ? `${precioSeo}${unidad ? ` ${unidad}` : ''}.` : '',
+      'Solicita tu reserva directo con el anfitrión en Casa Abierta Cuba.',
+    ]
+      .filter(Boolean)
+      .join(' '),
+    300,
+  );
+  const rutaSeo = businessPath(business.id);
+  const imagenSeo = foto ? absoluteUrl(foto) : null;
+
   /* Datos de Supabase blindados: cualquier campo puede venir null/vacío.
    * Todos los split/join trabajan sobre strings o arrays ya validados. */
   /* El anfitrión es el dueño del negocio, nunca la persona con sesión: si el
@@ -349,6 +378,26 @@ export default function BusinessDetail() {
    * check-in y check-out. Taxis, guías y experiencias muestran su horario o
    * un texto de coordinación con el anfitrión. */
   const familia = familiaDeServicio(business);
+
+  /* Datos estructurados: los alojamientos se anuncian como LodgingBusiness. */
+  const jsonLdSeo =
+    familia === 'alojamiento'
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'LodgingBusiness',
+          name: business.name,
+          description: descripcionSeo,
+          url: absoluteUrl(rutaSeo),
+          image: imagenSeo ?? absoluteUrl(DEFAULT_OG_IMAGE),
+          address: {
+            '@type': 'PostalAddress',
+            ...(business.municipality ? { addressLocality: business.municipality } : {}),
+            ...(business.province ? { addressRegion: business.province } : {}),
+            addressCountry: 'CU',
+          },
+          ...(precioSeo ? { priceRange: precioSeo } : {}),
+        }
+      : null;
   const bloquesLoQueDebesSaber: string[] = (() => {
     switch (familia) {
       case 'alojamiento':
@@ -465,6 +514,14 @@ export default function BusinessDetail() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-40 pt-3 md:pb-28">
+      <Seo
+        title={`${business.name}${business.municipality ? ` en ${business.municipality}` : ''} | Casa Abierta Cuba`}
+        description={descripcionSeo}
+        path={rutaSeo}
+        image={imagenSeo}
+        type="article"
+        jsonLd={jsonLdSeo}
+      />
       {/* ---------------------------------------------------------- */}
       {/* Galería superior                                            */}
       {/* ---------------------------------------------------------- */}

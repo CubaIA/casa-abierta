@@ -5,6 +5,7 @@ import { Heart, Menu, Search, Sparkles } from 'lucide-react';
 import { CATALOG_IMAGES, FILTROS, filterBusinesses, ordenarPorPremium, resultsTitle } from '@/lib/catalog';
 import { useCatalog } from '@/hooks/useCatalog';
 import { useFavorites } from '@/hooks/useFavorites';
+import { Seo } from '@/components/Seo';
 
 /** Muestra de la portada: 8 lugares en «Todo» y 12 dentro de cada categoría. */
 const LIMITE_INICIO = 8;
@@ -60,6 +61,12 @@ export default function Home() {
 
   return (
     <div className="bg-crema">
+      {/* Metadatos únicos de la portada (canonical, Open Graph). */}
+      <Seo
+        title="Casa Abierta Cuba | Descubre la isla con quienes la viven"
+        description="Alojamientos, gastronomía, experiencias y taxis revisados uno a uno en Cuba. Habla directo con anfitriones locales, sin intermediarios ni pagos por adelantado."
+        path="/"
+      />
       {/* ---------------------------------------------------------- */}
       {/* Portada wallpaper: la foto de Varadero ocupa toda la        */}
       {/* pantalla y se funde con la cabecera (azul marino) y con el */}

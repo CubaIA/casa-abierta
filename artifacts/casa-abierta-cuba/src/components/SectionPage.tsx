@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { ChevronRight } from 'lucide-react';
 import type { SectionDef } from '@/lib/sections';
 import { sectionCountLabel } from '@/lib/sections';
+import { Seo } from './Seo';
 
 interface SectionPageProps {
   section: SectionDef;
@@ -24,6 +25,13 @@ export function SectionPage({ section, count = null, children }: SectionPageProp
 
   return (
     <div>
+      {/* Metadatos propios de la sección: canonical y Open Graph. */}
+      <Seo
+        title={`${section.title} | Casa Abierta Cuba`}
+        description={section.subtitle}
+        path={section.path}
+        image={section.image ?? null}
+      />
       <header className={`relative isolate overflow-hidden text-white ${section.image ? 'bg-azul-700' : 'bg-azul'}`}>
         {section.image && (
           <>
