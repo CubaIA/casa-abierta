@@ -152,6 +152,8 @@ export interface Lead {
   guests: number | null;
   budget: string | null;
   message: string | null;
+  /** Origen de la visita (UTM o referrer). Null si la columna no existe o no hay dato. */
+  source?: string | null;
   status: LeadStatus;
   /** Negocio de la solicitud cuando la consulta lo trae con `businesses(...)`.
    *  `host_name` y `phone` se leen solo en el panel de administración. */

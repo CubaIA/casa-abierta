@@ -4,7 +4,11 @@ import App from './App';
 import { AuthProvider } from '@/lib/auth';
 import { Toaster } from '@/components/ui/toaster';
 import i18n from './i18n';
+import { capturarOrigenLead } from '@/lib/leadSource';
 import './index.css';
+
+// Origen de la visita (UTM o referrer) para atribuir la solicitud.
+capturarOrigenLead();
 
 /**
  * Espera a que i18next detecte el idioma (localStorage → navegador) y cargue

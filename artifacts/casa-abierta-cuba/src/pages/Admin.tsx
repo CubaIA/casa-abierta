@@ -1297,6 +1297,11 @@ function LeadsTab({ onError }: { onError: (m: string | null) => void }) {
                 Email:{' '}
                 <a className="text-link" href={`mailto:${l.tourist_email}`}>{l.tourist_email}</a>
               </p>
+              {l.source && (
+                <p>
+                  Origen: <strong>{l.source}</strong>
+                </p>
+              )}
             </div>
             {l.message && <p className="mt-2 text-sm text-tinta/75">{l.message}</p>}
             <div className="mt-3 flex flex-wrap gap-2">

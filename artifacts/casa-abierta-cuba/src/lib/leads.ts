@@ -8,10 +8,11 @@
  *
  * Nombres de columna exactos de la tabla `leads`:
  * business_id, host_id, tourist_name, tourist_email, tourist_phone,
- * check_in, check_out, guests, budget, message, status.
+ * check_in, check_out, guests, budget, message, status, source.
  */
 
 import { supabase } from './supabase';
+import { origenLead } from './leadSource';
 import type { Lead, LeadStatus } from './types';
 
 const CLAVE_DEMO = 'casa-abierta:leads-demo';
@@ -89,7 +90,7 @@ export async function crearLead(input: NuevoLead): Promise<string> {
   const leadId = crypto.randomUUID();
   const hostId = input.hostId ?? (await hostDelNegocio(input.businessId));
 
-  const fila = {
+  const filaBase = {
     id: leadId,
     business_id: input.businessId,
     host_id: hostId,
@@ -104,8 +105,24 @@ export async function crearLead(input: NuevoLead): Promise<string> {
     status: 'pending',
   };
 
+  // Origen de la visita guardado al cargar la app (UTM o referrer).
+  const origen = origenLead();
+  const fila = origen ? { ...filaBase, source: origen } : filaBase;
+
   if (supabase) {
-    const { error } = await supabase.from('leads').insert(fila);
+    let { error } = await supabase.from('leads').insert(fila);
+
+    // Proyecto sin la migración de `source`: la solicitud se guarda igualmente.
+    if (
+      error &&
+      origen &&
+      /source/i.test(error.message) &&
+      /does not exist|PGRST204|schema cache/i.test(error.message)
+    ) {
+      console.warn('[leads] La columna `source` no existe en `leads`: se guarda la solicitud sin origen.');
+      ({ error } = await supabase.from('leads').insert(filaBase));
+    }
+
     if (!error) return leadId;
 
     // Error exacto en consola para diagnosticar sin adivinar.
