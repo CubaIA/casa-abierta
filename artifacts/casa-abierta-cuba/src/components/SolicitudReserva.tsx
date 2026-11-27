@@ -3,6 +3,7 @@ import { CalendarCheck, CalendarDays, HelpCircle, Shield, X } from 'lucide-react
 import { Link } from 'wouter';
 import type { Business } from '@/lib/types';
 import { crearLead } from '@/lib/leads';
+import { supabase } from '@/lib/supabase';
 import { CampoTrampa } from './CampoTrampa';
 import {
   MENSAJE_LIMITE,
@@ -81,8 +82,9 @@ export function SolicitudReserva({ business }: { business: Business }) {
   // Antispam: campo trampa oculto y momento en que se abrió el formulario.
   const [trampa, setTrampa] = useState('');
   const abiertoEn = useRef(Date.now());
-  // Enlaces privados del partner: solo se muestran tras enviar la solicitud.
-  const enlacesPartner = (business.partner_links ?? '').trim();
+  // Enlaces privados del partner: llegan por RPC tras crear la solicitud.
+  const [partnerLinks, setPartnerLinks] = useState('');
+  const enlacesPartner = partnerLinks.trim();
 
   const campo = (clave: keyof Formulario) => ({
     value: form[clave],
@@ -93,9 +95,27 @@ export function SolicitudReserva({ business }: { business: Business }) {
   function abrir() {
     setError(null);
     setEnviada(false);
+    setPartnerLinks('');
     setTrampa('');
     abiertoEn.current = Date.now();
     setAbierto(true);
+  }
+
+  /** Pide los enlaces privados del partner con el id de la solicitud recién creada.
+   *  La columna no viaja en la ficha: solo esta RPC la entrega. Si falla, no
+   *  se muestra el bloque. */
+  async function cargarEnlacesPartner(lead: string) {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase.rpc('get_partner_links', { p_lead_id: lead });
+      if (error) {
+        console.warn('[leads] No se pudieron leer los enlaces del partner:', error.message);
+        return;
+      }
+      if (typeof data === 'string') setPartnerLinks(data);
+    } catch (err) {
+      console.warn('[leads] Error inesperado leyendo los enlaces del partner:', err);
+    }
   }
 
   function cerrar() {
@@ -149,6 +169,7 @@ export function SolicitudReserva({ business }: { business: Business }) {
       setForm(FORMULARIO_VACIO);
       setTrampa('');
       setEnviada(true);
+      void cargarEnlacesPartner(nuevoLead);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo enviar la solicitud.');
     } finally {
