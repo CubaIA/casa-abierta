@@ -47,6 +47,8 @@ export interface Business {
   experience_details: string;
   recommended_for: string[];
   lgbt_friendly: boolean;
+  /** Enlaces privados del partner: solo se muestran tras enviar una solicitud. */
+  partner_links?: string | null;
   /** Negocios destacados: se muestran primero y con sello Premium. */
   featured?: boolean | null;
   verified?: boolean;

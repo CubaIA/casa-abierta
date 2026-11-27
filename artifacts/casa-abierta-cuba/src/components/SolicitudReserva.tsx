@@ -18,6 +18,30 @@ const MENSAJE_EXITO =
 
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/** Una línea de `partner_links` con los enlaces clickables y el texto tal cual. */
+function LineaPartner({ linea }: { linea: string }) {
+  const partes = linea.split(/(\s+)/);
+  return (
+    <p className="break-words">
+      {partes.map((parte, i) =>
+        /^https?:\/\/\S+$/i.test(parte) ? (
+          <a
+            key={i}
+            href={parte}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-link break-all underline"
+          >
+            {parte}
+          </a>
+        ) : (
+          <span key={i}>{parte}</span>
+        ),
+      )}
+    </p>
+  );
+}
+
 interface Formulario {
   nombre: string;
   email: string;
@@ -57,6 +81,8 @@ export function SolicitudReserva({ business }: { business: Business }) {
   // Antispam: campo trampa oculto y momento en que se abrió el formulario.
   const [trampa, setTrampa] = useState('');
   const abiertoEn = useRef(Date.now());
+  // Enlaces privados del partner: solo se muestran tras enviar la solicitud.
+  const enlacesPartner = (business.partner_links ?? '').trim();
 
   const campo = (clave: keyof Formulario) => ({
     value: form[clave],
@@ -206,6 +232,18 @@ export function SolicitudReserva({ business }: { business: Business }) {
                 <p className="form-success" role="status">
                   {MENSAJE_EXITO}
                 </p>
+                {leadId && enlacesPartner && (
+                  <div className="mt-3 rounded-xl border border-arena-2 bg-crema/70 p-3 text-sm text-tinta/80">
+                    <p className="font-semibold text-azul">
+                      Aquí tienes los enlaces directos de reserva de este partner:
+                    </p>
+                    <div className="mt-1 whitespace-pre-line">
+                      {enlacesPartner.split(/\r?\n/).map((linea, i) =>
+                        linea.trim() ? <LineaPartner key={i} linea={linea} /> : <span key={i} className="block h-2" />,
+                      )}
+                    </div>
+                  </div>
+                )}
                 {leadId && (
                   <Link
                     href={`/chat/${leadId}`}

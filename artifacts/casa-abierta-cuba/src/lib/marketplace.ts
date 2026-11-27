@@ -118,10 +118,37 @@ function resolverColumnasServicios(): Promise<string[]> {
   return columnasServicios;
 }
 
+/** Enlaces privados del partner: columna opcional.
+ *
+ * Igual que las demás columnas nuevas, se comprueba una sola vez: si todavía
+ * no existe en la BD, no se pide y la ficha sigue cargando con normalidad. */
+let columnaPartnerLinks: Promise<boolean> | null = null;
+
+function resolverColumnaPartnerLinks(): Promise<boolean> {
+  if (!supabase) return Promise.resolve(false);
+  if (!columnaPartnerLinks) {
+    const client = supabase;
+    columnaPartnerLinks = (async () => {
+      const { error } = await client.from('businesses').select('partner_links').limit(1);
+      return !error || !esColumnaAusente(error.message);
+    })();
+  }
+  return columnaPartnerLinks;
+}
+
 /** Lista de columnas a pedir en cada lectura de `businesses`. */
 async function columnasDeNegocio(conDueno: boolean): Promise<string> {
-  const [propias, servicios] = await Promise.all([resolverColumnasAnfitrion(), resolverColumnasServicios()]);
-  const cols = [LIVE_BUSINESS_COLS_BASE, ...propias, ...servicios].join(', ');
+  const [propias, servicios, conPartnerLinks] = await Promise.all([
+    resolverColumnasAnfitrion(),
+    resolverColumnasServicios(),
+    resolverColumnaPartnerLinks(),
+  ]);
+  const cols = [
+    LIVE_BUSINESS_COLS_BASE,
+    ...propias,
+    ...servicios,
+    ...(conPartnerLinks ? ['partner_links'] : []),
+  ].join(', ');
   return conDueno ? `${cols}, owner_id` : cols;
 }
 
