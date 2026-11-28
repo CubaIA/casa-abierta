@@ -86,6 +86,15 @@ export const SERVICIOS_Y_EXPERIENCIAS = new Set([
   'artesanos',
 ]);
 
+/** Valores aceptados para la pestaña «Experiencias» (sin distinguir mayúsculas
+ *  ni espacios sobrantes: en la base de datos conviven 'experiencias' y
+ *  'Experiencias'). Las guías y los taxis tienen su propia sección. */
+const EXPERIENCIAS_KEYS = new Set(['experiencias']);
+
+export function esExperiencia(valor?: string): boolean {
+  return EXPERIENCIAS_KEYS.has((valor ?? '').trim().toLowerCase());
+}
+
 export interface CatalogFilterState {
   q: string;
   cat: string;
@@ -99,10 +108,10 @@ export function filterBusinesses(lista: Business[], { q, cat, inclusivo }: Catal
   //   alojamiento → service_type === 'alojamiento' (las guías locales no entran)
   //   gastronomia → service_type === 'gastronomia'
   //   transporte  → service_type === 'transporte'
-  //   experiencias → experiencias, guías, naturaleza y demás servicios
+  //   experiencias → sólo 'experiencias' (guías, taxis y demás tienen su sección)
   if (cat !== CATALOG_ALL) {
     if (cat === 'experiencias') {
-      rows = rows.filter((b) => SERVICIOS_Y_EXPERIENCIAS.has(b.service_type));
+      rows = rows.filter((b) => esExperiencia(b.service_type));
     } else {
       rows = rows.filter((b) => b.service_type === cat);
     }
