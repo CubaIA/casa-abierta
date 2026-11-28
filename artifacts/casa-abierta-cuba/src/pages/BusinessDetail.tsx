@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import type { Business, Review } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
-import { firstPhoto, resolvePhotos } from '@/lib/images';
+import { firstPhoto, photoTransform, resolvePhotos } from '@/lib/images';
 import { formatPrice } from '@/components/BusinessCard';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { AvisoError } from '@/components/AvisoError';
@@ -475,13 +475,20 @@ export default function BusinessDetail() {
               >
                 {url ? (
                   <img
-                    src={url}
+                    src={photoTransform(url, 300, 70)}
                     alt={`Foto ${i + 1} de ${business.name}`}
                     loading={i === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                      const el = e.currentTarget as HTMLImageElement;
+                      /* Si el plan no permite transformar, usa la original. */
+                      if (el.dataset.originalFallback !== '1') {
+                        el.dataset.originalFallback = '1';
+                        el.src = url;
+                        return;
+                      }
+                      el.style.display = 'none';
                     }}
                   />
                 ) : (
@@ -529,11 +536,17 @@ export default function BusinessDetail() {
         <div className="h-[300px] w-full sm:h-[420px]">
           {foto ? (
             <img
-              src={foto}
+              src={photoTransform(foto, 1200, 70)}
               alt={`Foto de ${business.name}`}
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover"
+              onError={(e) => {
+                const el = e.currentTarget as HTMLImageElement;
+                if (el.dataset.originalFallback === '1') return;
+                el.dataset.originalFallback = '1';
+                el.src = foto;
+              }}
             />
           ) : (
             <div className="grid h-full w-full place-items-center bg-gradient-to-br from-azul to-azul-700 text-white/70">

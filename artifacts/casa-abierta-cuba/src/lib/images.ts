@@ -79,6 +79,27 @@ export function firstPhoto(
   return null;
 }
 
+/** Convierte la URL pública de Storage en una URL transformada (redimensionada)
+ *  de Supabase: /storage/v1/render/image/public/... ?width=&quality=.
+ *
+ *  Sirve para que las tarjetas y las miniaturas descarguen imágenes pequeñas en
+ *  lugar del archivo original. Si la URL no es de Storage (o no es del tipo
+ *  esperado) se devuelve tal cual, y si el plan no permite transformar, el
+ *  componente que la usa vuelve a la URL original con `onError`.
+ */
+export function photoTransform(url: string, width: number, quality = 70): string {
+  if (!url) return url;
+  const marca = '/storage/v1/object/public/';
+  const i = url.indexOf(marca);
+  if (i === -1) return url;
+  const sinHash = url.split('#')[0];
+  const corte = sinHash.indexOf('?');
+  const limpia = corte >= 0 ? sinHash.slice(0, corte) : sinHash;
+  const prefijo = `${limpia.slice(0, i)}/storage/v1/render/image/public/`;
+  const ruta = limpia.slice(i + marca.length);
+  return `${prefijo}${ruta}?width=${Math.round(width)}&quality=${quality}`;
+}
+
 /** Actúa como la fuente canónica del campo `photos` en el tipo `Business`. */
 export function resolvePhotos(business: Business): string[] {
   if (Array.isArray(business.photos) && business.photos.length) return business.photos;

@@ -1,22 +1,10 @@
-import { useMemo, type MouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { Link } from 'wouter';
 import { Heart, ImageOff, Info, MapPin, Star } from 'lucide-react';
 import type { Business } from '@/lib/types';
-import { firstPhoto } from '@/lib/images';
+import { firstPhoto, photoTransform } from '@/lib/images';
 import { SelloVerificado } from './SelloVerificado';
 import { IconosServicios } from './IconosServicios';
-
-/** Anti-caché: añade `?v=<timestamp>` a la URL de la foto para que el navegador
- *  descargue de nuevo la portada cuando cambia, en lugar de servir la anterior
- *  desde su caché. Se elimina cualquier `v=` previo para no acumular parámetros. */
-function conAntiCache(url: string): string {
-  const hashIndex = url.indexOf('#');
-  const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
-  const sinHash = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
-  const sinV = sinHash.replace(/([?&])v=[^&]*/g, '$1');
-  const base = sinV.endsWith('?') || sinV.endsWith('&') ? sinV.slice(0, -1) : sinV;
-  return `${base}${base.includes('?') ? '&' : '?'}v=${Date.now()}${hash}`;
-}
 
 /** Precio legible para las tarjetas ("$12 USD"). */
 export function formatPrice(business: Business): string | null {
@@ -52,9 +40,15 @@ export function BusinessCard({
 }: BusinessCardProps) {
   // Portada: SIEMPRE la primera foto válida del arreglo (images[0]).
   const photo = firstPhoto(business);
-  // Recalcula el anti-caché solo cuando cambia la foto: así no se descarga
-  // de nuevo en cada render pero tampoco se queda la portada anterior.
-  const photoSrc = useMemo(() => (photo ? conAntiCache(photo) : null), [photo]);
+  // Se sirve la transformación de Storage a 400 px para no bajar la foto
+  // original. La URL es estable (sin parámetros aleatorios), así que el
+  // navegador y la CDN pueden cachearla. Si la transformación falla se vuelve
+  // a la URL original una sola vez.
+  const [transformFallida, setTransformFallida] = useState(false);
+  useEffect(() => {
+    setTransformFallida(false);
+  }, [photo]);
+  const photoSrc = photo ? (transformFallida ? photo : photoTransform(photo, 400, 70)) : null;
   const price = formatPrice(business);
   const unit = priceUnit(business);
   const rating = typeof business.rating === 'number' ? business.rating : null;
@@ -89,6 +83,10 @@ export function BusinessCard({
               decoding="async"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               onError={(e) => {
+                if (photo && photoSrc !== photo && !transformFallida) {
+                  setTransformFallida(true);
+                  return;
+                }
                 (e.currentTarget as HTMLImageElement).style.opacity = '0';
               }}
             />

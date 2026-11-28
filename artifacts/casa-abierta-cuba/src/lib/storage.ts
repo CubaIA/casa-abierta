@@ -26,7 +26,7 @@ export async function uploadBusinessImages(
     const { data, error } = await supabase.storage
       .from(BUCKET)
       .upload(name, file, {
-        cacheControl: '3600',
+        cacheControl: '31536000',
         upsert: false,
         contentType: mime,
       });
